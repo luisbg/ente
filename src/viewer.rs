@@ -1187,13 +1187,17 @@ impl Viewer {
 
     fn paste(&mut self) {
         info!("Paste copy string");
+        let line = self.cursor.line;
+        let column = self.cursor.col;
+        let disp_line = self.disp_line;
+        let disp_col = self.disp_col;
 
-        // TODO: More efficient solution
         let copy_string = self.copy_string.clone();
-        let chars = copy_string.chars();
-        for c in chars {
-            self.add_char(c);
-        }
+
+        self.model.add_block(copy_string, line, column);
+        self.text = self.model.get_text();
+        let _ = self.display_chunk(disp_line, disp_col);
+        self.update();
     }
 
     fn delete_line(&mut self) {

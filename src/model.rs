@@ -55,6 +55,22 @@ impl Model {
         }
     }
 
+    pub fn add_block(&mut self, copy_str: String, line: usize, column: usize) {
+        // TODO: Too similar to add_char(), overload?
+        let mut new_text = String::new();
+        for (x, ln) in self.text.lines().enumerate() {
+            if x == line - 1 {
+                let (beg, end) = ln.split_at(column - 1);
+                new_text.push_str(&format!("{}{}{}\n", beg, copy_str, end));
+            } else {
+                new_text.push_str(ln);
+                new_text.push('\n');
+            }
+        }
+        self.text = new_text;
+        self.saved = false;
+    }
+
     pub fn delete_char(&mut self, line: usize, column: usize) -> usize {
         // TODO: Use better data structure for strings. For example, a Rope
         // Can't delete from the beginning of the file

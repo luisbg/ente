@@ -6,6 +6,8 @@ extern crate rustbox;
 
 use std::error::{Error as StdError};
 use std::default::Default;
+use std::fs::File;
+use std::io::prelude::*;
 
 use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
@@ -14,7 +16,7 @@ mod errors {
     error_chain! { }
 }
 
-use errors::Result;
+use errors::*;
 
 fn main() {
     if let Err(ref e) = run() {
@@ -40,8 +42,18 @@ fn run() -> Result<()> {
 
     rustbox.set_output_mode(OutputMode::EightBit);
 
-    rustbox.print(1, 1, rustbox::RB_BOLD, Color::White, Color::Black,
-                  "Hello, world!");
+    let mut file = File::open("/tmp/kerouac")
+          .chain_err(|| "Couldn't open file")?;
+    let mut text = String::new();
+    match file.read_to_string(&mut text) {
+        Err(why) => bail!("couldn't read {}: ", why.description()),
+        Ok(_) => {},
+    }
+    let mut lines = text.lines();
+    if let Some(line) = lines.next() {
+        rustbox.print(1, 1, rustbox::RB_BOLD, Color::White, Color::Black,
+                      line);
+    }
     rustbox.print(1, 3, rustbox::RB_NORMAL, Color::Black, Color::Byte(0x04),
                   "Press 'q' to quit.");
 

@@ -23,8 +23,6 @@ fn main() {
                 println!("caused by: {}", e);
             }
 
-        // The backtrace is not always generated. Try to run this example
-        // with `RUST_BACKTRACE=1`.
         if let Some(backtrace) = e.backtrace() {
             println!("backtrace: {:?}",
                      backtrace);
@@ -36,7 +34,7 @@ fn main() {
 
 fn run() -> Result<()> {
     let mut rustbox = match RustBox::init(Default::default()) {
-        Ok(v) => v,
+        Ok(rustbox) => rustbox,
         Err(e) => bail!("{}", e),
     };
 

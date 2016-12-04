@@ -5,3 +5,4 @@ authors = ["Luis de Bethencourt <luisbg@debethencourt.com>"]
 
 [dependencies]
 rustbox = "*"
+error-chain = "*"

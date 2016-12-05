@@ -8,6 +8,7 @@ use std::error::{Error as StdError};
 use std::default::Default;
 use std::fs::File;
 use std::io::prelude::*;
+use std::env;
 
 use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
@@ -35,14 +36,22 @@ fn main() {
 }
 
 fn run() -> Result<()> {
+    let args: Vec<String> = env::args().collect();
+
     let mut rustbox = match RustBox::init(Default::default()) {
         Ok(rustbox) => rustbox,
         Err(e) => bail!("{}", e),
     };
 
+    let filepath = match args.len() {
+        1 => bail!("You need to specify a file to open"),
+        2 => &args[1],
+        _ => bail!("You can only open one file"),
+    };
+
     rustbox.set_output_mode(OutputMode::EightBit);
 
-    let mut file = File::open("/tmp/kerouac")
+    let mut file = File::open(filepath)
           .chain_err(|| "Couldn't open file")?;
     let mut text = String::new();
     match file.read_to_string(&mut text) {

@@ -63,6 +63,7 @@ fn run(logger: slog::Logger) -> Result<()> {
     };
 
     rustbox.set_output_mode(OutputMode::EightBit);
+    let height = rustbox.height();
 
     let mut file = File::open(filepath)
           .chain_err(|| "Couldn't open file")?;
@@ -72,9 +73,13 @@ fn run(logger: slog::Logger) -> Result<()> {
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
     let mut lines = text.lines();
-    if let Some(line) = lines.next() {
-        rustbox.print(1, 1, rustbox::RB_BOLD, Color::White, Color::Black,
-                      line);
+    for ln in 0 .. (height - 1) {
+        if let Some(line) = lines.next() {
+            rustbox.print(1, ln, rustbox::RB_BOLD, Color::White, Color::Black,
+                          line);
+        } else {
+            break;
+        }
     }
     rustbox.print(1, height - 1, rustbox::RB_NORMAL, Color::Black,
                   Color::Byte(0x04), "Press 'q' to quit.");

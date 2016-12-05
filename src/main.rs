@@ -27,7 +27,7 @@ mod errors {
 use errors::*;
 
 fn main() {
-    let log_file = File::create("kerouac.log").expect("Couldn't open log file");
+    let log_file = File::create("ente.log").expect("Couldn't open log file");
     let file_drain = slog_stream::stream(log_file, slog_json::default());
     let logger = slog::Logger::root(file_drain.fuse(), o!());
     info!(logger, "Application started";

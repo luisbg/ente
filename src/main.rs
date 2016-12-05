@@ -3,6 +3,11 @@
 
 extern crate rustbox;
 #[macro_use] extern crate error_chain;
+#[macro_use] extern crate slog;
+extern crate slog_term;
+extern crate time;
+extern crate slog_stream;
+extern crate slog_json;
 
 use std::error::{Error as StdError};
 use std::default::Default;
@@ -13,6 +18,8 @@ use std::env;
 use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
 
+use slog::DrainExt;
+
 mod errors {
     error_chain! { }
 }
@@ -20,7 +27,13 @@ mod errors {
 use errors::*;
 
 fn main() {
-    if let Err(ref e) = run() {
+    let log_file = File::create("kerouac.log").expect("Couldn't open log file");
+    let file_drain = slog_stream::stream(log_file, slog_json::default());
+    let logger = slog::Logger::root(file_drain.fuse(), o!());
+    info!(logger, "Application started";
+          "started_at" => format!("{}", time::now().rfc3339()));
+
+    if let Err(ref e) = run(logger) {
         println!("error: {}", e);
             for e in e.iter().skip(1) {
                 println!("caused by: {}", e);
@@ -35,7 +48,7 @@ fn main() {
     }
 }
 
-fn run() -> Result<()> {
+fn run(logger: slog::Logger) -> Result<()> {
     let args: Vec<String> = env::args().collect();
 
     let mut rustbox = match RustBox::init(Default::default()) {
@@ -71,7 +84,10 @@ fn run() -> Result<()> {
         match rustbox.poll_event(false) {
             Ok(rustbox::Event::KeyEvent(key)) => {
                 match key {
-                    Key::Char('q') => { break; }
+                    Key::Char('q') => {
+                        info!(logger, "Quitting application");
+                        break;
+                    }
                     _ => { }
                 }
             },

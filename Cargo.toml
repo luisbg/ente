@@ -6,3 +6,8 @@ authors = ["Luis de Bethencourt <luisbg@debethencourt.com>"]
 [dependencies]
 rustbox = "*"
 error-chain = "*"
+slog = "*"
+slog-term = "*"
+slog-stream = "*"
+slog-json = "*"
+time = "*"

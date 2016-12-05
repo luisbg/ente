@@ -46,8 +46,8 @@ fn run() -> Result<()> {
           .chain_err(|| "Couldn't open file")?;
     let mut text = String::new();
     match file.read_to_string(&mut text) {
-        Err(why) => bail!("couldn't read {}: ", why.description()),
         Ok(_) => {},
+        Err(why) => bail!("couldn't read {}: ", why.description()),
     }
     let mut lines = text.lines();
     if let Some(line) = lines.next() {
@@ -66,7 +66,7 @@ fn run() -> Result<()> {
                     _ => { }
                 }
             },
-            Err(e) => bail!("Rustbox.poll_event Error {}", e.description()),
+            Err(why) => bail!("Rustbox.poll_event Error {}", why.description()),
             _ => { }
         }
     }

@@ -76,8 +76,8 @@ fn run(logger: slog::Logger) -> Result<()> {
         rustbox.print(1, 1, rustbox::RB_BOLD, Color::White, Color::Black,
                       line);
     }
-    rustbox.print(1, 3, rustbox::RB_NORMAL, Color::Black, Color::Byte(0x04),
-                  "Press 'q' to quit.");
+    rustbox.print(1, height - 1, rustbox::RB_NORMAL, Color::Black,
+                  Color::Byte(0x04), "Press 'q' to quit.");
 
     rustbox.present();
     loop {

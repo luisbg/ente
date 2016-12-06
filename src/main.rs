@@ -27,12 +27,14 @@ mod errors {
 use errors::*;
 
 fn main() {
+    // Start logger
     let log_file = File::create("ente.log").expect("Couldn't open log file");
     let file_drain = slog_stream::stream(log_file, slog_json::default());
     let logger = slog::Logger::root(file_drain.fuse(), o!());
     info!(logger, "Application started";
           "started_at" => format!("{}", time::now().rfc3339()));
 
+    // Run catching errors
     if let Err(ref e) = run(logger) {
         println!("error: {}", e);
             for e in e.iter().skip(1) {
@@ -56,17 +58,22 @@ fn run(logger: slog::Logger) -> Result<()> {
         Err(e) => bail!("{}", e),
     };
 
+    // Check command arguments
     let filepath = match args.len() {
         1 => bail!("You need to specify a file to open"),
         2 => &args[1],
         _ => bail!("You can only open one file"),
     };
 
+    // Set terminal window
     rustbox.set_output_mode(OutputMode::EightBit);
     let height = rustbox.height();
 
+    // Open the file
     let mut file = File::open(filepath)
           .chain_err(|| "Couldn't open file")?;
+
+    // Read the file and show as much of the beginning as possible
     let mut text = String::new();
     match file.read_to_string(&mut text) {
         Ok(_) => {},
@@ -81,9 +88,12 @@ fn run(logger: slog::Logger) -> Result<()> {
             break;
         }
     }
+
+    // Add an informational status line
     rustbox.print(1, height - 1, rustbox::RB_NORMAL, Color::Black,
                   Color::Byte(0x04), "Press 'q' to quit.");
 
+    // Display content in terminal window and wait for keyboard events
     rustbox.present();
     loop {
         match rustbox.poll_event(false) {

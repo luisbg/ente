@@ -29,7 +29,8 @@ use errors::*;
 
 struct Viewer {
     rustbox: RustBox,
-    height: usize
+    height: usize,
+    cur: usize
 }
 
 impl Viewer {
@@ -42,6 +43,7 @@ impl Viewer {
         Viewer {
             rustbox: rustbox,
             height: height,
+            cur: 1,
         }
     }
 
@@ -52,6 +54,8 @@ impl Viewer {
             warn!("Line {} past EOF", start);
             return Err("End of file".into());
         }
+
+        self.cur = start;
 
         let mut lines = text.lines().skip(start - 1);
         for ln in 0 .. (self.height - 1) {
@@ -75,6 +79,47 @@ impl Viewer {
                       Color::Byte(0x04), "Press 'q' to quit.");
 
         self.rustbox.present();
+    }
+
+    fn scroll(&mut self, text: &String, key: rustbox::Key) {
+        let mut cur = self.cur;
+        match key {
+            Key::Down => {
+                cur += 1;
+                match self.display_chunk(&text, cur) {
+                    Ok(_) => self.update(),
+                    Err(_) => {}
+                }
+            }
+            Key::Up => {
+                if cur > 1 {
+                    cur -= 1;
+                }
+                match self.display_chunk(&text, cur) {
+                    Ok(_) => self.update(),
+                    Err(_) => {}
+                }
+            }
+            Key::PageDown => {
+                cur += self.height;
+                match self.display_chunk(&text, cur) {
+                    Ok(_) => self.update(),
+                    Err(_) => {}
+                }
+            }
+            Key::PageUp => {
+                if cur > self.height {
+                    cur -= self.height;
+                } else {
+                    cur = 1;
+                }
+                match self.display_chunk(&text, cur) {
+                    Ok(_) => self.update(),
+                    Err(_) => {}
+                }
+            }
+            _ => {}
+        }
     }
 
     fn poll_event(&mut self) -> EventResult {
@@ -109,7 +154,6 @@ fn main() {
 
 fn run() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    let mut cur = 1;
 
     let mut viewer = Viewer::new();
 
@@ -131,7 +175,7 @@ fn run() -> Result<()> {
         Ok(_) => {},
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
-    match viewer.display_chunk(&text, cur) {
+    match viewer.display_chunk(&text, 1) {
         Ok(_) => viewer.update(),
         Err(_) => {}
     }
@@ -145,41 +189,9 @@ fn run() -> Result<()> {
                         info!("Quitting application");
                         break;
                     }
-                    Key::Down => {
-                        cur += 1;
-                        match viewer.display_chunk(&text, cur) {
-                            Ok(_) => viewer.update(),
-                            Err(_) => { cur -= 1}
-                        }
+                    Key::Down | Key::Up | Key::PageDown | Key::PageUp => {
+                        viewer.scroll(&text, key);
                     }
-                    Key::Up => {
-                        if cur > 1 {
-                            cur -= 1;
-                        }
-                        match viewer.display_chunk(&text, cur) {
-                            Ok(_) => viewer.update(),
-                            Err(_) => {}
-                        }
-                    }
-                    Key::PageDown => {
-                        cur += viewer.height;
-                        match viewer.display_chunk(&text, cur) {
-                            Ok(_) => viewer.update(),
-                            Err(_) => { cur -= viewer.height}
-                        }
-                    }
-                    Key::PageUp => {
-                        if cur > viewer.height {
-                            cur -= viewer.height;
-                        } else {
-                            cur = 1;
-                        }
-                        match viewer.display_chunk(&text, cur) {
-                            Ok(_) => viewer.update(),
-                            Err(_) => {}
-                        }
-                    }
-
                     _ => { }
                 }
             },

@@ -78,6 +78,7 @@ fn display_chunk(logger: &slog::Logger, rustbox: &RustBox, text: &String,
 
 fn run(logger: slog::Logger) -> Result<()> {
     let args: Vec<String> = env::args().collect();
+    let mut cur = 1;
 
     let mut rustbox = match RustBox::init(Default::default()) {
         Ok(rustbox) => rustbox,
@@ -107,7 +108,7 @@ fn run(logger: slog::Logger) -> Result<()> {
         Ok(_) => {},
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
-    match display_chunk(&logger, &rustbox, &text, 1) {
+    match display_chunk(&logger, &rustbox, &text, cur) {
         Ok(_) => rustbox.present(),
         Err(_) => {}
     }
@@ -125,6 +126,22 @@ fn run(logger: slog::Logger) -> Result<()> {
                     Key::Char('q') => {
                         info!(logger, "Quitting application");
                         break;
+                    }
+                    Key::Down => {
+                        cur += 1;
+                        match display_chunk(&logger, &rustbox, &text, cur) {
+                            Ok(_) => rustbox.present(),
+                            Err(_) => { cur -= 1}
+                        }
+                    }
+                    Key::Up => {
+                        if cur > 1 {
+                            cur -= 1;
+                        }
+                        match display_chunk(&logger, &rustbox, &text, cur) {
+                            Ok(_) => rustbox.present(),
+                            Err(_) => {}
+                        }
                     }
                     _ => { }
                 }

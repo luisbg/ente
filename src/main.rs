@@ -50,6 +50,32 @@ fn main() {
     }
 }
 
+fn display_chunk(logger: &slog::Logger, rustbox: &RustBox, text: &String,
+                 start: usize) -> Result<()> {
+    rustbox.clear();
+    let height = rustbox.height();
+
+    if start > text.lines().count() {
+        warn!(logger, "Line {} past EOF", start);
+        return Err("End of file".into());
+    }
+
+    let mut lines = text.lines().skip(start - 1);
+    for ln in 0 .. (height - 1) {
+        if let Some(line) = lines.next() {
+            rustbox.print(1, ln, rustbox::RB_BOLD, Color::White, Color::Black,
+                          line);
+        } else {
+            info!(logger, "Displayed range {} : {} lines", start,
+                  start + ln - 1);
+            return Ok(());
+        }
+    }
+
+    info!(logger, "Displayed range {} : {} lines", start, start + height - 2);
+    Ok(())
+}
+
 fn run(logger: slog::Logger) -> Result<()> {
     let args: Vec<String> = env::args().collect();
 
@@ -75,20 +101,15 @@ fn run(logger: slog::Logger) -> Result<()> {
           .chain_err(|| "Couldn't open file")?;
     info!(logger, "Opening file: {}", filepath);
 
-    // Read the file and show as much of the beginning as possible
+    // Read the file and show the beginning
     let mut text = String::new();
     match file.read_to_string(&mut text) {
         Ok(_) => {},
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
-    let mut lines = text.lines();
-    for ln in 0 .. (height - 1) {
-        if let Some(line) = lines.next() {
-            rustbox.print(1, ln, rustbox::RB_BOLD, Color::White, Color::Black,
-                          line);
-        } else {
-            break;
-        }
+    match display_chunk(&logger, &rustbox, &text, 1) {
+        Ok(_) => rustbox.present(),
+        Err(_) => {}
     }
 
     // Add an informational status line

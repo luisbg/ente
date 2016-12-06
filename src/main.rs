@@ -68,10 +68,12 @@ fn run(logger: slog::Logger) -> Result<()> {
     // Set terminal window
     rustbox.set_output_mode(OutputMode::EightBit);
     let height = rustbox.height();
+    info!(logger, "Terminal window {} lines tall", height);
 
     // Open the file
     let mut file = File::open(filepath)
           .chain_err(|| "Couldn't open file")?;
+    info!(logger, "Opening file: {}", filepath);
 
     // Read the file and show as much of the beginning as possible
     let mut text = String::new();

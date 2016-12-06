@@ -15,7 +15,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::env;
 
-use rustbox::{Color, RustBox, OutputMode};
+use rustbox::{Color, RustBox, OutputMode, EventResult};
 use rustbox::Key;
 
 use slog::DrainExt;
@@ -25,6 +25,63 @@ mod errors {
 }
 
 use errors::*;
+
+struct Viewer {
+    rustbox: RustBox,
+    height: usize
+}
+
+impl Viewer {
+    fn new(logger: &slog::Logger) -> Viewer {
+        let mut rustbox = RustBox::init(Default::default()).unwrap();
+        let height = rustbox.height();
+        rustbox.set_output_mode(OutputMode::EightBit);
+        info!(logger, "Terminal window height: {}", height);
+
+        Viewer {
+            rustbox: rustbox,
+            height: height,
+        }
+    }
+
+    fn display_chunk(&mut self, logger: &slog::Logger, text: &String,
+                         start: usize) -> Result<()> {
+        self.rustbox.clear();
+
+        if start > text.lines().count() {
+            warn!(logger, "Line {} past EOF", start);
+            return Err("End of file".into());
+        }
+
+        let mut lines = text.lines().skip(start - 1);
+        for ln in 0 .. (self.height - 1) {
+            if let Some(line) = lines.next() {
+                self.rustbox.print(1, ln, rustbox::RB_BOLD, Color::White,
+                                   Color::Black, line);
+            } else {
+                info!(logger, "Displayed range {} : {} lines", start,
+                   start + ln - 1);
+                return Ok(());
+            }
+        }
+
+        info!(logger, "Displayed range {} : {} lines", start,
+              start + self.height - 2);
+        Ok(())
+    }
+
+    fn update(&mut self) {
+        // Add an informational status line
+        self.rustbox.print(1, self.height - 1, rustbox::RB_NORMAL, Color::Black,
+                      Color::Byte(0x04), "Press 'q' to quit.");
+
+        self.rustbox.present();
+    }
+
+    fn poll_event(&mut self) -> EventResult {
+        self.rustbox.poll_event(false)
+    }
+}
 
 fn main() {
     // Start logger
@@ -50,40 +107,11 @@ fn main() {
     }
 }
 
-fn display_chunk(logger: &slog::Logger, rustbox: &RustBox, text: &String,
-                 start: usize) -> Result<()> {
-    rustbox.clear();
-    let height = rustbox.height();
-
-    if start > text.lines().count() {
-        warn!(logger, "Line {} past EOF", start);
-        return Err("End of file".into());
-    }
-
-    let mut lines = text.lines().skip(start - 1);
-    for ln in 0 .. (height - 1) {
-        if let Some(line) = lines.next() {
-            rustbox.print(1, ln, rustbox::RB_BOLD, Color::White, Color::Black,
-                          line);
-        } else {
-            info!(logger, "Displayed range {} : {} lines", start,
-                  start + ln - 1);
-            return Ok(());
-        }
-    }
-
-    info!(logger, "Displayed range {} : {} lines", start, start + height - 2);
-    Ok(())
-}
-
 fn run(logger: slog::Logger) -> Result<()> {
     let args: Vec<String> = env::args().collect();
     let mut cur = 1;
 
-    let mut rustbox = match RustBox::init(Default::default()) {
-        Ok(rustbox) => rustbox,
-        Err(e) => bail!("{}", e),
-    };
+    let mut viewer = Viewer::new(&logger);
 
     // Check command arguments
     let filepath = match args.len() {
@@ -91,11 +119,6 @@ fn run(logger: slog::Logger) -> Result<()> {
         2 => &args[1],
         _ => bail!("You can only open one file"),
     };
-
-    // Set terminal window
-    rustbox.set_output_mode(OutputMode::EightBit);
-    let height = rustbox.height();
-    info!(logger, "Terminal window {} lines tall", height);
 
     // Open the file
     let mut file = File::open(filepath)
@@ -108,19 +131,14 @@ fn run(logger: slog::Logger) -> Result<()> {
         Ok(_) => {},
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
-    match display_chunk(&logger, &rustbox, &text, cur) {
-        Ok(_) => rustbox.present(),
+    match viewer.display_chunk(&logger, &text, cur) {
+        Ok(_) => viewer.update(),
         Err(_) => {}
     }
 
-    // Add an informational status line
-    rustbox.print(1, height - 1, rustbox::RB_NORMAL, Color::Black,
-                  Color::Byte(0x04), "Press 'q' to quit.");
-
-    // Display content in terminal window and wait for keyboard events
-    rustbox.present();
+    // Wait for keyboard events
     loop {
-        match rustbox.poll_event(false) {
+        match viewer.poll_event() {
             Ok(rustbox::Event::KeyEvent(key)) => {
                 match key {
                     Key::Char('q') => {
@@ -129,8 +147,8 @@ fn run(logger: slog::Logger) -> Result<()> {
                     }
                     Key::Down => {
                         cur += 1;
-                        match display_chunk(&logger, &rustbox, &text, cur) {
-                            Ok(_) => rustbox.present(),
+                        match viewer.display_chunk(&logger, &text, cur) {
+                            Ok(_) => viewer.update(),
                             Err(_) => { cur -= 1}
                         }
                     }
@@ -138,8 +156,8 @@ fn run(logger: slog::Logger) -> Result<()> {
                         if cur > 1 {
                             cur -= 1;
                         }
-                        match display_chunk(&logger, &rustbox, &text, cur) {
-                            Ok(_) => rustbox.present(),
+                        match viewer.display_chunk(&logger, &text, cur) {
+                            Ok(_) => viewer.update(),
                             Err(_) => {}
                         }
                     }

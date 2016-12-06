@@ -4,6 +4,7 @@
 extern crate rustbox;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate slog;
+#[macro_use] extern crate slog_scope;
 extern crate slog_term;
 extern crate time;
 extern crate slog_stream;
@@ -32,11 +33,11 @@ struct Viewer {
 }
 
 impl Viewer {
-    fn new(logger: &slog::Logger) -> Viewer {
+    fn new() -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height();
         rustbox.set_output_mode(OutputMode::EightBit);
-        info!(logger, "Terminal window height: {}", height);
+        info!("Terminal window height: {}", height);
 
         Viewer {
             rustbox: rustbox,
@@ -44,12 +45,11 @@ impl Viewer {
         }
     }
 
-    fn display_chunk(&mut self, logger: &slog::Logger, text: &String,
-                         start: usize) -> Result<()> {
+    fn display_chunk(&mut self, text: &String, start: usize) -> Result<()> {
         self.rustbox.clear();
 
         if start > text.lines().count() {
-            warn!(logger, "Line {} past EOF", start);
+            warn!("Line {} past EOF", start);
             return Err("End of file".into());
         }
 
@@ -59,14 +59,13 @@ impl Viewer {
                 self.rustbox.print(1, ln, rustbox::RB_BOLD, Color::White,
                                    Color::Black, line);
             } else {
-                info!(logger, "Displayed range {} : {} lines", start,
+                info!("Displayed range {} : {} lines", start,
                    start + ln - 1);
                 return Ok(());
             }
         }
 
-        info!(logger, "Displayed range {} : {} lines", start,
-              start + self.height - 2);
+        info!("Displayed range {} : {} lines", start, start + self.height - 2);
         Ok(())
     }
 
@@ -88,11 +87,12 @@ fn main() {
     let log_file = File::create("ente.log").expect("Couldn't open log file");
     let file_drain = slog_stream::stream(log_file, slog_json::default());
     let logger = slog::Logger::root(file_drain.fuse(), o!());
-    info!(logger, "Application started";
+    slog_scope::set_global_logger(logger);
+    info!("Application started";
           "started_at" => format!("{}", time::now().rfc3339()));
 
     // Run catching errors
-    if let Err(ref e) = run(logger) {
+    if let Err(ref e) = run() {
         println!("error: {}", e);
             for e in e.iter().skip(1) {
                 println!("caused by: {}", e);
@@ -107,11 +107,11 @@ fn main() {
     }
 }
 
-fn run(logger: slog::Logger) -> Result<()> {
+fn run() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     let mut cur = 1;
 
-    let mut viewer = Viewer::new(&logger);
+    let mut viewer = Viewer::new();
 
     // Check command arguments
     let filepath = match args.len() {
@@ -123,7 +123,7 @@ fn run(logger: slog::Logger) -> Result<()> {
     // Open the file
     let mut file = File::open(filepath)
           .chain_err(|| "Couldn't open file")?;
-    info!(logger, "Opening file: {}", filepath);
+    info!("Opening file: {}", filepath);
 
     // Read the file and show the beginning
     let mut text = String::new();
@@ -131,7 +131,7 @@ fn run(logger: slog::Logger) -> Result<()> {
         Ok(_) => {},
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
-    match viewer.display_chunk(&logger, &text, cur) {
+    match viewer.display_chunk(&text, cur) {
         Ok(_) => viewer.update(),
         Err(_) => {}
     }
@@ -142,12 +142,12 @@ fn run(logger: slog::Logger) -> Result<()> {
             Ok(rustbox::Event::KeyEvent(key)) => {
                 match key {
                     Key::Char('q') => {
-                        info!(logger, "Quitting application");
+                        info!("Quitting application");
                         break;
                     }
                     Key::Down => {
                         cur += 1;
-                        match viewer.display_chunk(&logger, &text, cur) {
+                        match viewer.display_chunk(&text, cur) {
                             Ok(_) => viewer.update(),
                             Err(_) => { cur -= 1}
                         }
@@ -156,7 +156,7 @@ fn run(logger: slog::Logger) -> Result<()> {
                         if cur > 1 {
                             cur -= 1;
                         }
-                        match viewer.display_chunk(&logger, &text, cur) {
+                        match viewer.display_chunk(&text, cur) {
                             Ok(_) => viewer.update(),
                             Err(_) => {}
                         }

@@ -29,14 +29,14 @@ use errors::*;
 
 struct Viewer {
     rustbox: RustBox,
-    height: usize,
+    height: usize,    // window height without status line
     cur: usize
 }
 
 impl Viewer {
     fn new() -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
-        let height = rustbox.height();
+        let height = rustbox.height() - 1;
         rustbox.set_output_mode(OutputMode::EightBit);
         info!("Terminal window height: {}", height);
 
@@ -59,7 +59,7 @@ impl Viewer {
         self.cur = start;
 
         let mut lines = text.lines().skip(start - 1);
-        for ln in 0 .. (self.height - 1) {
+        for ln in 0 .. (self.height) {
             if let Some(line) = lines.next() {
                 self.rustbox.print(1, ln, rustbox::RB_BOLD, Color::White,
                                    Color::Black, line);
@@ -70,13 +70,13 @@ impl Viewer {
             }
         }
 
-        info!("Displayed range {} : {} lines", start, start + self.height - 2);
+        info!("Displayed range {} : {} lines", start, start + self.height);
         Ok(())
     }
 
     fn update(&mut self) {
         // Add an informational status line
-        self.rustbox.print(1, self.height - 1, rustbox::RB_NORMAL, Color::Black,
+        self.rustbox.print(1, self.height, rustbox::RB_NORMAL, Color::Black,
                       Color::Byte(0x04), "Press 'q' to quit.");
 
         self.rustbox.present();
@@ -87,7 +87,7 @@ impl Viewer {
         match key {
             Key::Down => {
                 // Scroll by one until last line is in the bottom of the window
-                if cur < line_count - (self.height - 2) {
+                if cur <= line_count - self.height {
                     cur += 1;
                 }
                 match self.display_chunk(&text, line_count, cur) {
@@ -107,10 +107,10 @@ impl Viewer {
             }
             Key::PageDown => {
                 // Scroll a window height down
-                if cur < line_count - ((self.height - 2) * 2) {
+                if cur <= line_count - (self.height * 2) {
                     cur += self.height;
                 } else {
-                    cur = line_count - (self.height - 2);
+                    cur = line_count - self.height + 1;
                 }
                 match self.display_chunk(&text, line_count, cur) {
                     Ok(_) => self.update(),

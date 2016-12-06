@@ -161,6 +161,25 @@ fn run() -> Result<()> {
                             Err(_) => {}
                         }
                     }
+                    Key::PageDown => {
+                        cur += viewer.height;
+                        match viewer.display_chunk(&text, cur) {
+                            Ok(_) => viewer.update(),
+                            Err(_) => { cur -= viewer.height}
+                        }
+                    }
+                    Key::PageUp => {
+                        if cur > viewer.height {
+                            cur -= viewer.height;
+                        } else {
+                            cur = 1;
+                        }
+                        match viewer.display_chunk(&text, cur) {
+                            Ok(_) => viewer.update(),
+                            Err(_) => {}
+                        }
+                    }
+
                     _ => { }
                 }
             },

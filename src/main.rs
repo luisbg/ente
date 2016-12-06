@@ -47,10 +47,11 @@ impl Viewer {
         }
     }
 
-    fn display_chunk(&mut self, text: &String, start: usize) -> Result<()> {
+    fn display_chunk(&mut self, text: &String, line_count: usize,
+                     start: usize) -> Result<()> {
         self.rustbox.clear();
 
-        if start > text.lines().count() {
+        if start > line_count {
             warn!("Line {} past EOF", start);
             return Err("End of file".into());
         }
@@ -81,39 +82,49 @@ impl Viewer {
         self.rustbox.present();
     }
 
-    fn scroll(&mut self, text: &String, key: rustbox::Key) {
+    fn scroll(&mut self, text: &String, line_count: usize, key: rustbox::Key) {
         let mut cur = self.cur;
         match key {
             Key::Down => {
-                cur += 1;
-                match self.display_chunk(&text, cur) {
+                // Scroll by one until last line is in the bottom of the window
+                if cur < line_count - (self.height - 2) {
+                    cur += 1;
+                }
+                match self.display_chunk(&text, line_count, cur) {
                     Ok(_) => self.update(),
                     Err(_) => {}
                 }
             }
             Key::Up => {
+                // Scroll by one to the top of the file
                 if cur > 1 {
                     cur -= 1;
                 }
-                match self.display_chunk(&text, cur) {
+                match self.display_chunk(&text, line_count, cur) {
                     Ok(_) => self.update(),
                     Err(_) => {}
                 }
             }
             Key::PageDown => {
-                cur += self.height;
-                match self.display_chunk(&text, cur) {
+                // Scroll a window height down
+                if cur < line_count - ((self.height - 2) * 2) {
+                    cur += self.height;
+                } else {
+                    cur = line_count - (self.height - 2);
+                }
+                match self.display_chunk(&text, line_count, cur) {
                     Ok(_) => self.update(),
                     Err(_) => {}
                 }
             }
             Key::PageUp => {
+                // Scroll a window height up
                 if cur > self.height {
                     cur -= self.height;
                 } else {
                     cur = 1;
                 }
-                match self.display_chunk(&text, cur) {
+                match self.display_chunk(&text, line_count, cur) {
                     Ok(_) => self.update(),
                     Err(_) => {}
                 }
@@ -175,7 +186,9 @@ fn run() -> Result<()> {
         Ok(_) => {},
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
-    match viewer.display_chunk(&text, 1) {
+    let line_count = text.lines().count();
+
+    match viewer.display_chunk(&text, line_count, 1) {
         Ok(_) => viewer.update(),
         Err(_) => {}
     }
@@ -190,7 +203,7 @@ fn run() -> Result<()> {
                         break;
                     }
                     Key::Down | Key::Up | Key::PageDown | Key::PageUp => {
-                        viewer.scroll(&text, key);
+                        viewer.scroll(&text, line_count, key);
                     }
                     _ => { }
                 }

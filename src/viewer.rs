@@ -24,32 +24,32 @@ pub struct Viewer {
 }
 
 impl Viewer {
-    pub fn new(filename: String) -> Viewer {
+    pub fn new(text: &String, filename: String, line_count: usize) -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height() - 1;
         let width = rustbox.width();
         rustbox.set_output_mode(OutputMode::EightBit);
         info!("Terminal window height: {}", height);
 
-        Viewer {
+        let mut view = Viewer {
             rustbox: rustbox,
             height: height,
             width: width,
             filename: filename,
             cur: 1,
-        }
-    }
+        };
 
-    pub fn init(&mut self, text: &String, line_count: usize) {
-        match self.display_chunk(&text, line_count, 1) {
-            Ok(_) => self.update(),
+        match view.display_chunk(&text, line_count, 1) {
+            Ok(_) => view.update(),
             Err(_) => {
-                self.rustbox.print(1, 1, rustbox::RB_NORMAL, Color::Red,
+                view.rustbox.print(1, 1, rustbox::RB_NORMAL, Color::Red,
                                    Color::Black, "Empty file!");
-                self.cur = 0;
-                self.update()
+                view.cur = 0;
+                view.update()
             }
         }
+
+        return view;
     }
 
     pub fn display_chunk(&mut self, text: &String, line_count: usize,

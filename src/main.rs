@@ -78,8 +78,7 @@ fn run() -> Result<()> {
         None => "unknown".to_string(),
     };
 
-    let mut viewer = viewer::Viewer::new(filename);
-    viewer.init(&text, line_count);
+    let mut viewer = viewer::Viewer::new(&text, filename, line_count);
 
     // Wait for keyboard events
     loop {

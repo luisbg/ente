@@ -73,7 +73,11 @@ fn run() -> Result<()> {
     }
     let line_count = text.lines().count();
 
-    let filename = filepath.to_string();
+    let filename = match filepath.to_string().split('/').last() {
+        Some(name) => name.to_string(),
+        None => "unknown".to_string(),
+    };
+
     let mut viewer = viewer::Viewer::new(filename);
     viewer.init(&text, line_count);
 

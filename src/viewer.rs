@@ -19,11 +19,12 @@ pub struct Viewer {
     rustbox: RustBox,
     height: usize,    // window height without status line
     width: usize,
+    filename: String,
     cur: usize
 }
 
 impl Viewer {
-    pub fn new() -> Viewer {
+    pub fn new(filename: String) -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height() - 1;
         let width = rustbox.width();
@@ -34,6 +35,7 @@ impl Viewer {
             rustbox: rustbox,
             height: height,
             width: width,
+            filename: filename,
             cur: 1,
         }
     }
@@ -133,10 +135,14 @@ impl Viewer {
 
     fn update(&mut self) {
         // Add an informational status line
+        let filestatus = format!("{} ({})", self.filename, self.cur);
+
         let help: &'static str = "Press 'q' to quit";
+        self.rustbox.print(1, self.height, rustbox::RB_REVERSE, Color::White,
+                           Color::Black, filestatus.as_ref());
         self.rustbox.print(self.width - help.len(), self.height,
-                           rustbox::RB_NORMAL, Color::Black,
-                           Color::Byte(0x04), help);
+                           rustbox::RB_REVERSE, Color::White,
+                           Color::Black, help);
 
         self.rustbox.present();
     }

@@ -53,8 +53,6 @@ fn main() {
 fn run() -> Result<()> {
     let args: Vec<String> = env::args().collect();
 
-    let mut viewer = viewer::Viewer::new();
-
     // Check command arguments
     let filepath = match args.len() {
         1 => bail!("You need to specify a file to open"),
@@ -74,6 +72,9 @@ fn run() -> Result<()> {
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
     let line_count = text.lines().count();
+
+    let filename = filepath.to_string();
+    let mut viewer = viewer::Viewer::new(filename);
     viewer.init(&text, line_count);
 
     // Wait for keyboard events

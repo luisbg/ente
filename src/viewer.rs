@@ -18,6 +18,7 @@ use errors::*;
 pub struct Viewer {
     rustbox: RustBox,
     height: usize,    // window height without status line
+    width: usize,
     cur: usize
 }
 
@@ -25,12 +26,14 @@ impl Viewer {
     pub fn new() -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height() - 1;
+        let width = rustbox.width();
         rustbox.set_output_mode(OutputMode::EightBit);
         info!("Terminal window height: {}", height);
 
         Viewer {
             rustbox: rustbox,
             height: height,
+            width: width,
             cur: 1,
         }
     }
@@ -130,8 +133,10 @@ impl Viewer {
 
     fn update(&mut self) {
         // Add an informational status line
-        self.rustbox.print(1, self.height, rustbox::RB_NORMAL, Color::Black,
-                      Color::Byte(0x04), "Press 'q' to quit.");
+        let help: &'static str = "Press 'q' to quit";
+        self.rustbox.print(self.width - help.len(), self.height,
+                           rustbox::RB_NORMAL, Color::Black,
+                           Color::Byte(0x04), help);
 
         self.rustbox.present();
     }

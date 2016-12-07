@@ -38,7 +38,11 @@ impl Viewer {
     pub fn init(&mut self, text: &String, line_count: usize) {
         match self.display_chunk(&text, line_count, 1) {
             Ok(_) => self.update(),
-            Err(_) => {}
+            Err(_) => {
+                self.rustbox.print(1, 1, rustbox::RB_NORMAL, Color::Red,
+                                   Color::Black, "Empty file!");
+                self.update()
+            }
         }
     }
 
@@ -56,7 +60,7 @@ impl Viewer {
         let mut lines = text.lines().skip(start - 1);
         for ln in 0 .. (self.height) {
             if let Some(line) = lines.next() {
-                self.rustbox.print(1, ln, rustbox::RB_BOLD, Color::White,
+                self.rustbox.print(1, ln, rustbox::RB_NORMAL, Color::White,
                                    Color::Black, line);
             } else {
                 info!("Displayed range {} : {} lines", start,

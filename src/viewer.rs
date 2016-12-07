@@ -46,6 +46,7 @@ impl Viewer {
             Err(_) => {
                 self.rustbox.print(1, 1, rustbox::RB_NORMAL, Color::Red,
                                    Color::Black, "Empty file!");
+                self.cur = 0;
                 self.update()
             }
         }
@@ -79,6 +80,11 @@ impl Viewer {
     }
 
     pub fn scroll(&mut self, text: &String, line_count: usize, key: rustbox::Key) {
+        if line_count < self.height {
+            warn!("Can't scroll files smaller than the window");
+            return;
+        }
+
         let mut cur = self.cur;
         match key {
             Key::Down => {

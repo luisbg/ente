@@ -74,11 +74,7 @@ fn run() -> Result<()> {
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
     let line_count = text.lines().count();
-
-    match viewer.display_chunk(&text, line_count, 1) {
-        Ok(_) => viewer.update(),
-        Err(_) => {}
-    }
+    viewer.init(&text, line_count);
 
     // Wait for keyboard events
     loop {

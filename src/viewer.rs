@@ -35,6 +35,13 @@ impl Viewer {
         }
     }
 
+    pub fn init(&mut self, text: &String, line_count: usize) {
+        match self.display_chunk(&text, line_count, 1) {
+            Ok(_) => self.update(),
+            Err(_) => {}
+        }
+    }
+
     pub fn display_chunk(&mut self, text: &String, line_count: usize,
                      start: usize) -> Result<()> {
         self.rustbox.clear();
@@ -60,14 +67,6 @@ impl Viewer {
 
         info!("Displayed range {} : {} lines", start, start + self.height);
         Ok(())
-    }
-
-    pub fn update(&mut self) {
-        // Add an informational status line
-        self.rustbox.print(1, self.height, rustbox::RB_NORMAL, Color::Black,
-                      Color::Byte(0x04), "Press 'q' to quit.");
-
-        self.rustbox.present();
     }
 
     pub fn scroll(&mut self, text: &String, line_count: usize, key: rustbox::Key) {
@@ -123,5 +122,13 @@ impl Viewer {
 
     pub fn poll_event(&mut self) -> EventResult {
         self.rustbox.poll_event(false)
+    }
+
+    fn update(&mut self) {
+        // Add an informational status line
+        self.rustbox.print(1, self.height, rustbox::RB_NORMAL, Color::Black,
+                      Color::Byte(0x04), "Press 'q' to quit.");
+
+        self.rustbox.present();
     }
 }

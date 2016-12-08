@@ -90,7 +90,9 @@ fn run() -> Result<()> {
                         info!("Quitting application");
                         break;
                     }
-                    rustbox::Key::Down | rustbox::Key::Up |
+                    rustbox::Key::Down | rustbox::Key::Up => {
+                        viewer.move_cursor(&text, line_count, key);
+                    }
                     rustbox::Key::PageDown | rustbox::Key::PageUp => {
                         viewer.scroll(&text, line_count, key);
                     }

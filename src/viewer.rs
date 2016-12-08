@@ -23,6 +23,7 @@ pub struct Viewer {
     disp_line: usize, // first displayed line
     cur_line: usize,
     cur_col: usize,
+    cur_line_len: usize,
 }
 
 impl Viewer {
@@ -43,8 +44,10 @@ impl Viewer {
             disp_line: 1,
             cur_line: 1,
             cur_col: 1,
+            cur_line_len: 1,
         };
 
+        view.set_current_line(&text, 1);
         match view.display_chunk(&text, line_count, 1) {
             Ok(_) => view.update(),
             Err(_) => {
@@ -140,9 +143,10 @@ impl Viewer {
                 match self.display_chunk(&text, line_count, disp_line) {
                     Ok(_) => {
                         if self.cur_line + self.height < line_count {
-                            self.cur_line += self.height;
+                            let tmp = self.cur_line + self.height;
+                            self.set_current_line(text, tmp);
                         } else {
-                            self.cur_line = line_count;
+                            self.set_current_line(text, line_count);
                         }
 
                         self.update();
@@ -160,9 +164,10 @@ impl Viewer {
                 match self.display_chunk(&text, line_count, disp_line) {
                     Ok(_) => {
                         if self.cur_line > self.height {
-                            self.cur_line -= self.height;
+                            let tmp = self.cur_line - self.height;
+                            self.set_current_line(text, tmp);
                         } else {
-                            self.cur_line = 1;
+                            self.set_current_line(text, 1);
                         }
 
                         self.update();
@@ -180,8 +185,10 @@ impl Viewer {
                        key: rustbox::Key) {
         match key {
             Key::Down => {
+
                 if self.cur_line < line_count {
-                    self.cur_line += 1;
+                    let tmp = self.cur_line + 1;
+                    self.set_current_line(text, tmp);
                     info!("Current line is {}", self.cur_line);
 
                     if self.cur_line + 1 > (self.disp_line + self.height) {
@@ -195,7 +202,8 @@ impl Viewer {
             }
             Key::Up => {
                 if self.cur_line > 1 {
-                    self.cur_line -= 1;
+                    let tmp = self.cur_line - 1;
+                    self.set_current_line(text, tmp);
                     info!("Current line is {}", self.cur_line);
 
                     if self.cur_line < self.disp_line {
@@ -207,6 +215,20 @@ impl Viewer {
                     info!("Can't go up, already at the top of file");
                 }
             }
+            Key::Left => {
+                if self.cur_col > 1 {
+                    self.cur_col -= 1;
+                    self.update();
+                } else {
+                    info!("Can't go left, already at beginning of line");
+                }
+            }
+            Key::Right => {
+                if self.cur_col < self.cur_line_len {
+                    self.cur_col += 1;
+                    self.update();
+                }
+            }
             _ => {}
         }
     }
@@ -215,13 +237,38 @@ impl Viewer {
         self.rustbox.poll_event(false)
     }
 
+    fn set_current_line(&mut self, text: &String, cur_line: usize) {
+        self.cur_line = cur_line;
+
+        let line = match text.lines().nth(self.cur_line - 1) {
+            Some(line) => line,
+            None => return
+        };
+        self.cur_line_len = line.len();
+
+        if self.cur_line_len < self.cur_col {  // previous line was longer
+                self.cur_col = self.cur_line_len;
+        } else {
+            if self.cur_col == 0 {  // previous line was empty
+                self.cur_col = 1;   // jump back to first column
+            }
+        }
+    }
+
     fn update(&mut self) {
         // Add an informational status line
         let filestatus = format!("{} ({},{})",
                                  self.filename,
                                  self.cur_line,
                                  self.cur_col);
-        self.rustbox.set_cursor(self.cur_col as isize,
+
+        let cur_col: isize;
+        if self.cur_col == 0 {
+            cur_col = 0;
+        } else {
+            cur_col = (self.cur_col - 1) as isize;
+        }
+        self.rustbox.set_cursor(cur_col,
                                 (self.cur_line - self.disp_line) as isize);
 
         let help: &'static str = "Press 'q' to quit";

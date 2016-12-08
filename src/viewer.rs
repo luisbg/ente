@@ -113,11 +113,6 @@ impl Viewer {
                   text: &String,
                   line_count: usize,
                   key: rustbox::Key) {
-        if line_count < self.height {
-            warn!("Can't scroll files smaller than the window");
-            return;
-        }
-
         let mut disp_line = self.disp_line;
         match key {
             Key::Down => {
@@ -141,6 +136,11 @@ impl Viewer {
                 }
             }
             Key::PageDown => {
+                if line_count < self.height {
+                    warn!("Can't scroll files smaller than the window");
+                    return;
+                }
+
                 // Scroll a window height down
                 if disp_line <= line_count - (self.height * 2) {
                     disp_line += self.height;

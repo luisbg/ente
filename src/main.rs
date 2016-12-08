@@ -2,15 +2,18 @@
 #![recursion_limit = "1024"]
 
 extern crate rustbox;
-#[macro_use] extern crate error_chain;
-#[macro_use] extern crate slog;
-#[macro_use] extern crate slog_scope;
+#[macro_use]
+extern crate error_chain;
+#[macro_use]
+extern crate slog;
+#[macro_use]
+extern crate slog_scope;
 extern crate slog_term;
 extern crate time;
 extern crate slog_stream;
 extern crate slog_json;
 
-use std::error::{Error as StdError};
+use std::error::Error as StdError;
 use std::fs::File;
 use std::io::prelude::*;
 use std::env;
@@ -18,7 +21,7 @@ use std::env;
 use slog::DrainExt;
 
 mod errors {
-    error_chain! { }
+    error_chain!{}
 }
 
 use errors::*;
@@ -37,13 +40,12 @@ fn main() {
     // Run catching errors
     if let Err(ref e) = run() {
         println!("error: {}", e);
-            for e in e.iter().skip(1) {
-                println!("caused by: {}", e);
-            }
+        for e in e.iter().skip(1) {
+            println!("caused by: {}", e);
+        }
 
         if let Some(backtrace) = e.backtrace() {
-            println!("backtrace: {:?}",
-                     backtrace);
+            println!("backtrace: {:?}", backtrace);
         }
 
         ::std::process::exit(1);
@@ -61,14 +63,13 @@ fn run() -> Result<()> {
     };
 
     // Open the file
-    let mut file = File::open(filepath)
-          .chain_err(|| "Couldn't open file")?;
+    let mut file = File::open(filepath).chain_err(|| "Couldn't open file")?;
     info!("Opening file: {}", filepath);
 
     // Read the file and show the beginning
     let mut text = String::new();
     match file.read_to_string(&mut text) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
     let line_count = text.lines().count();
@@ -89,17 +90,15 @@ fn run() -> Result<()> {
                         info!("Quitting application");
                         break;
                     }
-                    rustbox::Key::Down |
-                    rustbox::Key::Up |
-                    rustbox::Key::PageDown |
-                    rustbox::Key::PageUp => {
+                    rustbox::Key::Down | rustbox::Key::Up |
+                    rustbox::Key::PageDown | rustbox::Key::PageUp => {
                         viewer.scroll(&text, line_count, key);
                     }
-                    _ => { }
+                    _ => {}
                 }
-            },
+            }
             Err(why) => bail!("Rustbox.poll_event Error {}", why.description()),
-            _ => { }
+            _ => {}
         }
     }
 

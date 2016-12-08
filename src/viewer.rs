@@ -10,17 +10,17 @@ use rustbox::{Color, RustBox, OutputMode, EventResult};
 use rustbox::Key;
 
 mod errors {
-    error_chain! { }
+    error_chain!{}
 }
 
 use errors::*;
 
 pub struct Viewer {
     rustbox: RustBox,
-    height: usize,    // window height without status line
+    height: usize, // window height without status line
     width: usize,
     filename: String,
-    cur: usize
+    cur: usize,
 }
 
 impl Viewer {
@@ -42,8 +42,12 @@ impl Viewer {
         match view.display_chunk(&text, line_count, 1) {
             Ok(_) => view.update(),
             Err(_) => {
-                view.rustbox.print(1, 1, rustbox::RB_NORMAL, Color::Red,
-                                   Color::Black, "Empty file!");
+                view.rustbox.print(1,
+                                   1,
+                                   rustbox::RB_NORMAL,
+                                   Color::Red,
+                                   Color::Black,
+                                   "Empty file!");
                 view.cur = 0;
                 view.update()
             }
@@ -52,8 +56,11 @@ impl Viewer {
         return view;
     }
 
-    pub fn display_chunk(&mut self, text: &String, line_count: usize,
-                     start: usize) -> Result<()> {
+    pub fn display_chunk(&mut self,
+                         text: &String,
+                         line_count: usize,
+                         start: usize)
+                         -> Result<()> {
         self.rustbox.clear();
 
         if start > line_count {
@@ -64,22 +71,32 @@ impl Viewer {
         self.cur = start;
 
         let mut lines = text.lines().skip(start - 1);
-        for ln in 0 .. (self.height) {
+        for ln in 0..(self.height) {
             if let Some(line) = lines.next() {
-                self.rustbox.print(1, ln, rustbox::RB_NORMAL, Color::White,
-                                   Color::Black, line);
+                self.rustbox.print(1,
+                                   ln,
+                                   rustbox::RB_NORMAL,
+                                   Color::White,
+                                   Color::Black,
+                                   line);
             } else {
-                info!("Displayed range {} : {} lines", start,
-                   start + ln - 1);
+                info!("Displayed range {} : {} lines",
+                      start,
+                      start + ln - 1);
                 return Ok(());
             }
         }
 
-        info!("Displayed range {} : {} lines", start, start + self.height);
+        info!("Displayed range {} : {} lines",
+              start,
+              start + self.height);
         Ok(())
     }
 
-    pub fn scroll(&mut self, text: &String, line_count: usize, key: rustbox::Key) {
+    pub fn scroll(&mut self,
+                  text: &String,
+                  line_count: usize,
+                  key: rustbox::Key) {
         if line_count < self.height {
             warn!("Can't scroll files smaller than the window");
             return;
@@ -144,11 +161,18 @@ impl Viewer {
         let filestatus = format!("{} ({})", self.filename, self.cur);
 
         let help: &'static str = "Press 'q' to quit";
-        self.rustbox.print(1, self.height, rustbox::RB_REVERSE, Color::White,
-                           Color::Black, filestatus.as_ref());
-        self.rustbox.print(self.width - help.len(), self.height,
-                           rustbox::RB_REVERSE, Color::White,
-                           Color::Black, help);
+        self.rustbox.print(1,
+                           self.height,
+                           rustbox::RB_REVERSE,
+                           Color::White,
+                           Color::Black,
+                           filestatus.as_ref());
+        self.rustbox.print(self.width - help.len(),
+                           self.height,
+                           rustbox::RB_REVERSE,
+                           Color::White,
+                           Color::Black,
+                           help);
 
         self.rustbox.present();
     }

@@ -1,0 +1,4 @@
+fn_call_width = 50
+max_width = 80
+wrap_comments = true
+verbose = true

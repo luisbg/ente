@@ -15,16 +15,20 @@ mod errors {
 
 use errors::*;
 
+pub struct Cursor {
+    line: usize,
+    col: usize,
+}
+
 pub struct Viewer {
     rustbox: RustBox,
     height: usize, // window height without status line
     width: usize,
     filename: String,
     disp_line: usize, // first displayed line
-    cur_line: usize,
-    cur_col: usize,
-    saved_cur_col: usize,
+    focus_col: usize,
     cur_line_len: usize,
+    cursor: Cursor,
 }
 
 impl Viewer {
@@ -37,16 +41,17 @@ impl Viewer {
 
         rustbox.set_cursor(0, 0);
 
+        let cursor = Cursor { line: 1, col: 1 };
+
         let mut view = Viewer {
             rustbox: rustbox,
             height: height,
             width: width,
             filename: filename,
             disp_line: 1,
-            cur_line: 1,
-            cur_col: 1,
-            saved_cur_col: 1,
+            focus_col: 1,
             cur_line_len: 1,
+            cursor: cursor,
         };
 
         view.set_current_line(&text, 1);
@@ -144,8 +149,8 @@ impl Viewer {
                 }
                 match self.display_chunk(&text, line_count, disp_line) {
                     Ok(_) => {
-                        if self.cur_line + self.height < line_count {
-                            let tmp = self.cur_line + self.height;
+                        if self.cursor.line + self.height < line_count {
+                            let tmp = self.cursor.line + self.height;
                             self.set_current_line(text, tmp);
                         } else {
                             self.set_current_line(text, line_count);
@@ -165,8 +170,8 @@ impl Viewer {
                 }
                 match self.display_chunk(&text, line_count, disp_line) {
                     Ok(_) => {
-                        if self.cur_line > self.height {
-                            let tmp = self.cur_line - self.height;
+                        if self.cursor.line > self.height {
+                            let tmp = self.cursor.line - self.height;
                             self.set_current_line(text, tmp);
                         } else {
                             self.set_current_line(text, 1);
@@ -187,13 +192,12 @@ impl Viewer {
                        key: rustbox::Key) {
         match key {
             Key::Down => {
-
-                if self.cur_line < line_count {
-                    let tmp = self.cur_line + 1;
+                if self.cursor.line < line_count {
+                    let tmp = self.cursor.line + 1;
                     self.set_current_line(text, tmp);
-                    info!("Current line is {}", self.cur_line);
+                    info!("Current line is {}", self.cursor.line);
 
-                    if self.cur_line + 1 > (self.disp_line + self.height) {
+                    if self.cursor.line + 1 > (self.disp_line + self.height) {
                         self.scroll(text, line_count, key);
                     }
 
@@ -203,12 +207,12 @@ impl Viewer {
                 }
             }
             Key::Up => {
-                if self.cur_line > 1 {
-                    let tmp = self.cur_line - 1;
+                if self.cursor.line > 1 {
+                    let tmp = self.cursor.line - 1;
                     self.set_current_line(text, tmp);
-                    info!("Current line is {}", self.cur_line);
+                    info!("Current line is {}", self.cursor.line);
 
-                    if self.cur_line < self.disp_line {
+                    if self.cursor.line < self.disp_line {
                         self.scroll(text, line_count, key);
                     }
 
@@ -218,18 +222,18 @@ impl Viewer {
                 }
             }
             Key::Left => {
-                if self.saved_cur_col > 1 {
-                    self.saved_cur_col -= 1;
-                    self.cur_col -= 1;
+                if self.focus_col > 1 {
+                    self.focus_col -= 1;
+                    self.cursor.col -= 1;
                     self.update();
                 } else {
                     info!("Can't go left, already at beginning of line");
                 }
             }
             Key::Right => {
-                if self.saved_cur_col < self.cur_line_len {
-                    self.saved_cur_col += 1;
-                    self.cur_col += 1;
+                if self.focus_col < self.cur_line_len {
+                    self.focus_col += 1;
+                    self.cursor.col += 1;
                     self.update();
                 }
             }
@@ -241,22 +245,24 @@ impl Viewer {
         self.rustbox.poll_event(false)
     }
 
-    fn set_current_line(&mut self, text: &String, cur_line: usize) {
-        self.cur_line = cur_line;
+    fn set_current_line(&mut self, text: &String, line_num: usize) {
+        self.cursor.line = line_num;
 
-        let line = match text.lines().nth(self.cur_line - 1) {
+        let line = match text.lines().nth(self.cursor.line - 1) {
             Some(line) => line,
-            None => return
+            None => return,
         };
         self.cur_line_len = line.len();
 
-        if self.cur_line_len < self.saved_cur_col {  // previous line was longer
-                self.cur_col = self.cur_line_len;
+        if self.cur_line_len < self.focus_col {
+            // previous line was longer
+            self.cursor.col = self.cur_line_len;
         } else {
-            self.cur_col = self.saved_cur_col;
+            self.cursor.col = self.focus_col;
 
-            if self.cur_col == 0 {  // previous line was empty
-                self.cur_col = 1;   // jump back to first column
+            if self.cursor.col == 0 {
+                // previous line was empty
+                self.cursor.col = 1;   // jump back to first column
             }
         }
     }
@@ -265,17 +271,17 @@ impl Viewer {
         // Add an informational status line
         let filestatus = format!("{} ({},{})",
                                  self.filename,
-                                 self.cur_line,
-                                 self.cur_col);
+                                 self.cursor.line,
+                                 self.cursor.col);
 
         let cur_col: isize;
-        if self.cur_col == 0 {
+        if self.cursor.col == 0 {
             cur_col = 0;
         } else {
-            cur_col = (self.cur_col - 1) as isize;
+            cur_col = (self.cursor.col - 1) as isize;
         }
         self.rustbox.set_cursor(cur_col,
-                                (self.cur_line - self.disp_line) as isize);
+                                (self.cursor.line - self.disp_line) as isize);
 
         let help: &'static str = "Press 'q' to quit";
         self.rustbox.print(0,

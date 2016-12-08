@@ -23,6 +23,7 @@ pub struct Viewer {
     disp_line: usize, // first displayed line
     cur_line: usize,
     cur_col: usize,
+    saved_cur_col: usize,
     cur_line_len: usize,
 }
 
@@ -44,6 +45,7 @@ impl Viewer {
             disp_line: 1,
             cur_line: 1,
             cur_col: 1,
+            saved_cur_col: 1,
             cur_line_len: 1,
         };
 
@@ -216,7 +218,8 @@ impl Viewer {
                 }
             }
             Key::Left => {
-                if self.cur_col > 1 {
+                if self.saved_cur_col > 1 {
+                    self.saved_cur_col -= 1;
                     self.cur_col -= 1;
                     self.update();
                 } else {
@@ -224,7 +227,8 @@ impl Viewer {
                 }
             }
             Key::Right => {
-                if self.cur_col < self.cur_line_len {
+                if self.saved_cur_col < self.cur_line_len {
+                    self.saved_cur_col += 1;
                     self.cur_col += 1;
                     self.update();
                 }
@@ -246,9 +250,11 @@ impl Viewer {
         };
         self.cur_line_len = line.len();
 
-        if self.cur_line_len < self.cur_col {  // previous line was longer
+        if self.cur_line_len < self.saved_cur_col {  // previous line was longer
                 self.cur_col = self.cur_line_len;
         } else {
+            self.cur_col = self.saved_cur_col;
+
             if self.cur_col == 0 {  // previous line was empty
                 self.cur_col = 1;   // jump back to first column
             }

@@ -22,6 +22,7 @@ pub struct Cursor {
 
 pub struct Viewer {
     rustbox: RustBox,
+    text: String,
     height: usize, // window height without status line
     width: usize,
     filename: String,
@@ -43,11 +44,13 @@ impl Viewer {
 
         rustbox.set_cursor(0, 0);
 
+        let text_copy = text.clone();
         let cursor = Cursor { line: 1, col: 1 };
         let line_count = text.lines().count();
 
         let mut view = Viewer {
             rustbox: rustbox,
+            text: text_copy,
             height: height,
             width: width,
             filename: filename,
@@ -59,8 +62,8 @@ impl Viewer {
             cursor: cursor,
         };
 
-        view.set_current_line(&text, 1);
-        match view.display_chunk(&text, 1, 1) {
+        view.set_current_line(1);
+        match view.display_chunk(1, 1) {
             Ok(_) => view.update(),
             Err(_) => {
                 view.rustbox.print(0,
@@ -78,7 +81,6 @@ impl Viewer {
     }
 
     pub fn display_chunk(&mut self,
-                         text: &String,
                          start_line: usize,
                          start_col: usize)
                          -> Result<()> {
@@ -92,7 +94,7 @@ impl Viewer {
         self.disp_line = start_line;
         self.disp_col = start_col;
 
-        let mut lines = text.lines().skip(start_line - 1);
+        let mut lines = self.text.lines().skip(start_line - 1);
         for ln in 0..(self.height) {
             if let Some(line) = lines.next() {
                 if line.len() >= start_col {
@@ -124,7 +126,7 @@ impl Viewer {
         Ok(())
     }
 
-    pub fn scroll(&mut self, text: &String, key: rustbox::Key) {
+    pub fn scroll(&mut self, key: rustbox::Key) {
         let mut disp_line = self.disp_line;
         let disp_col = self.disp_col;
 
@@ -134,7 +136,7 @@ impl Viewer {
                 if disp_line <= self.line_count - self.height {
                     disp_line += 1;
                 }
-                match self.display_chunk(&text, disp_line, disp_col) {
+                match self.display_chunk(disp_line, disp_col) {
                     Ok(_) => {}
                     Err(_) => {}
                 }
@@ -144,7 +146,7 @@ impl Viewer {
                 if disp_line > 1 {
                     disp_line -= 1;
                 }
-                match self.display_chunk(&text, disp_line, disp_col) {
+                match self.display_chunk(disp_line, disp_col) {
                     Ok(_) => {}
                     Err(_) => {}
                 }
@@ -163,7 +165,7 @@ impl Viewer {
                     disp_line = self.line_count - self.height + 1;
                 }
 
-                match self.display_chunk(&text, disp_line, disp_col) {
+                match self.display_chunk(disp_line, disp_col) {
                     Ok(_) => {}
                     Err(_) => {}
                 }
@@ -175,7 +177,7 @@ impl Viewer {
                 } else {
                     disp_line = 1;
                 }
-                match self.display_chunk(&text, disp_line, disp_col) {
+                match self.display_chunk(disp_line, disp_col) {
                     Ok(_) => {}
                     Err(_) => {}
                 }
@@ -183,7 +185,7 @@ impl Viewer {
             Key::Left => {
                 let disp_col = self.disp_col - 1;
                 let disp_line = self.disp_line;
-                match self.display_chunk(&text, disp_line, disp_col) {
+                match self.display_chunk(disp_line, disp_col) {
                     Ok(_) => {}
                     Err(_) => {}
                 }
@@ -191,7 +193,7 @@ impl Viewer {
             Key::Right => {
                 let disp_col = self.disp_col + 1;
                 let disp_line = self.disp_line;
-                match self.display_chunk(&text, disp_line, disp_col) {
+                match self.display_chunk(disp_line, disp_col) {
                     Ok(_) => {}
                     Err(_) => {}
                 }
@@ -200,16 +202,16 @@ impl Viewer {
         }
     }
 
-    pub fn move_cursor(&mut self, text: &String, key: rustbox::Key) {
+    pub fn move_cursor(&mut self, key: rustbox::Key) {
         match key {
             Key::Down => {
                 if self.cursor.line < self.line_count {
                     let tmp = self.cursor.line + 1;
-                    self.set_current_line(text, tmp);
+                    self.set_current_line(tmp);
                     info!("Current line is {}", self.cursor.line);
 
                     if self.cursor.line + 1 > (self.disp_line + self.height) {
-                        self.scroll(text, key);
+                        self.scroll(key);
                     }
                 } else {
                     info!("Can't go down, already at the bottom of file");
@@ -219,11 +221,11 @@ impl Viewer {
             Key::Up => {
                 if self.cursor.line > 1 {
                     let tmp = self.cursor.line - 1;
-                    self.set_current_line(text, tmp);
+                    self.set_current_line(tmp);
                     info!("Current line is {}", self.cursor.line);
 
                     if self.cursor.line < self.disp_line {
-                        self.scroll(text, key);
+                        self.scroll(key);
                     }
                 } else {
                     info!("Can't go up, already at the top of file");
@@ -236,7 +238,7 @@ impl Viewer {
                     self.focus_col = self.cursor.col;
 
                     if self.cursor.col < self.disp_col {
-                        self.scroll(text, key);
+                        self.scroll(key);
                     }
                 } else {
                     info!("Can't go left, already at beginning of the line");
@@ -249,7 +251,7 @@ impl Viewer {
                     self.focus_col = self.cursor.col;
 
                     if self.focus_col > self.disp_col + self.width - 1 {
-                        self.scroll(text, key);
+                        self.scroll(key);
                     }
                 } else {
                     info!("Can't go right, already at end of the line");
@@ -259,23 +261,23 @@ impl Viewer {
             Key::PageDown => {
                 if self.cursor.line + self.height < self.line_count {
                     let tmp = self.cursor.line + self.height;
-                    self.set_current_line(text, tmp);
+                    self.set_current_line(tmp);
                 } else {
                     let line_count = self.line_count;
-                    self.set_current_line(text, line_count);
+                    self.set_current_line(line_count);
                 }
 
-                self.scroll(text, key);
+                self.scroll(key);
             }
             Key::PageUp => {
                 if self.cursor.line > self.height {
                     let tmp = self.cursor.line - self.height;
-                    self.set_current_line(text, tmp);
+                    self.set_current_line(tmp);
                 } else {
-                    self.set_current_line(text, 1);
+                    self.set_current_line(1);
                 }
 
-                self.scroll(text, key);
+                self.scroll(key);
             }
             Key::Home => {
                 if self.cur_line_len > 0 {
@@ -308,7 +310,7 @@ impl Viewer {
                     // Cursor before display, scroll left
                     let disp_col = tmp_cur_col;
                     let disp_line = self.disp_line;
-                    match self.display_chunk(&text, disp_line, disp_col) {
+                    match self.display_chunk(disp_line, disp_col) {
                         Ok(_) => {}
                         Err(_) => {}
                     }
@@ -318,7 +320,7 @@ impl Viewer {
                     // Cursor past display, scroll right
                     let disp_col = self.cursor.col - self.width;
                     let disp_line = self.disp_line;
-                    match self.display_chunk(&text, disp_line, disp_col) {
+                    match self.display_chunk(disp_line, disp_col) {
                         Ok(_) => {}
                         Err(_) => {}
                     }
@@ -331,7 +333,7 @@ impl Viewer {
         self.update();
     }
 
-    pub fn poll_event(&mut self, text: &String) -> Result<()> {
+    pub fn poll_event(&mut self) -> Result<()> {
         loop {
             match self.rustbox.poll_event(false) {
                 Ok(rustbox::Event::KeyEvent(key)) => {
@@ -344,7 +346,7 @@ impl Viewer {
                         rustbox::Key::Left | rustbox::Key::Right |
                         rustbox::Key::PageDown | rustbox::Key::PageUp |
                         rustbox::Key::Home | rustbox::Key::End => {
-                            self.move_cursor(&text, key);
+                            self.move_cursor(key);
                         }
                         _ => {}
                     }
@@ -359,10 +361,10 @@ impl Viewer {
         }
     }
 
-    fn set_current_line(&mut self, text: &String, line_num: usize) {
+    fn set_current_line(&mut self, line_num: usize) {
         self.cursor.line = line_num;
 
-        let line = match text.lines().nth(self.cursor.line - 1) {
+        let line = match self.text.lines().nth(self.cursor.line - 1) {
             Some(line) => line,
             None => return,
         };

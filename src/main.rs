@@ -80,7 +80,7 @@ fn run() -> Result<()> {
     let mut viewer = viewer::Viewer::new(&text, filename);
 
     // Wait for keyboard events
-    match viewer.poll_event(&text) {
+    match viewer.poll_event() {
         Ok(_) => Ok(()),
         Err(error) => bail!(error),
     }

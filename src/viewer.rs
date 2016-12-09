@@ -159,7 +159,8 @@ impl Viewer {
                 }
 
                 // Scroll a window height down
-                if disp_line <= line_count - (self.height * 2) {
+                if disp_line <= line_count - self.height &&
+                   disp_line + self.height <= line_count - self.height {
                     disp_line += self.height;
                 } else {
                     disp_line = line_count - self.height + 1;

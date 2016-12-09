@@ -66,23 +66,21 @@ fn run() -> Result<()> {
     let mut file = File::open(filepath).chain_err(|| "Couldn't open file")?;
     info!("Opening file: {}", filepath);
 
-    // Read the file and show the beginning
+    // Read the file and start a Viewer with it
     let mut text = String::new();
     match file.read_to_string(&mut text) {
         Ok(_) => {}
         Err(why) => bail!("couldn't read {}: ", why.description()),
     }
-    let line_count = text.lines().count();
-
     let filename = match filepath.to_string().split('/').last() {
         Some(name) => name.to_string(),
         None => "unknown".to_string(),
     };
 
-    let mut viewer = viewer::Viewer::new(&text, filename, line_count);
+    let mut viewer = viewer::Viewer::new(&text, filename);
 
     // Wait for keyboard events
-    match viewer.poll_event(&text, line_count) {
+    match viewer.poll_event(&text) {
         Ok(_) => Ok(()),
         Err(error) => bail!(error),
     }

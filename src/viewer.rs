@@ -286,6 +286,22 @@ impl Viewer {
 
                 self.scroll(text, line_count, key);
             }
+            Key::Home => {
+                if self.cur_line_len > 0 {
+                    self.cursor.col = 1;
+                    self.focus_col = 1;
+                } else {
+                    info!("Can't move to the beginning of an empty line");
+                }
+            }
+            Key::End => {
+                if self.cur_line_len > 0 {
+                    self.cursor.col = self.cur_line_len;
+                    self.focus_col = self.cur_line_len;
+                } else {
+                    info!("Can't move to the end of an empty line");
+                }
+            }
             _ => {}
         }
 
@@ -297,7 +313,6 @@ impl Viewer {
                 } else {
                     tmp_cur_col = self.cursor.col;
                 }
-                info!("c d {} {}", tmp_cur_col, self.disp_col);
                 if tmp_cur_col < self.disp_col {
                     // Cursor before display, scroll left
                     let disp_col = tmp_cur_col;
@@ -341,7 +356,8 @@ impl Viewer {
                         }
                         rustbox::Key::Down | rustbox::Key::Up |
                         rustbox::Key::Left | rustbox::Key::Right |
-                        rustbox::Key::PageDown | rustbox::Key::PageUp => {
+                        rustbox::Key::PageDown | rustbox::Key::PageUp |
+                        rustbox::Key::Home | rustbox::Key::End => {
                             self.move_cursor(&text, line_count, key);
                         }
                         _ => {}

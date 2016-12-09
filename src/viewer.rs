@@ -285,6 +285,42 @@ impl Viewer {
             }
             _ => {}
         }
+
+        match key {
+            Key::Down | Key::Up => {
+                let tmp_cur_col: usize;
+                if self.cursor.col == 0 {
+                    tmp_cur_col = 1;
+                } else {
+                    tmp_cur_col = self.cursor.col;
+                }
+                info!("c d {} {}", tmp_cur_col, self.disp_col);
+                if tmp_cur_col < self.disp_col {
+                    // Cursor before display, scroll left
+                    let disp_col = tmp_cur_col;
+                    let disp_line = self.disp_line;
+                    match self.display_chunk(&text, line_count, disp_line,
+                                             disp_col) {
+                        Ok(_) => {},
+                        Err(_) => {}
+                    }
+                }
+
+                if self.cursor.col > self.disp_col + self.width {
+                    // Cursor past display, scroll right
+                    let disp_col = self.cursor.col - self.width;
+                    let disp_line = self.disp_line;
+                    match self.display_chunk(&text, line_count, disp_line,
+                                            disp_col) {
+                        Ok(_) => {},
+                        Err(_) => {}
+                    }
+                }
+
+            }
+            _ => {}
+        }
+
         self.update();
     }
 

@@ -26,6 +26,7 @@ pub struct Viewer {
     width: usize,
     filename: String,
     disp_line: usize, // first displayed line
+    disp_col: usize, // first displayed col
     focus_col: usize,
     cur_line_len: usize,
     cursor: Cursor,
@@ -49,13 +50,14 @@ impl Viewer {
             width: width,
             filename: filename,
             disp_line: 1,
+            disp_col: 1,
             focus_col: 1,
             cur_line_len: 1,
             cursor: cursor,
         };
 
         view.set_current_line(&text, 1);
-        match view.display_chunk(&text, line_count, 1) {
+        match view.display_chunk(&text, line_count, 1, 1) {
             Ok(_) => view.update(),
             Err(_) => {
                 view.rustbox.print(0,
@@ -75,37 +77,48 @@ impl Viewer {
     pub fn display_chunk(&mut self,
                          text: &String,
                          line_count: usize,
-                         start: usize)
+                         start_line: usize,
+                         start_col: usize)
                          -> Result<()> {
         self.rustbox.clear();
 
-        if start > line_count {
-            warn!("Line {} past EOF", start);
+        if start_line > line_count {
+            warn!("Line {} past EOF", start_line);
             return Err("End of file".into());
         }
 
-        self.disp_line = start;
+        self.disp_line = start_line;
+        self.disp_col = start_col;
 
-        let mut lines = text.lines().skip(start - 1);
+        let mut lines = text.lines().skip(start_line - 1);
         for ln in 0..(self.height) {
             if let Some(line) = lines.next() {
-                self.rustbox.print(0,
-                                   ln,
-                                   rustbox::RB_NORMAL,
-                                   Color::White,
-                                   Color::Black,
-                                   line);
+                if line.len() >= start_col {
+                    self.rustbox.print(0,
+                                       ln,
+                                       rustbox::RB_NORMAL,
+                                       Color::White,
+                                       Color::Black,
+                                       &line[start_col - 1..]);
+                } else {
+                    self.rustbox.print(0,
+                                       ln,
+                                       rustbox::RB_NORMAL,
+                                       Color::White,
+                                       Color::Black,
+                                       "");
+                }
             } else {
                 info!("Displayed range {} : {} lines",
-                      start,
-                      start + ln - 1);
+                      start_line,
+                      start_line + ln - 1);
                 return Ok(());
             }
         }
 
         info!("Displayed range {} : {} lines",
-              start,
-              start + self.height);
+              start_line,
+              start_line + self.height);
         Ok(())
     }
 
@@ -114,13 +127,16 @@ impl Viewer {
                   line_count: usize,
                   key: rustbox::Key) {
         let mut disp_line = self.disp_line;
+        let disp_col = self.disp_col;
+
         match key {
             Key::Down => {
                 // Scroll by one until last line is in the bottom of the window
                 if disp_line <= line_count - self.height {
                     disp_line += 1;
                 }
-                match self.display_chunk(&text, line_count, disp_line) {
+                match self.display_chunk(&text, line_count, disp_line,
+                                         disp_col) {
                     Ok(_) => self.update(),
                     Err(_) => {}
                 }
@@ -130,7 +146,8 @@ impl Viewer {
                 if disp_line > 1 {
                     disp_line -= 1;
                 }
-                match self.display_chunk(&text, line_count, disp_line) {
+                match self.display_chunk(&text, line_count, disp_line,
+                                         disp_col) {
                     Ok(_) => self.update(),
                     Err(_) => {}
                 }
@@ -147,7 +164,9 @@ impl Viewer {
                 } else {
                     disp_line = line_count - self.height + 1;
                 }
-                match self.display_chunk(&text, line_count, disp_line) {
+
+                match self.display_chunk(&text, line_count, disp_line,
+                                         disp_col) {
                     Ok(_) => {
                         if self.cursor.line + self.height < line_count {
                             let tmp = self.cursor.line + self.height;
@@ -168,7 +187,8 @@ impl Viewer {
                 } else {
                     disp_line = 1;
                 }
-                match self.display_chunk(&text, line_count, disp_line) {
+                match self.display_chunk(&text, line_count, disp_line,
+                                         disp_col) {
                     Ok(_) => {
                         if self.cursor.line > self.height {
                             let tmp = self.cursor.line - self.height;
@@ -179,6 +199,24 @@ impl Viewer {
 
                         self.update();
                     }
+                    Err(_) => {}
+                }
+            }
+            Key::Left => {
+                let disp_col = self.disp_col - 1;
+                let disp_line = self.disp_line;
+                match self.display_chunk(&text, line_count, disp_line,
+                                         disp_col) {
+                    Ok(_) => {},
+                    Err(_) => {}
+                }
+            }
+            Key::Right => {
+                let disp_col = self.disp_col + 1;
+                let disp_line = self.disp_line;
+                match self.display_chunk(&text, line_count, disp_line,
+                                         disp_col) {
+                    Ok(_) => {},
                     Err(_) => {}
                 }
             }
@@ -200,10 +238,9 @@ impl Viewer {
                     if self.cursor.line + 1 > (self.disp_line + self.height) {
                         self.scroll(text, line_count, key);
                     }
-
-                    self.update();
                 } else {
                     info!("Can't go down, already at the bottom of file");
+                    return;
                 }
             }
             Key::Up => {
@@ -215,30 +252,40 @@ impl Viewer {
                     if self.cursor.line < self.disp_line {
                         self.scroll(text, line_count, key);
                     }
-
-                    self.update();
                 } else {
                     info!("Can't go up, already at the top of file");
+                    return;
                 }
             }
             Key::Left => {
-                if self.focus_col > 1 {
-                    self.focus_col -= 1;
+                if self.cursor.col > 1 {
                     self.cursor.col -= 1;
-                    self.update();
+                    self.focus_col = self.cursor.col;
+
+                    if self.cursor.col < self.disp_col {
+                        self.scroll(text, line_count, key);
+                    }
                 } else {
-                    info!("Can't go left, already at beginning of line");
+                    info!("Can't go left, already at beginning of the line");
+                    return;
                 }
             }
             Key::Right => {
                 if self.focus_col < self.cur_line_len {
-                    self.focus_col += 1;
                     self.cursor.col += 1;
-                    self.update();
+                    self.focus_col = self.cursor.col;
+
+                    if self.focus_col > self.disp_col + self.width - 1 {
+                        self.scroll(text, line_count, key);
+                    }
+                } else {
+                    info!("Can't go right, already at end of the line");
+                    return;
                 }
             }
             _ => {}
         }
+        self.update();
     }
 
     pub fn poll_event(&mut self) -> EventResult {
@@ -278,7 +325,7 @@ impl Viewer {
         if self.cursor.col == 0 {
             cur_col = 0;
         } else {
-            cur_col = (self.cursor.col - 1) as isize;
+            cur_col = (self.cursor.col - self.disp_col) as isize;
         }
         self.rustbox.set_cursor(cur_col,
                                 (self.cursor.line - self.disp_line) as isize);

@@ -91,11 +91,9 @@ fn run() -> Result<()> {
                         break;
                     }
                     rustbox::Key::Down | rustbox::Key::Up |
-                    rustbox::Key::Left | rustbox::Key::Right => {
-                        viewer.move_cursor(&text, line_count, key);
-                    }
+                    rustbox::Key::Left | rustbox::Key::Right |
                     rustbox::Key::PageDown | rustbox::Key::PageUp => {
-                        viewer.scroll(&text, line_count, key);
+                        viewer.move_cursor(&text, line_count, key);
                     }
                     _ => {}
                 }

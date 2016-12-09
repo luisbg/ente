@@ -168,16 +168,7 @@ impl Viewer {
 
                 match self.display_chunk(&text, line_count, disp_line,
                                          disp_col) {
-                    Ok(_) => {
-                        if self.cursor.line + self.height < line_count {
-                            let tmp = self.cursor.line + self.height;
-                            self.set_current_line(text, tmp);
-                        } else {
-                            self.set_current_line(text, line_count);
-                        }
-
-                        self.update();
-                    }
+                    Ok(_) => {},
                     Err(_) => {}
                 }
             }
@@ -190,16 +181,7 @@ impl Viewer {
                 }
                 match self.display_chunk(&text, line_count, disp_line,
                                          disp_col) {
-                    Ok(_) => {
-                        if self.cursor.line > self.height {
-                            let tmp = self.cursor.line - self.height;
-                            self.set_current_line(text, tmp);
-                        } else {
-                            self.set_current_line(text, 1);
-                        }
-
-                        self.update();
-                    }
+                    Ok(_) => {},
                     Err(_) => {}
                 }
             }
@@ -284,11 +266,31 @@ impl Viewer {
                     return;
                 }
             }
+            Key::PageDown => {
+                if self.cursor.line + self.height < line_count {
+                    let tmp = self.cursor.line + self.height;
+                    self.set_current_line(text, tmp);
+                } else {
+                    self.set_current_line(text, line_count);
+                }
+
+                self.scroll(text, line_count, key);
+            }
+            Key::PageUp => {
+                if self.cursor.line > self.height {
+                    let tmp = self.cursor.line - self.height;
+                    self.set_current_line(text, tmp);
+                } else {
+                    self.set_current_line(text, 1);
+                }
+
+                self.scroll(text, line_count, key);
+            }
             _ => {}
         }
 
         match key {
-            Key::Down | Key::Up => {
+            Key::Down | Key::Up | Key::PageDown | Key::PageUp => {
                 let tmp_cur_col: usize;
                 if self.cursor.col == 0 {
                     tmp_cur_col = 1;

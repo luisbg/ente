@@ -137,7 +137,7 @@ impl Viewer {
                 }
                 match self.display_chunk(&text, line_count, disp_line,
                                          disp_col) {
-                    Ok(_) => self.update(),
+                    Ok(_) => {},
                     Err(_) => {}
                 }
             }
@@ -148,7 +148,7 @@ impl Viewer {
                 }
                 match self.display_chunk(&text, line_count, disp_line,
                                          disp_col) {
-                    Ok(_) => self.update(),
+                    Ok(_) => {},
                     Err(_) => {}
                 }
             }
@@ -357,7 +357,6 @@ impl Viewer {
                                  self.filename,
                                  self.cursor.line,
                                  self.cursor.col);
-
         let cur_col: isize;
         if self.cursor.col == 0 {
             cur_col = 0;

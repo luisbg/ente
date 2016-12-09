@@ -135,7 +135,7 @@ impl Viewer {
                     disp_line += 1;
                 }
                 match self.display_chunk(&text, disp_line, disp_col) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(_) => {}
                 }
             }
@@ -145,7 +145,7 @@ impl Viewer {
                     disp_line -= 1;
                 }
                 match self.display_chunk(&text, disp_line, disp_col) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(_) => {}
                 }
             }
@@ -164,7 +164,7 @@ impl Viewer {
                 }
 
                 match self.display_chunk(&text, disp_line, disp_col) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(_) => {}
                 }
             }
@@ -176,7 +176,7 @@ impl Viewer {
                     disp_line = 1;
                 }
                 match self.display_chunk(&text, disp_line, disp_col) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(_) => {}
                 }
             }
@@ -184,7 +184,7 @@ impl Viewer {
                 let disp_col = self.disp_col - 1;
                 let disp_line = self.disp_line;
                 match self.display_chunk(&text, disp_line, disp_col) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(_) => {}
                 }
             }
@@ -192,7 +192,7 @@ impl Viewer {
                 let disp_col = self.disp_col + 1;
                 let disp_line = self.disp_line;
                 match self.display_chunk(&text, disp_line, disp_col) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(_) => {}
                 }
             }
@@ -309,7 +309,7 @@ impl Viewer {
                     let disp_col = tmp_cur_col;
                     let disp_line = self.disp_line;
                     match self.display_chunk(&text, disp_line, disp_col) {
-                        Ok(_) => {},
+                        Ok(_) => {}
                         Err(_) => {}
                     }
                 }
@@ -319,7 +319,7 @@ impl Viewer {
                     let disp_col = self.cursor.col - self.width;
                     let disp_line = self.disp_line;
                     match self.display_chunk(&text, disp_line, disp_col) {
-                        Ok(_) => {},
+                        Ok(_) => {}
                         Err(_) => {}
                     }
                 }

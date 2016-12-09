@@ -82,26 +82,8 @@ fn run() -> Result<()> {
     let mut viewer = viewer::Viewer::new(&text, filename, line_count);
 
     // Wait for keyboard events
-    loop {
-        match viewer.poll_event() {
-            Ok(rustbox::Event::KeyEvent(key)) => {
-                match key {
-                    rustbox::Key::Char('q') => {
-                        info!("Quitting application");
-                        break;
-                    }
-                    rustbox::Key::Down | rustbox::Key::Up |
-                    rustbox::Key::Left | rustbox::Key::Right |
-                    rustbox::Key::PageDown | rustbox::Key::PageUp => {
-                        viewer.move_cursor(&text, line_count, key);
-                    }
-                    _ => {}
-                }
-            }
-            Err(why) => bail!("Rustbox.poll_event Error {}", why.description()),
-            _ => {}
-        }
+    match viewer.poll_event(&text, line_count) {
+        Ok(_) => Ok(()),
+        Err(error) => bail!(error),
     }
-
-    Ok(())
 }

@@ -6,7 +6,7 @@ extern crate slog_json;
 
 use std::default::Default;
 
-use rustbox::{Color, RustBox, OutputMode, EventResult};
+use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
 
 mod errors {
@@ -327,8 +327,34 @@ impl Viewer {
         self.update();
     }
 
-    pub fn poll_event(&mut self) -> EventResult {
-        self.rustbox.poll_event(false)
+    pub fn poll_event(&mut self,
+                      text: &String,
+                      line_count: usize)
+                      -> Result<()> {
+        loop {
+            match self.rustbox.poll_event(false) {
+                Ok(rustbox::Event::KeyEvent(key)) => {
+                    match key {
+                        rustbox::Key::Char('q') => {
+                            info!("Quitting application");
+                            return Ok(());
+                        }
+                        rustbox::Key::Down | rustbox::Key::Up |
+                        rustbox::Key::Left | rustbox::Key::Right |
+                        rustbox::Key::PageDown | rustbox::Key::PageUp => {
+                            self.move_cursor(&text, line_count, key);
+                        }
+                        _ => {}
+                    }
+                }
+                Err(_) => {
+                    let e = "Rustbox.poll_event Error";
+                    error!(e);
+                    return Err(e.into());
+                }
+                _ => {}
+            }
+        }
     }
 
     fn set_current_line(&mut self, text: &String, line_num: usize) {

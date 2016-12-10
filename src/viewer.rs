@@ -15,6 +15,9 @@ mod errors {
 
 use errors::*;
 
+const RB_COL_START: usize = 0;
+const RB_ROW_START: usize = 0;
+
 enum Action {
     None,
     MoveRight,
@@ -78,8 +81,8 @@ impl Viewer {
         match view.display_chunk(1, 1) {
             Ok(_) => view.update(),
             Err(_) => {
-                view.rustbox.print(0,
-                                   0,
+                view.rustbox.print(RB_COL_START,
+                                   RB_ROW_START,
                                    rustbox::RB_NORMAL,
                                    Color::Red,
                                    Color::Black,
@@ -110,14 +113,14 @@ impl Viewer {
         for ln in 0..(self.height) {
             if let Some(line) = lines.next() {
                 if line.len() >= start_col {
-                    self.rustbox.print(0,
+                    self.rustbox.print(RB_COL_START,
                                        ln,
                                        rustbox::RB_NORMAL,
                                        Color::White,
                                        Color::Black,
                                        &line[start_col - 1..]);
                 } else {
-                    self.rustbox.print(0,
+                    self.rustbox.print(RB_COL_START,
                                        ln,
                                        rustbox::RB_NORMAL,
                                        Color::White,
@@ -450,7 +453,7 @@ impl Viewer {
                                 (self.cursor.line - self.disp_line) as isize);
 
         let help: &'static str = "Press 'q' to quit";
-        self.rustbox.print(0,
+        self.rustbox.print(RB_COL_START,
                            self.height,
                            rustbox::RB_REVERSE,
                            Color::White,

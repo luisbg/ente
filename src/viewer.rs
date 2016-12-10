@@ -15,6 +15,18 @@ mod errors {
 
 use errors::*;
 
+enum Action {
+    None,
+    MoveRight,
+    MoveLeft,
+    MoveDown,
+    MoveUp,
+    MovePageUp,
+    MovePageDown,
+    MoveStartLine,
+    MoveEndLine,
+}
+
 pub struct Cursor {
     line: usize,
     col: usize,
@@ -126,12 +138,12 @@ impl Viewer {
         Ok(())
     }
 
-    pub fn scroll(&mut self, key: rustbox::Key) {
+    pub fn scroll(&mut self, action: &Action) {
         let mut disp_line = self.disp_line;
         let disp_col = self.disp_col;
 
-        match key {
-            Key::Down => {
+        match *action {
+            Action::MoveDown => {
                 // Scroll by one until last line is in the bottom of the window
                 if disp_line <= self.line_count - self.height {
                     disp_line += 1;
@@ -141,7 +153,7 @@ impl Viewer {
                     Err(_) => {}
                 }
             }
-            Key::Up => {
+            Action::MoveUp => {
                 // Scroll by one to the top of the file
                 if disp_line > 1 {
                     disp_line -= 1;
@@ -151,7 +163,7 @@ impl Viewer {
                     Err(_) => {}
                 }
             }
-            Key::PageDown => {
+            Action::MovePageDown => {
                 if self.line_count < self.height {
                     warn!("Can't scroll files smaller than the window");
                     return;
@@ -170,7 +182,7 @@ impl Viewer {
                     Err(_) => {}
                 }
             }
-            Key::PageUp => {
+            Action::MovePageUp => {
                 // Scroll a window height up
                 if disp_line > self.height {
                     disp_line -= self.height;
@@ -182,7 +194,7 @@ impl Viewer {
                     Err(_) => {}
                 }
             }
-            Key::Left => {
+            Action::MoveLeft => {
                 let disp_col = self.disp_col - 1;
                 let disp_line = self.disp_line;
                 match self.display_chunk(disp_line, disp_col) {
@@ -190,7 +202,7 @@ impl Viewer {
                     Err(_) => {}
                 }
             }
-            Key::Right => {
+            Action::MoveRight => {
                 let disp_col = self.disp_col + 1;
                 let disp_line = self.disp_line;
                 match self.display_chunk(disp_line, disp_col) {
@@ -202,63 +214,63 @@ impl Viewer {
         }
     }
 
-    pub fn move_cursor(&mut self, key: rustbox::Key) {
-        match key {
-            Key::Down => {
+    pub fn move_cursor(&mut self, action: &Action) {
+        match *action {
+            Action::MoveDown => {
                 if self.cursor.line < self.line_count {
                     let tmp = self.cursor.line + 1;
                     self.set_current_line(tmp);
                     info!("Current line is {}", self.cursor.line);
 
                     if self.cursor.line + 1 > (self.disp_line + self.height) {
-                        self.scroll(key);
+                        self.scroll(action);
                     }
                 } else {
                     info!("Can't go down, already at the bottom of file");
                     return;
                 }
             }
-            Key::Up => {
+            Action::MoveUp => {
                 if self.cursor.line > 1 {
                     let tmp = self.cursor.line - 1;
                     self.set_current_line(tmp);
                     info!("Current line is {}", self.cursor.line);
 
                     if self.cursor.line < self.disp_line {
-                        self.scroll(key);
+                        self.scroll(action);
                     }
                 } else {
                     info!("Can't go up, already at the top of file");
                     return;
                 }
             }
-            Key::Left => {
+            Action::MoveLeft => {
                 if self.cursor.col > 1 {
                     self.cursor.col -= 1;
                     self.focus_col = self.cursor.col;
 
                     if self.cursor.col < self.disp_col {
-                        self.scroll(key);
+                        self.scroll(action);
                     }
                 } else {
                     info!("Can't go left, already at beginning of the line");
                     return;
                 }
             }
-            Key::Right => {
+            Action::MoveRight => {
                 if self.focus_col < self.cur_line_len {
                     self.cursor.col += 1;
                     self.focus_col = self.cursor.col;
 
                     if self.focus_col > self.disp_col + self.width - 1 {
-                        self.scroll(key);
+                        self.scroll(action);
                     }
                 } else {
                     info!("Can't go right, already at end of the line");
                     return;
                 }
             }
-            Key::PageDown => {
+            Action::MovePageDown => {
                 if self.cursor.line + self.height < self.line_count {
                     let tmp = self.cursor.line + self.height;
                     self.set_current_line(tmp);
@@ -267,9 +279,9 @@ impl Viewer {
                     self.set_current_line(line_count);
                 }
 
-                self.scroll(key);
+                self.scroll(action);
             }
-            Key::PageUp => {
+            Action::MovePageUp => {
                 if self.cursor.line > self.height {
                     let tmp = self.cursor.line - self.height;
                     self.set_current_line(tmp);
@@ -277,9 +289,9 @@ impl Viewer {
                     self.set_current_line(1);
                 }
 
-                self.scroll(key);
+                self.scroll(action);
             }
-            Key::Home => {
+            Action::MoveStartLine => {
                 if self.cur_line_len > 0 {
                     self.cursor.col = 1;
                     self.focus_col = 1;
@@ -287,7 +299,7 @@ impl Viewer {
                     info!("Can't move to the beginning of an empty line");
                 }
             }
-            Key::End => {
+            Action::MoveEndLine => {
                 if self.cur_line_len > 0 {
                     self.cursor.col = self.cur_line_len;
                     self.focus_col = self.cur_line_len;
@@ -295,11 +307,12 @@ impl Viewer {
                     info!("Can't move to the end of an empty line");
                 }
             }
-            _ => {}
+            Action::None => {}
         }
 
-        match key {
-            Key::Down | Key::Up | Key::PageDown | Key::PageUp => {
+        match *action {
+            Action::MoveDown | Action::MoveUp | Action::MovePageDown |
+            Action::MovePageUp => {
                 let tmp_cur_col: usize;
                 if self.cursor.col == 0 {
                     tmp_cur_col = 1;
@@ -337,18 +350,9 @@ impl Viewer {
         loop {
             match self.rustbox.poll_event(false) {
                 Ok(rustbox::Event::KeyEvent(key)) => {
-                    match key {
-                        rustbox::Key::Char('q') => {
-                            info!("Quitting application");
-                            return Ok(());
-                        }
-                        rustbox::Key::Down | rustbox::Key::Up |
-                        rustbox::Key::Left | rustbox::Key::Right |
-                        rustbox::Key::PageDown | rustbox::Key::PageUp |
-                        rustbox::Key::Home | rustbox::Key::End => {
-                            self.move_cursor(key);
-                        }
-                        _ => {}
+                    // TODO: Handle quit action better
+                    if !self.match_key_action(key) {
+                        return Ok(());
                     }
                 }
                 Err(_) => {
@@ -360,6 +364,53 @@ impl Viewer {
             }
         }
     }
+
+    fn match_key_action(&mut self, key: Key) -> bool {
+        let mut action: Action = Action::None;
+        match key {
+            Key::Char('q') => {
+                info!("Quitting application");
+                return false;
+            }
+            Key::Up => {
+                action = Action::MoveUp;
+            }
+            Key::Down => {
+                action = Action::MoveDown;
+            }
+            Key::Left => {
+                action = Action::MoveLeft;
+            }
+            Key::Right => {
+                action = Action::MoveRight;
+            }
+            Key::PageDown => {
+                action = Action::MovePageDown;
+            }
+            Key::PageUp => {
+                action = Action::MovePageUp;
+            }
+            Key::Home => {
+                action = Action::MoveStartLine;
+            }
+            Key::End => {
+                action = Action::MoveEndLine;
+            }
+            _ => {}
+        }
+
+        match action {
+            Action::MoveUp | Action::MoveDown | Action::MoveLeft |
+            Action::MoveRight | Action::MovePageDown | Action::MovePageUp |
+            Action::MoveStartLine | Action::MoveEndLine => {
+                self.move_cursor(&action);
+            }
+            _ => {}
+        }
+
+        true
+    }
+
 
     fn set_current_line(&mut self, line_num: usize) {
         self.cursor.line = line_num;

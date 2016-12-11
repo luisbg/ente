@@ -112,13 +112,21 @@ impl Viewer {
         let mut lines = self.text.lines().skip(start_line - 1);
         for ln in 0..(self.height) {
             if let Some(line) = lines.next() {
-                if line.len() >= start_col {
+                let beg = start_col - 1;
+
+                // Check if there is line content to show or past the end
+                if line.len() > beg {
+                    let mut end = line.len();
+                    if (line.len() - beg) >= self.width {
+                        // Don't show characters past terminal's right edge
+                        end = beg + self.width;
+                    }
                     self.rustbox.print(RB_COL_START,
                                        ln,
                                        rustbox::RB_NORMAL,
                                        Color::White,
                                        Color::Black,
-                                       &line[start_col - 1..]);
+                                       &line[beg .. end]);
                 } else {
                     self.rustbox.print(RB_COL_START,
                                        ln,

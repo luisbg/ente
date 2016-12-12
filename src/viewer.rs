@@ -240,6 +240,22 @@ impl Viewer {
                     Err(_) => {}
                 }
             }
+            Action::MoveStartLine => {
+                let disp_col = 1;
+                let disp_line = self.disp_line;
+                match self.display_chunk(disp_line, disp_col) {
+                    Ok(_) => {}
+                    Err(_) => {}
+                }
+            }
+            Action::MoveEndLine => {
+                let disp_col = self.cursor.col - self.width + 1;
+                let disp_line = self.disp_line;
+                match self.display_chunk(disp_line, disp_col) {
+                    Ok(_) => {}
+                    Err(_) => {}
+                }
+            }
             _ => {}
         }
     }
@@ -328,6 +344,10 @@ impl Viewer {
                 } else {
                     info!("Can't move to the beginning of an empty line");
                 }
+
+                if self.cursor.col < self.disp_col {
+                    self.scroll(action);
+                }
             }
             Action::MoveEndLine => {
                 if self.cur_line_len > 0 {
@@ -335,6 +355,10 @@ impl Viewer {
                     self.focus_col = self.cur_line_len;
                 } else {
                     info!("Can't move to the end of an empty line");
+                }
+
+                if self.cursor.col > self.disp_col + self.width - 1 {
+                    self.scroll(action);
                 }
             }
             Action::None => {}

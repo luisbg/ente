@@ -308,7 +308,7 @@ impl Viewer {
                     self.cursor.col += 1;
                     self.focus_col = self.cursor.col;
 
-                    if self.focus_col > self.disp_col + self.width - 1 {
+                    if self.cursor.col > self.disp_col + self.width - 1 {
                         self.scroll(action);
                     }
                 } else {

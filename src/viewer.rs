@@ -170,7 +170,7 @@ impl Viewer {
 
     fn scroll(&mut self, action: &Action) {
         let mut disp_line = self.disp_line;
-        let disp_col = self.disp_col;
+        let mut disp_col = self.disp_col;
 
         match *action {
             Action::MoveDown => {
@@ -178,19 +178,11 @@ impl Viewer {
                 if disp_line <= self.line_count - self.height {
                     disp_line += 1;
                 }
-                match self.display_chunk(disp_line, disp_col) {
-                    Ok(_) => {}
-                    Err(_) => {}
-                }
             }
             Action::MoveUp => {
                 // Scroll by one to the top of the file
                 if disp_line > 1 {
                     disp_line -= 1;
-                }
-                match self.display_chunk(disp_line, disp_col) {
-                    Ok(_) => {}
-                    Err(_) => {}
                 }
             }
             Action::MovePageDown => {
@@ -206,11 +198,6 @@ impl Viewer {
                 } else {
                     disp_line = self.line_count - self.height + 1;
                 }
-
-                match self.display_chunk(disp_line, disp_col) {
-                    Ok(_) => {}
-                    Err(_) => {}
-                }
             }
             Action::MovePageUp => {
                 // Scroll a window height up
@@ -219,45 +206,28 @@ impl Viewer {
                 } else {
                     disp_line = 1;
                 }
-                match self.display_chunk(disp_line, disp_col) {
-                    Ok(_) => {}
-                    Err(_) => {}
-                }
             }
             Action::MoveLeft => {
-                let disp_col = self.disp_col - 1;
-                let disp_line = self.disp_line;
-                match self.display_chunk(disp_line, disp_col) {
-                    Ok(_) => {}
-                    Err(_) => {}
-                }
+                disp_col = self.disp_col - 1;
             }
             Action::MoveRight => {
-                let disp_col = self.disp_col + 1;
-                let disp_line = self.disp_line;
-                match self.display_chunk(disp_line, disp_col) {
-                    Ok(_) => {}
-                    Err(_) => {}
-                }
+                disp_col = self.disp_col + 1;
             }
             Action::MoveStartLine => {
-                let disp_col = 1;
-                let disp_line = self.disp_line;
-                match self.display_chunk(disp_line, disp_col) {
-                    Ok(_) => {}
-                    Err(_) => {}
-                }
+                disp_col = 1;
             }
             Action::MoveEndLine => {
-                let disp_col = self.cursor.col - self.width + 1;
-                let disp_line = self.disp_line;
-                match self.display_chunk(disp_line, disp_col) {
-                    Ok(_) => {}
-                    Err(_) => {}
-                }
+                disp_col = self.cursor.col - self.width + 1;
             }
-            _ => {}
+            _ => {
+                return;
+            }
         }
+        match self.display_chunk(disp_line, disp_col) {
+            Ok(_) => {}
+            Err(_) => {}
+        }
+
     }
 
     fn move_cursor(&mut self, action: &Action) {
@@ -383,9 +353,9 @@ impl Viewer {
                     }
                 }
 
-                if self.cursor.col > self.disp_col + self.width {
+                if self.cursor.col > self.disp_col + self.width - 1 {
                     // Cursor past display, scroll right
-                    let disp_col = self.cursor.col - self.width;
+                    let disp_col = self.cursor.col - self.width + 1;
                     let disp_line = self.disp_line;
                     match self.display_chunk(disp_line, disp_col) {
                         Ok(_) => {}

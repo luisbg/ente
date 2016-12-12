@@ -95,10 +95,29 @@ impl Viewer {
         return view;
     }
 
-    pub fn display_chunk(&mut self,
-                         start_line: usize,
-                         start_col: usize)
-                         -> Result<()> {
+    pub fn poll_event(&mut self) -> Result<()> {
+        loop {
+            match self.rustbox.poll_event(false) {
+                Ok(rustbox::Event::KeyEvent(key)) => {
+                    // TODO: Handle quit action better
+                    if !self.match_key_action(key) {
+                        return Ok(());
+                    }
+                }
+                Err(_) => {
+                    let e = "Rustbox.poll_event Error";
+                    error!(e);
+                    return Err(e.into());
+                }
+                _ => {}
+            }
+        }
+    }
+
+    fn display_chunk(&mut self,
+                     start_line: usize,
+                     start_col: usize)
+                     -> Result<()> {
         self.rustbox.clear();
 
         if start_line > self.line_count {
@@ -126,7 +145,7 @@ impl Viewer {
                                        rustbox::RB_NORMAL,
                                        Color::White,
                                        Color::Black,
-                                       &line[beg .. end]);
+                                       &line[beg..end]);
                 } else {
                     self.rustbox.print(RB_COL_START,
                                        ln,
@@ -149,7 +168,7 @@ impl Viewer {
         Ok(())
     }
 
-    pub fn scroll(&mut self, action: &Action) {
+    fn scroll(&mut self, action: &Action) {
         let mut disp_line = self.disp_line;
         let disp_col = self.disp_col;
 
@@ -225,7 +244,7 @@ impl Viewer {
         }
     }
 
-    pub fn move_cursor(&mut self, action: &Action) {
+    fn move_cursor(&mut self, action: &Action) {
         match *action {
             Action::MoveDown => {
                 if self.cursor.line < self.line_count {
@@ -355,25 +374,6 @@ impl Viewer {
         }
 
         self.update();
-    }
-
-    pub fn poll_event(&mut self) -> Result<()> {
-        loop {
-            match self.rustbox.poll_event(false) {
-                Ok(rustbox::Event::KeyEvent(key)) => {
-                    // TODO: Handle quit action better
-                    if !self.match_key_action(key) {
-                        return Ok(());
-                    }
-                }
-                Err(_) => {
-                    let e = "Rustbox.poll_event Error";
-                    error!(e);
-                    return Err(e.into());
-                }
-                _ => {}
-            }
-        }
     }
 
     fn match_key_action(&mut self, key: Key) -> bool {

@@ -455,12 +455,25 @@ impl Viewer {
                                 (self.cursor.line - self.disp_line) as isize);
 
         let help: &'static str = "Press 'q' to quit";
+
+        let mut empty = String::with_capacity(self.width - filestatus.len() -
+                                              help.len());
+        for _ in 0..empty.capacity() {
+            empty.push(' ');
+        }
+
         self.rustbox.print(RB_COL_START,
                            self.height,
                            rustbox::RB_REVERSE,
                            Color::White,
                            Color::Black,
                            filestatus.as_ref());
+        self.rustbox.print(RB_COL_START + filestatus.len(),
+                           self.height,
+                           rustbox::RB_NORMAL,
+                           Color::White,
+                           Color::Black,
+                           empty.as_ref());
         self.rustbox.print(self.width - help.len(),
                            self.height,
                            rustbox::RB_REVERSE,

@@ -5,3 +5,11 @@ ENTE (Educational Nimble Text Editor)
     \___)
 
 A text editor project to keep learning Rust through practice.
+
+For now it views files. Will play with simple editing over the December
+vacations.
+
+Comments and patches welcome :)
+
+To run:
+$ cargo run text_file

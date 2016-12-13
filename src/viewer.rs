@@ -16,6 +16,7 @@ use errors::*;
 const RB_COL_START: usize = 0;
 const RB_ROW_START: usize = 0;
 
+#[derive(Copy,Clone)]
 enum Action {
     None,
     MoveRight,
@@ -166,11 +167,11 @@ impl Viewer {
         Ok(())
     }
 
-    fn scroll(&mut self, action: &Action) {
+    fn scroll(&mut self, action: Action) {
         let mut disp_line = self.disp_line;
         let mut disp_col = self.disp_col;
 
-        match *action {
+        match action {
             Action::MoveDown => {
                 // Scroll by one until last line is in the bottom of the window
                 if disp_line <= self.line_count - self.height {
@@ -228,8 +229,8 @@ impl Viewer {
 
     }
 
-    fn move_cursor(&mut self, action: &Action) {
-        match *action {
+    fn move_cursor(&mut self, action: Action) {
+        match action {
             Action::MoveDown => {
                 if self.cursor.line < self.line_count {
                     let tmp = self.cursor.line + 1;
@@ -332,7 +333,7 @@ impl Viewer {
             Action::None => {}
         }
 
-        match *action {
+        match action {
             Action::MoveDown | Action::MoveUp | Action::MovePageDown |
             Action::MovePageUp => {
                 let tmp_cur_col: usize;
@@ -406,7 +407,7 @@ impl Viewer {
             Action::MoveUp | Action::MoveDown | Action::MoveLeft |
             Action::MoveRight | Action::MovePageDown | Action::MovePageUp |
             Action::MoveStartLine | Action::MoveEndLine => {
-                self.move_cursor(&action);
+                self.move_cursor(action);
             }
             _ => {}
         }

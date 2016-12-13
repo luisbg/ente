@@ -1,8 +1,6 @@
 extern crate rustbox;
-extern crate slog_term;
 extern crate time;
 extern crate slog_stream;
-extern crate slog_json;
 
 use std::default::Default;
 

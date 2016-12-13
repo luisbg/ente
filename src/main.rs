@@ -53,8 +53,13 @@ fn main() {
     let file_drain = slog_stream::stream(log_file, LogFormat);
     let logger = slog::Logger::root(file_drain.fuse(), o!());
     slog_scope::set_global_logger(logger);
-    info!("Application started (at {})",
-          time::now().rfc3339());
+
+    let now = time::now();
+    let time_str = match now.strftime("%T %d %b %Y") {
+        Ok(time) => time,
+        Err(_) => now.rfc3339()
+    };
+    info!("Application started (at {})", time_str);
 
     // Run catching errors
     if let Err(ref e) = run() {

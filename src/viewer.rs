@@ -18,7 +18,7 @@ const RB_COL_START: usize = 0;
 const RB_ROW_START: usize = 0;
 
 #[derive(Copy,Clone)]
-enum Action {
+pub enum Action {
     None,
     MoveRight,
     MoveLeft,
@@ -51,23 +51,11 @@ pub struct Viewer {
     cursor: Cursor,
 }
 
-fn fill_key_map() -> HashMap<Key, Action> {
-    let mut actions = HashMap::new();
-    actions.insert(Key::Right, Action::MoveRight);
-    actions.insert(Key::Left, Action::MoveLeft);
-    actions.insert(Key::Down, Action::MoveDown);
-    actions.insert(Key::Up, Action::MoveUp);
-    actions.insert(Key::PageUp, Action::MovePageUp);
-    actions.insert(Key::PageDown, Action::MovePageDown);
-    actions.insert(Key::Home, Action::MoveStartLine);
-    actions.insert(Key::End, Action::MoveEndLine);
-    actions.insert(Key::Char('q'), Action::Quit);
-
-    actions
-}
-
 impl Viewer {
-    pub fn new(text: &String, filename: String) -> Viewer {
+    pub fn new(text: &String,
+               filename: String,
+               key_map: HashMap<Key, Action>)
+               -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height() - 1;
         let width = rustbox.width();
@@ -77,15 +65,13 @@ impl Viewer {
         rustbox.set_cursor(0, 0);
 
         let text_copy = text.clone();
-        let actions = fill_key_map();
-
         let cursor = Cursor { line: 1, col: 1 };
         let line_count = text.lines().count();
 
         let mut view = Viewer {
             rustbox: rustbox,
             text: text_copy,
-            actions: actions,
+            actions: key_map,
             height: height,
             width: width,
             filename: filename,

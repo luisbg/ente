@@ -3,6 +3,7 @@ extern crate time;
 extern crate slog_stream;
 
 use std::default::Default;
+use std::collections::HashMap;
 
 use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
@@ -27,6 +28,7 @@ enum Action {
     MovePageDown,
     MoveStartLine,
     MoveEndLine,
+    Quit,
 }
 
 pub struct Cursor {
@@ -37,6 +39,7 @@ pub struct Cursor {
 pub struct Viewer {
     rustbox: RustBox,
     text: String,
+    actions: HashMap<Key, Action>,
     height: usize, // window height without status line
     width: usize,
     filename: String,
@@ -46,6 +49,21 @@ pub struct Viewer {
     cur_line_len: usize,
     line_count: usize,
     cursor: Cursor,
+}
+
+fn fill_key_map() -> HashMap<Key, Action> {
+    let mut actions = HashMap::new();
+    actions.insert(Key::Right, Action::MoveRight);
+    actions.insert(Key::Left, Action::MoveLeft);
+    actions.insert(Key::Down, Action::MoveDown);
+    actions.insert(Key::Up, Action::MoveUp);
+    actions.insert(Key::PageUp, Action::MovePageUp);
+    actions.insert(Key::PageDown, Action::MovePageDown);
+    actions.insert(Key::Home, Action::MoveStartLine);
+    actions.insert(Key::End, Action::MoveEndLine);
+    actions.insert(Key::Char('q'), Action::Quit);
+
+    actions
 }
 
 impl Viewer {
@@ -59,12 +77,15 @@ impl Viewer {
         rustbox.set_cursor(0, 0);
 
         let text_copy = text.clone();
+        let actions = fill_key_map();
+
         let cursor = Cursor { line: 1, col: 1 };
         let line_count = text.lines().count();
 
         let mut view = Viewer {
             rustbox: rustbox,
             text: text_copy,
+            actions: actions,
             height: height,
             width: width,
             filename: filename,
@@ -330,7 +351,7 @@ impl Viewer {
                     self.scroll(action);
                 }
             }
-            Action::None => {}
+            _ => {}
         }
 
         match action {
@@ -370,46 +391,19 @@ impl Viewer {
     }
 
     fn match_key_action(&mut self, key: Key) -> bool {
-        let mut action: Action = Action::None;
-        match key {
-            Key::Char('q') => {
+        let no_action = Action::None;
+        let action = self.actions.get(&key).unwrap_or(&no_action).clone();
+        match action {
+            Action::Quit => {
                 info!("Quitting application");
                 return false;
             }
-            Key::Up => {
-                action = Action::MoveUp;
-            }
-            Key::Down => {
-                action = Action::MoveDown;
-            }
-            Key::Left => {
-                action = Action::MoveLeft;
-            }
-            Key::Right => {
-                action = Action::MoveRight;
-            }
-            Key::PageDown => {
-                action = Action::MovePageDown;
-            }
-            Key::PageUp => {
-                action = Action::MovePageUp;
-            }
-            Key::Home => {
-                action = Action::MoveStartLine;
-            }
-            Key::End => {
-                action = Action::MoveEndLine;
-            }
-            _ => {}
-        }
-
-        match action {
             Action::MoveUp | Action::MoveDown | Action::MoveLeft |
             Action::MoveRight | Action::MovePageDown | Action::MovePageUp |
             Action::MoveStartLine | Action::MoveEndLine => {
                 self.move_cursor(action);
             }
-            _ => {}
+            Action::None => {}
         }
 
         true

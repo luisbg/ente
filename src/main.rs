@@ -90,6 +90,8 @@ fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
     actions.insert(Key::PageDown, viewer::Action::MovePageDown);
     actions.insert(Key::Home, viewer::Action::MoveStartLine);
     actions.insert(Key::End, viewer::Action::MoveEndLine);
+    actions.insert(Key::Char('g'), viewer::Action::GoToLine);
+    actions.insert(Key::Enter, viewer::Action::Go);
     actions.insert(Key::Char('q'), viewer::Action::Quit);
 
     // Load config file key settings
@@ -118,11 +120,13 @@ fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         let mut split = ln.split(':');
         let key = split.next().unwrap_or("NoKey");
         let k = match key.trim() {
+            "G" => Key::Char('g'),
             "H" => Key::Char('h'),
             "J" => Key::Char('j'),
             "K" => Key::Char('k'),
             "L" => Key::Char('l'),
             "Q" => Key::Char('q'),
+            ";" => Key::Char(';'),
             "Esc" => Key::Esc,
             _ => {
                 continue;
@@ -135,6 +139,7 @@ fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
             "MoveRight" => viewer::Action::MoveRight,
             "MoveUp" => viewer::Action::MoveUp,
             "MoveDown" => viewer::Action::MoveDown,
+            "GoToLine" => viewer::Action::GoToLine,
             "Quit" => viewer::Action::Quit,
             "None" => viewer::Action::None,
             _ => {

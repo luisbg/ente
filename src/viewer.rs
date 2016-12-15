@@ -20,6 +20,7 @@ const RB_ROW_START: usize = 0;
 #[derive(Copy,Clone)]
 pub enum Action {
     None,
+    Go,
     MoveRight,
     MoveLeft,
     MoveDown,
@@ -28,6 +29,7 @@ pub enum Action {
     MovePageDown,
     MoveStartLine,
     MoveEndLine,
+    GoToLine,
     Quit,
 }
 
@@ -48,6 +50,7 @@ pub struct Viewer {
     focus_col: usize,
     cur_line_len: usize,
     line_count: usize,
+    line_jump: isize,
     cursor: Cursor,
 }
 
@@ -80,6 +83,7 @@ impl Viewer {
             focus_col: 1,
             cur_line_len: 1,
             line_count: line_count,
+            line_jump: -1,
             cursor: cursor,
         };
 
@@ -233,7 +237,6 @@ impl Viewer {
             Ok(_) => {}
             Err(_) => {}
         }
-
     }
 
     fn move_cursor(&mut self, action: Action) {
@@ -389,12 +392,85 @@ impl Viewer {
             Action::MoveStartLine | Action::MoveEndLine => {
                 self.move_cursor(action);
             }
+            Action::GoToLine | Action::Go => {
+                self.go_to_line(action, key);
+            }
             Action::None => {}
+        }
+
+        // If in GoToLine mode use the number to update line_jump
+        if self.line_jump != -1 {
+            match key {
+                Key::Char('1') | Key::Char('2') | Key::Char('3') |
+                Key::Char('4') | Key::Char('5') | Key::Char('6') |
+                Key::Char('7') | Key::Char('8') | Key::Char('9') |
+                Key::Char('0') => {
+                    self.go_to_line(Action::GoToLine, key);
+                }
+                _ => {}
+            }
         }
 
         true
     }
 
+    fn go_to_line(&mut self, action: Action, key: Key) {
+        match action {
+            Action::Go => {
+                let mut line_num: usize = self.line_jump as usize;
+                self.line_jump = -1;  // Set back to out of GoToLine mode
+
+                if line_num > self.line_count {
+                    info!("ERROR: GoToLine {} past end of file", line_num);
+                    self.update();
+
+                    return;
+                }
+
+                info!("Go to line {}", line_num);
+                self.set_current_line(line_num);
+
+                // Update display if line_num is outside of it
+                if line_num < self.disp_line ||
+                   line_num >= self.disp_line + self.height {
+                    if line_num > self.line_count - self.height {
+                        line_num = self.line_count - self.height + 1;
+                    }
+                    match self.display_chunk(line_num, 1) {
+                        Ok(_) => {}
+                        Err(_) => {}
+                    }
+                }
+            }
+            Action::GoToLine => {
+                if self.line_jump == -1 {
+                    info!("Enter GoToLine mode");
+                    self.line_jump = 0;
+                } else {
+                    let n = match key {
+                        Key::Char('1') => 1,
+                        Key::Char('2') => 2,
+                        Key::Char('3') => 3,
+                        Key::Char('4') => 4,
+                        Key::Char('5') => 5,
+                        Key::Char('6') => 6,
+                        Key::Char('7') => 7,
+                        Key::Char('8') => 8,
+                        Key::Char('9') => 9,
+                        Key::Char('0') => 0,
+                        _ => {
+                            return;
+                        }
+                    };
+
+                    self.line_jump = (self.line_jump * 10) + n;
+                }
+            }
+            _ => {}
+        }
+
+        self.update();
+    }
 
     fn set_current_line(&mut self, line_num: usize) {
         self.cursor.line = line_num;
@@ -420,10 +496,23 @@ impl Viewer {
 
     fn update(&mut self) {
         // Add an informational status line
-        let filestatus = format!("{} ({},{})",
+
+        let status: String;
+        match self.line_jump {
+            -1 => {
+                status = format!("{} ({},{})",
                                  self.filename,
                                  self.cursor.line,
                                  self.cursor.col);
+            }
+            0 => {
+                status = format!(":");
+            }
+            _ => {
+                status = format!(":{}", self.line_jump);
+            }
+        }
+
         let cur_col: isize;
         if self.cursor.col == 0 {
             cur_col = 0;
@@ -435,7 +524,7 @@ impl Viewer {
 
         let help: &'static str = "Press 'q' to quit";
 
-        let mut empty = String::with_capacity(self.width - filestatus.len() -
+        let mut empty = String::with_capacity(self.width - status.len() -
                                               help.len());
         for _ in 0..empty.capacity() {
             empty.push(' ');
@@ -446,8 +535,8 @@ impl Viewer {
                            rustbox::RB_REVERSE,
                            Color::White,
                            Color::Black,
-                           filestatus.as_ref());
-        self.rustbox.print(RB_COL_START + filestatus.len(),
+                           status.as_ref());
+        self.rustbox.print(RB_COL_START + status.len(),
                            self.height,
                            rustbox::RB_NORMAL,
                            Color::White,

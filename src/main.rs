@@ -11,14 +11,11 @@ extern crate slog_scope;
 extern crate time;
 extern crate slog_stream;
 
-use std::collections::HashMap;
 use std::error::Error as StdError;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io;
 use std::env;
-
-use rustbox::Key;
 
 use slog::DrainExt;
 
@@ -29,6 +26,7 @@ mod errors {
 use errors::*;
 
 mod viewer;
+mod keyconfig;
 
 const FILE_POS_LOG: usize = 65;
 
@@ -79,80 +77,6 @@ fn main() {
     }
 }
 
-fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
-    // Defaults
-    let mut actions = HashMap::new();
-    actions.insert(Key::Right, viewer::Action::MoveRight);
-    actions.insert(Key::Left, viewer::Action::MoveLeft);
-    actions.insert(Key::Down, viewer::Action::MoveDown);
-    actions.insert(Key::Up, viewer::Action::MoveUp);
-    actions.insert(Key::PageUp, viewer::Action::MovePageUp);
-    actions.insert(Key::PageDown, viewer::Action::MovePageDown);
-    actions.insert(Key::Home, viewer::Action::MoveStartLine);
-    actions.insert(Key::End, viewer::Action::MoveEndLine);
-    actions.insert(Key::Char('g'), viewer::Action::GoToLine);
-    actions.insert(Key::Enter, viewer::Action::Go);
-    actions.insert(Key::Char('q'), viewer::Action::Quit);
-
-    // Load config file key settings
-    let mut config_file = match File::open(filepath) {
-        Ok(file) => file,
-        Err(_) => {
-            info!("Config file {} doesn't exist", filepath);
-            return actions;
-        }
-    };
-    info!("Opening config file: {}", filepath);
-
-    let mut text = String::new();
-    match config_file.read_to_string(&mut text) {
-        Ok(_) => {}
-        Err(e) => {
-            info!("Error reading config file: {}", e.description());
-            return actions;
-        }
-    }
-
-    for ln in text.lines() {
-        if ln.len() == 0 || &ln[0..1] == "#" {
-            continue;
-        }
-        let mut split = ln.split(':');
-        let key = split.next().unwrap_or("NoKey");
-        let k = match key.trim() {
-            "G" => Key::Char('g'),
-            "H" => Key::Char('h'),
-            "J" => Key::Char('j'),
-            "K" => Key::Char('k'),
-            "L" => Key::Char('l'),
-            "Q" => Key::Char('q'),
-            ";" => Key::Char(';'),
-            "Esc" => Key::Esc,
-            _ => {
-                continue;
-            }
-        };
-
-        let act = split.next().unwrap_or("NoAct");
-        let a = match act.trim() {
-            "MoveLeft" => viewer::Action::MoveLeft,
-            "MoveRight" => viewer::Action::MoveRight,
-            "MoveUp" => viewer::Action::MoveUp,
-            "MoveDown" => viewer::Action::MoveDown,
-            "GoToLine" => viewer::Action::GoToLine,
-            "Quit" => viewer::Action::Quit,
-            "None" => viewer::Action::None,
-            _ => {
-                continue;
-            }
-        };
-
-        actions.insert(k, a);
-    }
-
-    actions
-}
-
 fn run() -> Result<()> {
     let args: Vec<String> = env::args().collect();
 
@@ -179,7 +103,7 @@ fn run() -> Result<()> {
     };
 
     let config_file = "keys.conf";
-    let actions = fill_key_map(config_file);
+    let actions = keyconfig::fill_key_map(config_file);
     let mut viewer = viewer::Viewer::new(&text, filename, actions);
 
     // Wait for keyboard events

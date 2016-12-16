@@ -33,6 +33,12 @@ pub enum Action {
     Quit,
 }
 
+#[derive(Eq,PartialEq)]
+enum Mode {
+    Read,
+    GoToLine,
+}
+
 pub struct Cursor {
     line: usize,
     col: usize,
@@ -41,6 +47,7 @@ pub struct Cursor {
 pub struct Viewer {
     rustbox: RustBox,
     text: String,
+    mode: Mode,
     actions: HashMap<Key, Action>,
     height: usize, // window height without status line
     width: usize,
@@ -50,7 +57,7 @@ pub struct Viewer {
     focus_col: usize,
     cur_line_len: usize,
     line_count: usize,
-    line_jump: isize,
+    line_jump: usize,
     cursor: Cursor,
 }
 
@@ -74,6 +81,7 @@ impl Viewer {
         let mut view = Viewer {
             rustbox: rustbox,
             text: text_copy,
+            mode: Mode::Read,
             actions: key_map,
             height: height,
             width: width,
@@ -83,7 +91,7 @@ impl Viewer {
             focus_col: 1,
             cur_line_len: 1,
             line_count: line_count,
-            line_jump: -1,
+            line_jump: 0,
             cursor: cursor,
         };
 
@@ -382,32 +390,36 @@ impl Viewer {
     fn match_key_action(&mut self, key: Key) -> bool {
         let no_action = Action::None;
         let action = self.actions.get(&key).unwrap_or(&no_action).clone();
-        match action {
-            Action::Quit => {
-                info!("Quitting application");
-                return false;
-            }
-            Action::MoveUp | Action::MoveDown | Action::MoveLeft |
-            Action::MoveRight | Action::MovePageDown | Action::MovePageUp |
-            Action::MoveStartLine | Action::MoveEndLine => {
-                self.move_cursor(action);
-            }
-            Action::GoToLine | Action::Go => {
-                self.go_to_line(action, key);
-            }
-            Action::None => {}
-        }
 
-        // If in GoToLine mode use the number to update line_jump
-        if self.line_jump != -1 {
-            match key {
-                Key::Char('1') | Key::Char('2') | Key::Char('3') |
-                Key::Char('4') | Key::Char('5') | Key::Char('6') |
-                Key::Char('7') | Key::Char('8') | Key::Char('9') |
-                Key::Char('0') => {
-                    self.go_to_line(Action::GoToLine, key);
+        match self.mode {
+            Mode::Read => {
+                match action {
+                    Action::Quit => {
+                        info!("Quitting application");
+                        return false;
+                    }
+                    Action::MoveUp | Action::MoveDown | Action::MoveLeft |
+                    Action::MoveRight | Action::MovePageDown |
+                    Action::MovePageUp | Action::MoveStartLine |
+                    Action::MoveEndLine => {
+                        self.move_cursor(action);
+                    }
+                    Action::GoToLine => {
+                        self.go_to_line(action, key);
+                    }
+                    _ => {}
                 }
-                _ => {}
+            }
+            Mode::GoToLine => {
+                match action {
+                    Action::Go => {
+                        self.go_to_line(action, key);
+                    }
+                    _ => {
+                        // Numbers don't always match GoToLine action
+                        self.go_to_line(Action::GoToLine, key);
+                    }
+                }
             }
         }
 
@@ -417,8 +429,10 @@ impl Viewer {
     fn go_to_line(&mut self, action: Action, key: Key) {
         match action {
             Action::Go => {
-                let mut line_num: usize = self.line_jump as usize;
-                self.line_jump = -1;  // Set back to out of GoToLine mode
+                let mut line_num = self.line_jump;
+
+                self.mode = Mode::Read;  // Set back to previous mode
+                self.line_jump = 0;
 
                 if line_num > self.line_count {
                     info!("ERROR: GoToLine {} past end of file", line_num);
@@ -443,9 +457,9 @@ impl Viewer {
                 }
             }
             Action::GoToLine => {
-                if self.line_jump == -1 {
+                if self.mode != Mode::GoToLine {
                     info!("Enter GoToLine mode");
-                    self.line_jump = 0;
+                    self.mode = Mode::GoToLine;
                 } else {
                     let n = match key {
                         Key::Char('1') => 1,
@@ -498,18 +512,19 @@ impl Viewer {
         // Add an informational status line
 
         let status: String;
-        match self.line_jump {
-            -1 => {
+        match self.mode {
+            Mode::Read => {
                 status = format!("{} ({},{})",
                                  self.filename,
                                  self.cursor.line,
                                  self.cursor.col);
             }
-            0 => {
-                status = format!(":");
-            }
-            _ => {
-                status = format!(":{}", self.line_jump);
+            Mode::GoToLine => {
+                if self.line_jump == 0 {
+                    status = format!(":");
+                } else {
+                    status = format!(":{}", self.line_jump);
+                }
             }
         }
 

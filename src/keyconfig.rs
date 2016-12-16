@@ -5,20 +5,33 @@ use std::io::prelude::*;
 use rustbox::Key;
 use viewer;
 
+macro_rules! map(
+    { $($key:expr => $value:expr),+ } => {
+        {
+            let mut m = ::std::collections::HashMap::new();
+            $(
+                m.insert($key, $value);
+            )+
+            m
+        }
+    };
+);
+
 pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
     // Defaults
-    let mut actions = HashMap::new();
-    actions.insert(Key::Right, viewer::Action::MoveRight);
-    actions.insert(Key::Left, viewer::Action::MoveLeft);
-    actions.insert(Key::Down, viewer::Action::MoveDown);
-    actions.insert(Key::Up, viewer::Action::MoveUp);
-    actions.insert(Key::PageUp, viewer::Action::MovePageUp);
-    actions.insert(Key::PageDown, viewer::Action::MovePageDown);
-    actions.insert(Key::Home, viewer::Action::MoveStartLine);
-    actions.insert(Key::End, viewer::Action::MoveEndLine);
-    actions.insert(Key::Char('g'), viewer::Action::GoToLine);
-    actions.insert(Key::Enter, viewer::Action::Go);
-    actions.insert(Key::Char('q'), viewer::Action::Quit);
+    let mut actions = map!{
+        Key::Right => viewer::Action::MoveRight,
+        Key::Left => viewer::Action::MoveLeft,
+        Key::Down => viewer::Action::MoveDown,
+        Key::Up => viewer::Action::MoveUp,
+        Key::PageUp => viewer::Action::MovePageUp,
+        Key::PageDown => viewer::Action::MovePageDown,
+        Key::Home => viewer::Action::MoveStartLine,
+        Key::End => viewer::Action::MoveEndLine,
+        Key::Char('g') => viewer::Action::GoToLine,
+        Key::Enter => viewer::Action::Go,
+        Key::Char('q') => viewer::Action::Quit
+    };
 
     // Load config file key settings
     let mut config_file = match File::open(filepath) {

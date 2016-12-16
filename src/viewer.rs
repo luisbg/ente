@@ -456,8 +456,8 @@ impl Viewer {
         self.mode = Mode::Read;  // Set back to previous mode
         self.line_jump = 0;
 
-        if line_num > self.line_count {
-            info!("ERROR: GoToLine {} past end of file", line_num);
+        if line_num > self.line_count || line_num == 0 {
+            info!("ERROR: Invalid line number {}", line_num);
             self.update();
 
             return;

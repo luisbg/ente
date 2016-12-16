@@ -405,7 +405,9 @@ impl Viewer {
                         self.move_cursor(action);
                     }
                     Action::GoToLine => {
-                        self.go_to_line(action, key);
+                        info!("Enter GoToLine mode");
+                        self.mode = Mode::GoToLine;
+                        self.update();
                     }
                     _ => {}
                 }
@@ -413,11 +415,11 @@ impl Viewer {
             Mode::GoToLine => {
                 match action {
                     Action::Go => {
-                        self.go_to_line(action, key);
+                        self.do_line_jump();
                     }
                     _ => {
                         // Numbers don't always match GoToLine action
-                        self.go_to_line(Action::GoToLine, key);
+                        self.go_to_line_mode(key);
                     }
                 }
             }
@@ -426,61 +428,54 @@ impl Viewer {
         true
     }
 
-    fn go_to_line(&mut self, action: Action, key: Key) {
-        match action {
-            Action::Go => {
-                let mut line_num = self.line_jump;
 
-                self.mode = Mode::Read;  // Set back to previous mode
-                self.line_jump = 0;
-
-                if line_num > self.line_count {
-                    info!("ERROR: GoToLine {} past end of file", line_num);
-                    self.update();
-
-                    return;
-                }
-
-                info!("Go to line {}", line_num);
-                self.set_current_line(line_num);
-
-                // Update display if line_num is outside of it
-                if line_num < self.disp_line ||
-                   line_num >= self.disp_line + self.height {
-                    if line_num > self.line_count - self.height {
-                        line_num = self.line_count - self.height + 1;
-                    }
-                    match self.display_chunk(line_num, 1) {
-                        Ok(_) => {}
-                        Err(_) => {}
-                    }
-                }
+    fn go_to_line_mode(&mut self, key: Key) {
+        let n = match key {
+            Key::Char('1') => 1,
+            Key::Char('2') => 2,
+            Key::Char('3') => 3,
+            Key::Char('4') => 4,
+            Key::Char('5') => 5,
+            Key::Char('6') => 6,
+            Key::Char('7') => 7,
+            Key::Char('8') => 8,
+            Key::Char('9') => 9,
+            Key::Char('0') => 0,
+            _ => {
+                return;
             }
-            Action::GoToLine => {
-                if self.mode != Mode::GoToLine {
-                    info!("Enter GoToLine mode");
-                    self.mode = Mode::GoToLine;
-                } else {
-                    let n = match key {
-                        Key::Char('1') => 1,
-                        Key::Char('2') => 2,
-                        Key::Char('3') => 3,
-                        Key::Char('4') => 4,
-                        Key::Char('5') => 5,
-                        Key::Char('6') => 6,
-                        Key::Char('7') => 7,
-                        Key::Char('8') => 8,
-                        Key::Char('9') => 9,
-                        Key::Char('0') => 0,
-                        _ => {
-                            return;
-                        }
-                    };
+        };
 
-                    self.line_jump = (self.line_jump * 10) + n;
-                }
+        self.line_jump = (self.line_jump * 10) + n;
+        self.update();
+    }
+
+    fn do_line_jump(&mut self) {
+        let mut line_num = self.line_jump;
+
+        self.mode = Mode::Read;  // Set back to previous mode
+        self.line_jump = 0;
+
+        if line_num > self.line_count {
+            info!("ERROR: GoToLine {} past end of file", line_num);
+            self.update();
+
+            return;
+        }
+
+        info!("Go to line {}", line_num);
+        self.set_current_line(line_num);
+
+        // Update display if line_num is outside of it
+        if line_num < self.disp_line ||
+           line_num >= self.disp_line + self.height {
+            if line_num > self.line_count - self.height {
+                line_num = self.line_count - self.height + 1;
             }
-            _ => {}
+            match self.display_chunk(line_num, 1) {
+                Ok(_) => {}
+                Err(_) => {}
+            }
         }
 
         self.update();

@@ -18,6 +18,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io;
 
+use std::env;
 use slog::DrainExt;
 use std::collections::HashMap;
 use docopt::Docopt;
@@ -89,12 +90,18 @@ fn main() {
     };
     info!("Application started (at {})", time_str);
 
-    let mut key_config_file = args.get_str("--keyconfig");
+    let mut key_config_file = args.get_str("--keyconfig").to_string();
     if key_config_file.len() == 0 {
         // No config file set
-        key_config_file = "keys.conf";
+        key_config_file = match env::home_dir() {
+            Some(mut path) => {
+                path.push(".config/ente/keys.conf");
+                path.to_str().unwrap().to_string()
+            }
+            None => String::from("keys.conf"),
+        }
     }
-    let actions = keyconfig::fill_key_map(key_config_file);
+    let actions = keyconfig::fill_key_map(key_config_file.as_ref());
 
     // Run catching errors
     if let Err(ref e) = run(args.get_str("FILE"), actions) {

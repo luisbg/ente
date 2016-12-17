@@ -10,14 +10,17 @@ extern crate slog;
 extern crate slog_scope;
 extern crate time;
 extern crate slog_stream;
+extern crate rustc_serialize;
+extern crate docopt;
 
 use std::error::Error as StdError;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io;
-use std::env;
 
 use slog::DrainExt;
+use std::collections::HashMap;
+use docopt::Docopt;
 
 mod errors {
     error_chain!{}
@@ -31,6 +34,26 @@ mod keyconfig;
 const FILE_POS_LOG: usize = 65;
 
 struct LogFormat;
+
+const USAGE: &'static str = "
+Ente text editor.
+
+Usage:
+  ente FILE [--keyconfig=<kc>]
+  ente (-h | --help)
+  ente --version
+
+  Options:
+    -h --help          Show this screen.
+    --version          Show version.
+    --keyconfig=<kc>   Key configurationf file.
+";
+
+#[derive(Debug, RustcDecodable)]
+struct Args {
+    arg_file: String,
+    flag_keyconfig: String,
+}
 
 impl slog_stream::Format for LogFormat {
     fn format(&self,
@@ -49,6 +72,10 @@ impl slog_stream::Format for LogFormat {
 }
 
 fn main() {
+    let args = Docopt::new(USAGE)
+        .and_then(|dopt| dopt.parse())
+        .unwrap_or_else(|e| e.exit());
+
     // Start logger
     let log_file = File::create("ente.log").expect("Couldn't open log file");
     let file_drain = slog_stream::stream(log_file, LogFormat);
@@ -62,8 +89,15 @@ fn main() {
     };
     info!("Application started (at {})", time_str);
 
+    let mut key_config_file = args.get_str("--keyconfig");
+    if key_config_file.len() == 0 {
+        // No config file set
+        key_config_file = "keys.conf";
+    }
+    let actions = keyconfig::fill_key_map(key_config_file);
+
     // Run catching errors
-    if let Err(ref e) = run() {
+    if let Err(ref e) = run(args.get_str("FILE"), actions) {
         println!("error: {}", e);
         for e in e.iter().skip(1) {
             println!("caused by: {}", e);
@@ -77,16 +111,9 @@ fn main() {
     }
 }
 
-fn run() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-
-    // Check command arguments
-    let filepath = match args.len() {
-        1 => bail!("You need to specify a file to open"),
-        2 => &args[1],
-        _ => bail!("You can only open one file"),
-    };
-
+fn run(filepath: &str,
+       actions: HashMap<rustbox::Key, viewer::Action>)
+       -> Result<()> {
     // Open the file
     let mut file = File::open(filepath).chain_err(|| "Couldn't open file")?;
     info!("Opening file: {}", filepath);
@@ -102,8 +129,6 @@ fn run() -> Result<()> {
         None => "unknown".to_string(),
     };
 
-    let config_file = "keys.conf";
-    let actions = keyconfig::fill_key_map(config_file);
     let mut viewer = viewer::Viewer::new(&text, filename, actions);
 
     // Wait for keyboard events

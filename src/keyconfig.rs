@@ -29,6 +29,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::Home => viewer::Action::MoveStartLine,
         Key::End => viewer::Action::MoveEndLine,
         Key::Char('g') => viewer::Action::GoToLine,
+        Key::Char('/') => viewer::Action::Search,
         Key::Enter => viewer::Action::Go,
         Key::Char('q') => viewer::Action::Quit
     };
@@ -150,6 +151,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
             "MoveStartLine" => viewer::Action::MoveStartLine,
             "MoveEndLine" => viewer::Action::MoveEndLine,
             "GoToLine" => viewer::Action::GoToLine,
+            "Search" => viewer::Action::Search,
             "Quit" => viewer::Action::Quit,
             _ => {
                 continue;

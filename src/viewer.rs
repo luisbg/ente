@@ -30,6 +30,7 @@ pub enum Action {
     MoveStartLine,
     MoveEndLine,
     GoToLine,
+    Search,
     Quit,
 }
 
@@ -37,6 +38,7 @@ pub enum Action {
 enum Mode {
     Read,
     GoToLine,
+    Search,
 }
 
 pub struct Cursor {
@@ -59,6 +61,7 @@ pub struct Viewer {
     line_count: usize,
     line_jump: usize,
     cursor: Cursor,
+    search_string: String,
 }
 
 impl Viewer {
@@ -93,6 +96,7 @@ impl Viewer {
             line_count: line_count,
             line_jump: 0,
             cursor: cursor,
+            search_string: String::new(),
         };
 
         view.set_current_line(1);
@@ -409,6 +413,12 @@ impl Viewer {
                         self.mode = Mode::GoToLine;
                         self.update();
                     }
+                    Action::Search => {
+                        info!("Enter Search mode");
+                        self.mode = Mode::Search;
+                        self.search_string = String::new();
+                        self.update();
+                    }
                     _ => {}
                 }
             }
@@ -423,11 +433,24 @@ impl Viewer {
                     }
                 }
             }
+            Mode::Search => {
+                match action {
+                    Action::Go => {
+                        self.do_forward_search();
+                    }
+                    Action::Quit => {
+                        self.mode = Mode::Read;
+                        self.update();
+                    }
+                    _ => {
+                        self.search_mode(key);
+                    }
+                }
+            }
         }
 
         true
     }
-
 
     fn go_to_line_mode(&mut self, key: Key) {
         let n = match key {
@@ -481,6 +504,65 @@ impl Viewer {
         self.update();
     }
 
+    fn search_mode(&mut self, key: Key) {
+        match key {
+            Key::Char(c) => {
+                self.search_string.push(c);
+            }
+            Key::Backspace => {
+                self.search_string.pop();
+            }
+            _ => return,
+        }
+
+        self.update();
+    }
+
+    fn do_forward_search(&mut self) {
+        self.mode = Mode::Read;
+        let mut line_num = 0;
+
+        let text_copy = self.text.clone();  // so we can borrow self as mutable
+        let mut lines = text_copy.lines().skip(self.cursor.line);
+        for ln in self.cursor.line..self.line_count {
+            match lines.next() {
+                Some(l) => {
+                    if l.contains(self.search_string.as_str()) {
+                        line_num = ln + 1;
+                        break;
+                    }
+                }
+                _ => {
+                    return;
+                }
+            }
+        }
+
+        if line_num != 0 {
+            info!("Found '{}' in line {}",
+                  self.search_string,
+                  line_num);
+            self.set_current_line(line_num);
+
+            // Update display if line_num is outside of it
+            if line_num < self.disp_line ||
+               line_num >= self.disp_line + self.height {
+                if line_num > self.line_count - self.height {
+                    line_num = self.line_count - self.height + 1;
+                }
+                match self.display_chunk(line_num, 1) {
+                    Ok(_) => {}
+                    Err(_) => {}
+                }
+            }
+
+        } else {
+            info!("Did not found: {}", self.search_string);
+        }
+
+        self.update();
+    }
+
     fn set_current_line(&mut self, line_num: usize) {
         self.cursor.line = line_num;
 
@@ -519,6 +601,13 @@ impl Viewer {
                     status = format!(":");
                 } else {
                     status = format!(":{}", self.line_jump);
+                }
+            }
+            Mode::Search => {
+                if self.search_string.is_empty() {
+                    status = format!("/");
+                } else {
+                    status = format!("/{}", self.search_string);
                 }
             }
         }

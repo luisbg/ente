@@ -518,26 +518,36 @@ impl Viewer {
             return;
         }
 
+        let text_copy = self.text.clone();  // so we can borrow self as mutable
+        let mut lines = text_copy.lines().skip(self.cursor.line - 1);
         let mut line_num = 0;
         let mut col = 0;
 
-        let text_copy = self.text.clone();  // so we can borrow self as mutable
-        let mut lines = text_copy.lines().skip(self.cursor.line);
-        for ln in self.cursor.line..self.line_count {
-            match lines.next() {
-                Some(l) => {
-                    match l.find(self.search_string.as_str()) {
-                        Some(c) => {
-                            info!("Found: {} {}", line_num, c);
-                            line_num = ln + 1;
-                            col = c + 1;
-                            break;
+        // Check current line after the cursor
+        let (_, rest_line) = lines.next().unwrap().split_at(self.cursor.col);
+        match rest_line.find(self.search_string.as_str()) {
+            Some(c) => {
+                line_num = self.cursor.line;
+                col = c + self.cursor.col + 1;
+            }
+            None => {
+                // If nothing found in current line, search in the rest
+                for ln in self.cursor.line..self.line_count {
+                    match lines.next() {
+                        Some(l) => {
+                            match l.find(self.search_string.as_str()) {
+                                Some(c) => {
+                                    line_num = ln + 1;
+                                    col = c + 1;
+                                    break;  // Found it
+                                }
+                                None => {}
+                            }
                         }
-                        None => {}
+                        _ => {
+                            return;
+                        }
                     }
-                }
-                _ => {
-                    return;
                 }
             }
         }

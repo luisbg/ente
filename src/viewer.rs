@@ -508,15 +508,21 @@ impl Viewer {
     fn do_forward_search(&mut self) {
         self.mode = Mode::Read;
         let mut line_num = 0;
+        let mut col = 0;
 
         let text_copy = self.text.clone();  // so we can borrow self as mutable
         let mut lines = text_copy.lines().skip(self.cursor.line);
         for ln in self.cursor.line..self.line_count {
             match lines.next() {
                 Some(l) => {
-                    if l.contains(self.search_string.as_str()) {
-                        line_num = ln + 1;
-                        break;
+                    match l.find(self.search_string.as_str()) {
+                        Some(c) => {
+                            info!("Found: {} {}", line_num, c);
+                            line_num = ln + 1;
+                            col = c + 1;
+                            break;
+                        }
+                        None => {}
                     }
                 }
                 _ => {
@@ -529,7 +535,7 @@ impl Viewer {
             info!("Found '{}' in line {}",
                   self.search_string,
                   line_num);
-            self.set_cursor(line_num, 1);
+            self.set_cursor(line_num, col);
         } else {
             info!("Did not found: {}", self.search_string);
         }

@@ -474,7 +474,7 @@ impl Viewer {
     }
 
     fn do_line_jump(&mut self) {
-        let mut line_num = self.line_jump;
+        let line_num = self.line_jump;
 
         self.mode = Mode::Read;  // Set back to previous mode
         self.line_jump = 0;
@@ -487,20 +487,7 @@ impl Viewer {
         }
 
         info!("Go to line {}", line_num);
-        self.set_current_line(line_num);
-
-        // Update display if line_num is outside of it
-        if line_num < self.disp_line ||
-           line_num >= self.disp_line + self.height {
-            if line_num > self.line_count - self.height {
-                line_num = self.line_count - self.height + 1;
-            }
-            match self.display_chunk(line_num, 1) {
-                Ok(_) => {}
-                Err(_) => {}
-            }
-        }
-
+        self.set_cursor(line_num, 1);
         self.update();
     }
 
@@ -542,20 +529,7 @@ impl Viewer {
             info!("Found '{}' in line {}",
                   self.search_string,
                   line_num);
-            self.set_current_line(line_num);
-
-            // Update display if line_num is outside of it
-            if line_num < self.disp_line ||
-               line_num >= self.disp_line + self.height {
-                if line_num > self.line_count - self.height {
-                    line_num = self.line_count - self.height + 1;
-                }
-                match self.display_chunk(line_num, 1) {
-                    Ok(_) => {}
-                    Err(_) => {}
-                }
-            }
-
+            self.set_cursor(line_num, 1);
         } else {
             info!("Did not found: {}", self.search_string);
         }
@@ -581,6 +555,24 @@ impl Viewer {
             if self.cursor.col == 0 {
                 // previous line was empty
                 self.cursor.col = 1;   // jump back to first column
+            }
+        }
+    }
+
+    fn set_cursor(&mut self, mut line_num: usize, col: usize) {
+        self.focus_col = col;
+
+        self.set_current_line(line_num);
+
+        // Update display if line_num is outside of it
+        if line_num < self.disp_line ||
+           line_num >= self.disp_line + self.height {
+            if line_num > self.line_count - self.height {
+                line_num = self.line_count - self.height + 1;
+            }
+            match self.display_chunk(line_num, 1) {
+                Ok(_) => {}
+                Err(_) => {}
             }
         }
     }

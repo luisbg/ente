@@ -31,6 +31,7 @@ pub enum Action {
     MoveEndLine,
     GoToLine,
     Search,
+    SearchNext,
     Quit,
 }
 
@@ -419,6 +420,10 @@ impl Viewer {
                         self.search_string = String::new();
                         self.update();
                     }
+                    Action::SearchNext => {
+                        info!("Search for next: {}", self.search_string);
+                        self.do_forward_search();
+                    }
                     _ => {}
                 }
             }
@@ -507,6 +512,12 @@ impl Viewer {
 
     fn do_forward_search(&mut self) {
         self.mode = Mode::Read;
+
+        if self.search_string == "" {
+            self.update();
+            return;
+        }
+
         let mut line_num = 0;
         let mut col = 0;
 

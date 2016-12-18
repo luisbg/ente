@@ -58,7 +58,6 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         }
         let mut split = ln.split(':');
         let key = split.next().unwrap_or("NoKey");
-        info!("len of key {}", key.trim().len());
         let k = match key.trim().len() {
             1 => Key::Char(key.trim().chars().next().unwrap()),
             2 => {
@@ -141,6 +140,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         let act = split.next().unwrap_or("NoAct");
         let a = match act.trim() {
             "None" => viewer::Action::None,
+            "Go" => viewer::Action::Go,
             "MoveRight" => viewer::Action::MoveRight,
             "MoveLeft" => viewer::Action::MoveLeft,
             "MoveDown" => viewer::Action::MoveDown,

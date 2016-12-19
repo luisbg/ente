@@ -32,6 +32,7 @@ pub enum Action {
     GoToLine,
     Search,
     SearchNext,
+    SearchPrevious,
     Quit,
 }
 
@@ -424,6 +425,10 @@ impl Viewer {
                         info!("Search for next: {}", self.search_string);
                         self.do_forward_search();
                     }
+                    Action::SearchPrevious => {
+                        info!("Search for previous: {}", self.search_string);
+                        self.do_backward_search();
+                    }
                     _ => {}
                 }
             }
@@ -538,6 +543,61 @@ impl Viewer {
                             match l.find(self.search_string.as_str()) {
                                 Some(c) => {
                                     line_num = ln + 1;
+                                    col = c + 1;
+                                    break;  // Found it
+                                }
+                                None => {}
+                            }
+                        }
+                        _ => {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        if line_num != 0 {
+            info!("Found '{}' in line {}",
+                  self.search_string,
+                  line_num);
+            self.set_cursor(line_num, col);
+        } else {
+            info!("Did not found: {}", self.search_string);
+        }
+
+        self.update();
+    }
+
+    fn do_backward_search(&mut self) {
+        self.mode = Mode::Read;
+
+        if self.search_string == "" {
+            self.update();
+            return;
+        }
+
+        let text_copy = self.text.clone();  // so we can borrow self as mutable
+        let mut lines =
+            text_copy.lines().rev().skip(self.line_count - self.cursor.line);
+        let mut line_num = 0;
+        let mut col = 0;
+
+        // Check current line before the cursor
+        let (beg_line, _) = lines.next().unwrap().split_at(self.cursor.col);
+        match beg_line.rfind(self.search_string.as_str()) {
+            Some(c) => {
+                line_num = self.cursor.line;
+                col = c + 1;
+            }
+            None => {
+                // If nothing found in current line, search in the rest
+                for ln in (1..self.cursor.line).rev() {
+                    match lines.next() {
+                        Some(l) => {
+                            match l.rfind(self.search_string.as_str()) {
+                                Some(c) => {
+                                    line_num = ln;
                                     col = c + 1;
                                     break;  // Found it
                                 }

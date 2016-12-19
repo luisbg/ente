@@ -136,7 +136,8 @@ fn run(filepath: &str,
         None => "unknown".to_string(),
     };
 
-    let mut viewer = viewer::Viewer::new(&text, filename, actions);
+    let text_clone = text.clone();
+    let mut viewer = viewer::Viewer::new(&text_clone, filename, actions);
 
     // Wait for keyboard events
     match viewer.poll_event() {

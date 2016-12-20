@@ -34,6 +34,7 @@ pub enum Action {
     SearchNext,
     SearchPrevious,
     MoveNextWord,
+    MovePrevWord,
     Quit,
 }
 
@@ -433,6 +434,9 @@ impl Viewer {
                     Action::MoveNextWord => {
                         self.move_next_word();
                     }
+                    Action::MovePrevWord => {
+                        self.move_prev_word();
+                    }
                     _ => {}
                 }
             }
@@ -651,6 +655,49 @@ impl Viewer {
             self.update();
         }
     }
+
+    fn move_prev_word(&mut self) {
+        let text_copy = self.text.clone();  // so we can borrow self as mutable
+        let mut lines =
+            text_copy.lines().rev().skip(self.line_count - self.cursor.line);
+        let line_num = self.cursor.line;
+        let col: usize;
+
+        let line = lines.next();
+        if self.cursor.col > 1 {
+            // Check current line before the cursor
+            let (beg_line, _) = line.unwrap().split_at(self.cursor.col - 2);
+            match beg_line.rfind(' ') {
+                Some(c) => {
+                    col = c + 2;
+                }
+                None => {
+                    // If no word break before cursor in current line, go to
+                    // the beginning of the line
+                    col = 1;
+                }
+            }
+        } else {
+            // If at beginning of line, go to end of previous line
+            match lines.next() {
+                Some(line) => {
+                    self.cursor.col = line.len();
+                    self.cursor.line = line_num - 1;
+                    self.move_prev_word();
+
+                    return; // return to avoid set_cursor() below with old line_num
+                }
+                _ => {
+                    // Already at beginning of file, nothing to do
+                    return;
+                }
+            }
+        }
+
+        self.set_cursor(line_num, col);
+        self.update();
+    }
+
 
     fn set_current_line(&mut self, line_num: usize) {
         self.cursor.line = line_num;

@@ -33,6 +33,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::Char('n') => viewer::Action::SearchNext,
         Key::Char('p') => viewer::Action::SearchPrevious,
         Key::Char('w') => viewer::Action::MoveNextWord,
+        Key::Char('s') => viewer::Action::MovePrevWord,
         Key::Enter => viewer::Action::Go,
         Key::Char('q') => viewer::Action::Quit
     };
@@ -158,6 +159,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
             "SearchNext" => viewer::Action::SearchNext,
             "SearchPrevious" => viewer::Action::SearchPrevious,
             "MoveNextWord" => viewer::Action::MoveNextWord,
+            "MovePrevWord" => viewer::Action::MovePrevWord,
             "Quit" => viewer::Action::Quit,
             _ => {
                 continue;

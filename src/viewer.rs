@@ -33,6 +33,7 @@ pub enum Action {
     Search,
     SearchNext,
     SearchPrevious,
+    MoveNextWord,
     Quit,
 }
 
@@ -429,6 +430,9 @@ impl Viewer {
                         info!("Search for previous: {}", self.search_string);
                         self.do_backward_search();
                     }
+                    Action::MoveNextWord => {
+                        self.move_next_word();
+                    }
                     _ => {}
                 }
             }
@@ -622,6 +626,30 @@ impl Viewer {
         }
 
         self.update();
+    }
+
+    fn move_next_word(&mut self) {
+        let text_copy = self.text.clone();  // so we can borrow self as mutable
+        let mut lines = text_copy.lines().skip(self.cursor.line - 1);
+        let mut line_num = self.cursor.line;
+        let mut col = 1;
+
+        // Check current line after the cursor
+        let (_, rest_line) = lines.next().unwrap().split_at(self.cursor.col);
+        match rest_line.find(" ") {
+            Some(c) => {
+                col = c + self.cursor.col + 2;
+            }
+            None => {
+                // If no word break found in current line, go to next
+                line_num += 1;
+            }
+        }
+
+        if line_num <= self.line_count {
+            self.set_cursor(line_num, col);
+            self.update();
+        }
     }
 
     fn set_current_line(&mut self, line_num: usize) {

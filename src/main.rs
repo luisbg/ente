@@ -1,6 +1,9 @@
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+
 extern crate rustbox;
 #[macro_use]
 extern crate error_chain;

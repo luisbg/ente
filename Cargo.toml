@@ -12,3 +12,7 @@ slog-scope = "0.2.2"
 time = "0.1.35"
 docopt = "0.6.86"
 rustc-serialize = "0.3.22"
+clippy = {version = "*", optional = true}
+
+[features]
+default = []

@@ -424,11 +424,9 @@ impl Viewer {
                         self.update();
                     }
                     Action::SearchNext => {
-                        info!("Search for next: {}", self.search_string);
                         self.do_forward_search();
                     }
                     Action::SearchPrevious => {
-                        info!("Search for previous: {}", self.search_string);
                         self.do_backward_search();
                     }
                     Action::MoveNextWord => {
@@ -531,6 +529,7 @@ impl Viewer {
             return;
         }
 
+        info!("Search for next: {}", self.search_string);
         let text_copy = self.text.clone();  // so we can borrow self as mutable
         let mut lines = text_copy.lines().skip(self.cursor.line - 1);
         let mut line_num = 0;
@@ -585,6 +584,7 @@ impl Viewer {
             return;
         }
 
+        info!("Search for previous: {}", self.search_string);
         let text_copy = self.text.clone();  // so we can borrow self as mutable
         let mut lines =
             text_copy.lines().rev().skip(self.line_count - self.cursor.line);
@@ -651,6 +651,7 @@ impl Viewer {
         }
 
         if line_num <= self.line_count {
+            info!("Moving to next word at {}:{}", line_num, col);
             self.set_cursor(line_num, col);
             self.update();
         }
@@ -694,6 +695,7 @@ impl Viewer {
             }
         }
 
+        info!("Moving to previous word at {}:{}", line_num, col);
         self.set_cursor(line_num, col);
         self.update();
     }

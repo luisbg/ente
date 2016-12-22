@@ -386,7 +386,7 @@ impl Viewer {
 
     fn match_key_action(&mut self, key: Key) -> bool {
         let no_action = Action::None;
-        let action = self.actions.get(&key).unwrap_or(&no_action).clone();
+        let action = *self.actions.get(&key).unwrap_or(&no_action);
 
         match self.mode {
             Mode::Read => {

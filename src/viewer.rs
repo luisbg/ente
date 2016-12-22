@@ -116,7 +116,7 @@ impl Viewer {
             }
         }
 
-        return view;
+        view
     }
 
     pub fn poll_event(&mut self) -> Result<()> {

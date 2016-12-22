@@ -625,7 +625,7 @@ impl Viewer {
 
         // Check current line after the cursor
         let (_, rest_line) = lines.next().unwrap().split_at(self.cursor.col);
-        match rest_line.find(" ") {
+        match rest_line.find(' ') {
             Some(c) => {
                 col = c + self.cursor.col + 2;
             }
@@ -736,14 +736,14 @@ impl Viewer {
             }
             Mode::GoToLine => {
                 if self.line_jump == 0 {
-                    status = format!(":");
+                    status = String::from(":");
                 } else {
                     status = format!(":{}", self.line_jump);
                 }
             }
             Mode::Search => {
                 if self.search_string.is_empty() {
-                    status = format!("/");
+                    status = String::from("/");
                 } else {
                     status = format!("/{}", self.search_string);
                 }

@@ -67,7 +67,7 @@ pub struct Viewer {
 }
 
 impl Viewer {
-    pub fn new(text: &String,
+    pub fn new(text: &str,
                filename: String,
                key_map: HashMap<Key, Action>)
                -> Viewer {
@@ -79,13 +79,12 @@ impl Viewer {
 
         rustbox.set_cursor(0, 0);
 
-        let text_copy = text.clone();
         let cursor = Cursor { line: 1, col: 1 };
         let line_count = text.lines().count();
 
         let mut view = Viewer {
             rustbox: rustbox,
-            text: text_copy,
+            text: String::from(text),
             mode: Mode::Read,
             actions: key_map,
             height: height,

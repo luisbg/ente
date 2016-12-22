@@ -94,7 +94,7 @@ fn main() {
     info!("Application started (at {})", time_str);
 
     let mut key_config_file = args.get_str("--keyconfig").to_string();
-    if key_config_file.len() == 0 {
+    if key_config_file.is_empty() {
         // No config file set
         key_config_file = match env::home_dir() {
             Some(mut path) => {

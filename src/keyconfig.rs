@@ -58,7 +58,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
     }
 
     for ln in text.lines() {
-        if ln.len() == 0 || &ln[0..1] == "#" {
+        if ln.is_empty() || &ln[0..1] == "#" {
             continue;
         }
         let mut split = ln.split(':');

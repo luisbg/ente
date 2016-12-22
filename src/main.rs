@@ -70,7 +70,7 @@ impl slog_stream::Format for LogFormat {
             msg.push(' ');
         }
         msg += format!("[{} : {}]\n", rinfo.file(), rinfo.line()).as_ref();
-        let _ = try!(io.write_all(msg.as_bytes()));
+        try!(io.write_all(msg.as_bytes()));
         Ok(())
     }
 }

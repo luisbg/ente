@@ -159,11 +159,12 @@ impl Viewer {
 
                 // Check if there is line content to show or past the end
                 if line.len() > beg {
-                    let mut end = line.len();
-                    if (line.len() - beg) >= self.width {
+                    let end = if (line.len() - beg) >= self.width {
                         // Don't show characters past terminal's right edge
-                        end = beg + self.width;
-                    }
+                        beg + self.width
+                    } else {
+                        line.len()
+                    };
                     self.rustbox.print(RB_COL_START,
                                        ln,
                                        rustbox::RB_NORMAL,
@@ -360,12 +361,11 @@ impl Viewer {
         match action {
             Action::MoveDown | Action::MoveUp | Action::MovePageDown |
             Action::MovePageUp => {
-                let tmp_cur_col: usize;
-                if self.cursor.col == 0 {
-                    tmp_cur_col = 1;
+                let tmp_cur_col = if self.cursor.col == 0 {
+                    1
                 } else {
-                    tmp_cur_col = self.cursor.col;
-                }
+                    self.cursor.col
+                };
                 if tmp_cur_col < self.disp_col {
                     // Cursor before display, scroll left
                     let disp_col = tmp_cur_col;
@@ -766,12 +766,11 @@ impl Viewer {
             }
         }
 
-        let cur_col: isize;
-        if self.cursor.col == 0 {
-            cur_col = 0;
+        let cur_col = if self.cursor.col == 0 {
+            0
         } else {
-            cur_col = (self.cursor.col - self.disp_col) as isize;
-        }
+            (self.cursor.col - self.disp_col) as isize
+        };
         self.rustbox.set_cursor(cur_col,
                                 (self.cursor.line - self.disp_line) as isize);
 

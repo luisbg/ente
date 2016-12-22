@@ -8,9 +8,7 @@ use std::collections::HashMap;
 use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
 
-mod errors {
-    error_chain!{}
-}
+mod errors {}
 
 use errors::*;
 

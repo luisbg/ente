@@ -248,10 +248,7 @@ impl Viewer {
                 return;
             }
         }
-        match self.display_chunk(disp_line, disp_col) {
-            Ok(_) => {}
-            Err(_) => {}
-        }
+        let _ = self.display_chunk(disp_line, disp_col);
     }
 
     fn move_cursor(&mut self, action: Action) {
@@ -370,20 +367,14 @@ impl Viewer {
                     // Cursor before display, scroll left
                     let disp_col = tmp_cur_col;
                     let disp_line = self.disp_line;
-                    match self.display_chunk(disp_line, disp_col) {
-                        Ok(_) => {}
-                        Err(_) => {}
-                    }
+                    let _ = self.display_chunk(disp_line, disp_col);
                 }
 
                 if self.cursor.col > self.disp_col + self.width - 1 {
                     // Cursor past display, scroll right
                     let disp_col = self.cursor.col - self.width + 1;
                     let disp_line = self.disp_line;
-                    match self.display_chunk(disp_line, disp_col) {
-                        Ok(_) => {}
-                        Err(_) => {}
-                    }
+                    let _ = self.display_chunk(disp_line, disp_col);
                 }
 
             }
@@ -732,10 +723,7 @@ impl Viewer {
             if line_num > self.line_count - self.height {
                 line_num = self.line_count - self.height + 1;
             }
-            match self.display_chunk(line_num, 1) {
-                Ok(_) => {}
-                Err(_) => {}
-            }
+            let _ = self.display_chunk(line_num, 1);
         }
     }
 

@@ -57,6 +57,13 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         }
     }
 
+    parse_config_file(text, &mut actions);
+
+    actions
+}
+
+fn parse_config_file(text: String,
+                     actions: &mut HashMap<Key, viewer::Action>) {
     for ln in text.lines() {
         if ln.is_empty() || &ln[0..1] == "#" {
             continue;
@@ -168,6 +175,4 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
 
         actions.insert(k, a);
     }
-
-    actions
 }

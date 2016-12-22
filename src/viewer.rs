@@ -536,13 +536,11 @@ impl Viewer {
                 for ln in self.cursor.line..self.line_count {
                     match lines.next() {
                         Some(l) => {
-                            match l.find(self.search_string.as_str()) {
-                                Some(c) => {
-                                    line_num = ln + 1;
-                                    col = c + 1;
-                                    break;  // Found it
-                                }
-                                None => {}
+                            if let Some(c) =
+                                l.find(self.search_string.as_str()) {
+                                line_num = ln + 1;
+                                col = c + 1;
+                                break;  // Found it
                             }
                         }
                         _ => {
@@ -592,13 +590,11 @@ impl Viewer {
                 for ln in (1..self.cursor.line).rev() {
                     match lines.next() {
                         Some(l) => {
-                            match l.rfind(self.search_string.as_str()) {
-                                Some(c) => {
-                                    line_num = ln;
-                                    col = c + 1;
-                                    break;  // Found it
-                                }
-                                None => {}
+                            if let Some(c) =
+                                l.rfind(self.search_string.as_str()) {
+                                line_num = ln;
+                                col = c + 1;
+                                break;  // Found it
                             }
                         }
                         _ => {

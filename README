@@ -13,3 +13,5 @@ Comments and patches welcome :)
 
 To run:
 $ cargo run text_file
+or
+$ cargo run text_file --keyconfig=<config_file>

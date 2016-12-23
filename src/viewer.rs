@@ -33,12 +33,15 @@ pub enum Action {
     SearchPrevious,
     MoveNextWord,
     MovePrevWord,
+    EditMode,
+    ReadMode,
     Quit,
 }
 
 #[derive(Eq,PartialEq)]
 enum Mode {
     Read,
+    Edit,
     GoToLine,
     Search,
 }
@@ -395,6 +398,25 @@ impl Viewer {
         let action = *self.actions.get(&key).unwrap_or(&no_action);
 
         match self.mode {
+            Mode::Edit => {
+                match action {
+                    Action::Quit => {
+                        info!("Quitting application");
+                        return false;
+                    }
+                    Action::MoveUp | Action::MoveDown | Action::MoveLeft |
+                    Action::MoveRight | Action::MovePageDown |
+                    Action::MovePageUp | Action::MoveStartLine |
+                    Action::MoveEndLine => {
+                        self.move_cursor(action);
+                    }
+                    Action::ReadMode => {
+                        self.switch_mode(action);
+                        self.update();
+                    }
+                    _ => {}
+                }
+            }
             Mode::Read => {
                 match action {
                     Action::Quit => {
@@ -430,6 +452,10 @@ impl Viewer {
                     Action::MovePrevWord => {
                         self.move_prev_word();
                     }
+                    Action::EditMode => {
+                        self.switch_mode(action);
+                        self.update();
+                    }
                     _ => {}
                 }
             }
@@ -461,6 +487,24 @@ impl Viewer {
         }
 
         true
+    }
+
+    fn switch_mode(&mut self, action: Action) {
+        match action {
+            Action::EditMode => {
+                if self.mode != Mode::Edit {
+                    info!("Switch to Edit Mode");
+                    self.mode = Mode::Edit;
+                }
+            }
+            Action::ReadMode => {
+                if self.mode != Mode::Read {
+                    info!("Switch to Read Mode");
+                    self.mode = Mode::Read;
+                }
+            }
+            _ => {}
+        }
     }
 
     fn go_to_line_mode(&mut self, key: Key) {
@@ -734,8 +778,14 @@ impl Viewer {
 
         let status: String;
         match self.mode {
-            Mode::Read => {
-                status = format!("{} ({},{})",
+            Mode::Read | Mode::Edit => {
+                let mode = match self.mode {
+                    Mode::Read => 'R',
+                    Mode::Edit => 'E',
+                    _ => ' ',
+                };
+                status = format!("{} -- {} ({},{})",
+                                 mode,
                                  self.filename,
                                  self.cursor.line,
                                  self.cursor.col);

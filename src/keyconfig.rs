@@ -28,6 +28,8 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::PageDown => viewer::Action::MovePageDown,
         Key::Home => viewer::Action::MoveStartLine,
         Key::End => viewer::Action::MoveEndLine,
+        Key::Char('e') => viewer::Action::EditMode,
+        Key::Ctrl('r') => viewer::Action::ReadMode,
         Key::Char('g') => viewer::Action::GoToLine,
         Key::Char('/') => viewer::Action::Search,
         Key::Char('n') => viewer::Action::SearchNext,
@@ -35,7 +37,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::Char('w') => viewer::Action::MoveNextWord,
         Key::Char('s') => viewer::Action::MovePrevWord,
         Key::Enter => viewer::Action::Go,
-        Key::Char('q') => viewer::Action::Quit
+        Key::Ctrl('q') => viewer::Action::Quit
     };
 
     // Load config file key settings
@@ -161,6 +163,8 @@ fn parse_config_file(text: String,
             "MovePageDown" => viewer::Action::MovePageDown,
             "MoveStartLine" => viewer::Action::MoveStartLine,
             "MoveEndLine" => viewer::Action::MoveEndLine,
+            "EditMode" => viewer::Action::EditMode,
+            "ReadMode" => viewer::Action::ReadMode,
             "GoToLine" => viewer::Action::GoToLine,
             "Search" => viewer::Action::Search,
             "SearchNext" => viewer::Action::SearchNext,

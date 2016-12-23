@@ -412,6 +412,11 @@ impl Viewer {
                     }
                     Action::ReadMode => {
                         self.switch_mode(action);
+
+                        // Update current line max column
+                        let cur_line = self.cursor.line;
+                        self.set_current_line(cur_line);
+
                         self.update();
                     }
                     _ => {}
@@ -454,6 +459,11 @@ impl Viewer {
                     }
                     Action::EditMode => {
                         self.switch_mode(action);
+
+                        // Update current line max column
+                        let cur_line = self.cursor.line;
+                        self.set_current_line(cur_line);
+
                         self.update();
                     }
                     _ => {}
@@ -743,7 +753,11 @@ impl Viewer {
             Some(line) => line,
             None => return,
         };
-        self.cur_line_len = line.len();
+        self.cur_line_len = if self.mode == Mode::Edit {
+            line.len() + 1
+        } else {
+            line.len()
+        };
 
         if self.cur_line_len < self.focus_col {
             // previous line was longer

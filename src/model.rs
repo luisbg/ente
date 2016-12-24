@@ -1,16 +1,22 @@
+use std::fs::OpenOptions;
+use std::io::prelude::*;
+use std::path::Path;
+
 mod errors {}
 
 pub struct Model {
     text: String,
     line_count: usize,
+    filepath: String,
 }
 
 impl Model {
-    pub fn new(text: &str) -> Model {
+    pub fn new(text: &str, filepath: &str) -> Model {
         let line_count = text.lines().count();
 
         let model = Model {
             text: String::from(text),
+            filepath: filepath.to_string(),
             line_count: line_count,
         };
 
@@ -79,5 +85,34 @@ impl Model {
         }
 
         end_len
+    }
+
+    pub fn save(&mut self) {
+        let path = Path::new(&self.filepath);
+        let mut file = match OpenOptions::new().write(true).open(&path) {
+            Ok(file) => file,
+            Err(error) => {
+                error!("There was a problem opening the file: {}", error);
+                return;
+            }
+        };
+
+        match file.write_all(self.text.as_bytes()) {
+            Ok(_) => {}
+            Err(error) => {
+                error!("Couldn't write to {} because {}",
+                       path.display(),
+                       error);
+                return;
+            }
+        }
+        match file.set_len(self.text.len() as u64) {
+            Ok(_) => info!("Successfully saved file: {}", path.display()),
+            Err(error) => {
+                error!("Couldn't truncate file {} because {}",
+                       path.display(),
+                       error)
+            }
+        }
     }
 }

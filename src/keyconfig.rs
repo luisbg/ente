@@ -37,6 +37,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::Char('w') => viewer::Action::MoveNextWord,
         Key::Char('s') => viewer::Action::MovePrevWord,
         Key::Enter => viewer::Action::Go,
+        Key::Ctrl('s') => viewer::Action::Save,
         Key::Ctrl('q') => viewer::Action::Quit
     };
 
@@ -171,6 +172,7 @@ fn parse_config_file(text: String,
             "SearchPrevious" => viewer::Action::SearchPrevious,
             "MoveNextWord" => viewer::Action::MoveNextWord,
             "MovePrevWord" => viewer::Action::MovePrevWord,
+            "Save" => viewer::Action::Save,
             "Quit" => viewer::Action::Quit,
             _ => {
                 continue;

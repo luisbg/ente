@@ -37,6 +37,7 @@ pub enum Action {
     MovePrevWord,
     EditMode,
     ReadMode,
+    Save,
     Quit,
 }
 
@@ -74,7 +75,8 @@ pub struct Viewer {
 impl Viewer {
     pub fn new(text: &str,
                filename: String,
-               key_map: HashMap<Key, Action>)
+               key_map: HashMap<Key, Action>,
+               filepath: &str)
                -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height() - 1;
@@ -85,7 +87,7 @@ impl Viewer {
         rustbox.set_cursor(0, 0);
 
         let cursor = Cursor { line: 1, col: 1 };
-        let model = model::Model::new(text);
+        let model = model::Model::new(text, filepath);
 
         let mut view = Viewer {
             rustbox: rustbox,
@@ -423,6 +425,9 @@ impl Viewer {
 
                         self.update();
                     }
+                    Action::Save => {
+                        self.model.save();
+                    }
                     _ => {
                         match key {
                             Key::Char(c) => {
@@ -482,6 +487,9 @@ impl Viewer {
                         self.set_current_line(cur_line);
 
                         self.update();
+                    }
+                    Action::Save => {
+                        self.model.save();
                     }
                     _ => {}
                 }

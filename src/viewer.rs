@@ -419,7 +419,23 @@ impl Viewer {
 
                         self.update();
                     }
-                    _ => {}
+                    _ => {
+                        let cur_line = self.cursor.line;
+                        let cur_col = self.cursor.col;
+
+                        match key {
+                            Key::Char(c) => {
+                                self.add_char(c, cur_line, cur_col);
+                            }
+                            Key::Enter => {
+                                self.add_char('\n', cur_line, cur_col);
+                            }
+                            Key::Backspace => {
+                                self.delete_char(cur_line, cur_col);
+                            }
+                            _ => {}
+                        }
+                    }
                 }
             }
             Mode::Read => {
@@ -785,6 +801,98 @@ impl Viewer {
             }
             let _ = self.display_chunk(line_num, 1);
         }
+    }
+
+    fn add_char(&mut self, c: char, line: usize, column: usize) {
+        // TODO: Use better data structure for strings. For example, a Rope
+        info!("Add {} at {}:{}", c, line, column);
+
+        let mut new_text = String::new();
+        for (x, ln) in self.text.lines().enumerate() {
+            if x == line - 1 {
+                let (beg, end) = ln.split_at(column - 1);
+                new_text.push_str(&format!("{}{}{}\n", beg, c, end));
+            } else {
+                new_text.push_str(ln);
+                new_text.push('\n');
+            }
+        }
+        self.text = new_text;
+
+        let mut disp_line = self.disp_line;
+        let disp_col = self.disp_col;
+
+        if c == '\n' {
+            // If adding an Enter, we move the cursor to the newline which
+            // might fall outside of the display
+            self.cursor.col = 1;
+            self.cursor.line += 1;
+            self.line_count += 1;
+            if self.cursor.line >= disp_line + self.height {
+                disp_line += 1;
+            }
+        } else {
+            // If adding any other character move the cursor one past new char
+            self.cursor.col += 1;
+        }
+        self.focus_col = self.cursor.col;
+
+        let _ = self.display_chunk(disp_line, disp_col);
+        self.update();
+    }
+
+    fn delete_char(&mut self, line: usize, column: usize) {
+        // TODO: Use better data structure for strings. For example, a Rope
+        info!("Delete char from {}:{}", line, column);
+
+        // Can't delete from the beginning of the file
+        if line == 1 && column == 1 {
+            return;
+        }
+
+        let mut new_text = String::new();
+        let mut end_len = 0;
+        for (x, ln) in self.text.lines().enumerate() {
+            if x == line - 1 {
+                let (tmp_beg, tmp_end) = ln.split_at(column - 1);
+                let mut beg = tmp_beg.to_string();
+                let end = tmp_end.to_string();
+
+                if beg.is_empty() {
+                    new_text.pop(); // remove newline from previous line
+                    new_text.push_str(&format!("{}{}\n", beg, end));
+                    end_len = end.len();
+                } else {
+                    beg.pop(); // remove character at the cursor
+                    new_text.push_str(&format!("{}{}\n", beg, end));
+                }
+            } else {
+                new_text.push_str(ln);
+                new_text.push('\n');
+            }
+        }
+        self.text = new_text;
+
+        let mut disp_line = self.disp_line;
+        let disp_col = self.disp_col;
+
+        if self.cursor.col == 1 {
+            // Removed first character of line, move to line above
+            let line_num = self.cursor.line - 1;
+            self.set_current_line(line_num);
+            self.cursor.col = self.cur_line_len - end_len;
+            self.line_count -= 1;
+            if self.cursor.line < disp_line {
+                disp_line -= 1;
+            }
+        } else {
+            self.cursor.col -= 1;
+        }
+        self.focus_col = self.cursor.col;
+
+        let _ = self.display_chunk(disp_line, disp_col);
+        self.update();
+
     }
 
     fn update(&mut self) {

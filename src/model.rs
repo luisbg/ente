@@ -2,12 +2,16 @@ mod errors {}
 
 pub struct Model {
     text: String,
+    line_count: usize,
 }
 
 impl Model {
     pub fn new(text: &str) -> Model {
+        let line_count = text.lines().count();
+
         let model = Model {
             text: String::from(text),
+            line_count: line_count,
         };
 
         model
@@ -15,6 +19,10 @@ impl Model {
 
     pub fn get_text(&mut self) -> String {
         self.text.clone()
+    }
+
+    pub fn get_line_count(&mut self) -> usize {
+        self.line_count
     }
 
     pub fn add_char(&mut self, c: char, line: usize, column: usize) {
@@ -30,6 +38,10 @@ impl Model {
             }
         }
         self.text = new_text;
+
+        if c == '\n' {
+            self.line_count += 1;
+        }
     }
 
     pub fn delete_char(&mut self, line: usize, column: usize) -> usize {
@@ -61,6 +73,10 @@ impl Model {
             }
         }
         self.text = new_text;
+
+        if column == 1 {
+            self.line_count -= 1;
+        }
 
         end_len
     }

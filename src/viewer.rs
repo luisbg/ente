@@ -66,7 +66,6 @@ pub struct Viewer {
     disp_col: usize, // first displayed col
     focus_col: usize,
     cur_line_len: usize,
-    line_count: usize,
     line_jump: usize,
     cursor: Cursor,
     search_string: String,
@@ -87,7 +86,6 @@ impl Viewer {
 
         let cursor = Cursor { line: 1, col: 1 };
         let model = model::Model::new(text);
-        let line_count = text.lines().count();
 
         let mut view = Viewer {
             rustbox: rustbox,
@@ -102,7 +100,6 @@ impl Viewer {
             disp_col: 1,
             focus_col: 1,
             cur_line_len: 1,
-            line_count: line_count,
             line_jump: 0,
             cursor: cursor,
             search_string: String::new(),
@@ -151,7 +148,7 @@ impl Viewer {
                      -> Result<()> {
         self.rustbox.clear();
 
-        if start_line > self.line_count {
+        if start_line > self.model.get_line_count() {
             warn!("Line {} past EOF", start_line);
             return Err("End of file".into());
         }
@@ -203,11 +200,12 @@ impl Viewer {
     fn vertical_scroll(&mut self, action: Action) {
         let mut disp_line = self.disp_line;
         let mut disp_col = self.disp_col;
+        let line_count = self.model.get_line_count();
 
         match action {
             Action::MoveDown => {
                 // Scroll by one until last line is in the bottom of the window
-                if disp_line <= self.line_count - self.height {
+                if disp_line <= line_count - self.height {
                     disp_line += 1;
                 }
             }
@@ -218,17 +216,17 @@ impl Viewer {
                 }
             }
             Action::MovePageDown => {
-                if self.line_count < self.height {
+                if line_count < self.height {
                     warn!("Can't scroll files smaller than the window");
                     return;
                 }
 
                 // Scroll a window height down
-                if disp_line <= self.line_count - self.height &&
-                   disp_line + self.height <= self.line_count - self.height {
+                if disp_line <= line_count - self.height &&
+                   disp_line + self.height <= line_count - self.height {
                     disp_line += self.height;
                 } else {
-                    disp_line = self.line_count - self.height + 1;
+                    disp_line = line_count - self.height + 1;
                 }
             }
             Action::MovePageUp => {
@@ -288,9 +286,11 @@ impl Viewer {
     }
 
     fn move_cursor(&mut self, action: Action) {
+        let line_count = self.model.get_line_count();
+
         match action {
             Action::MoveDown => {
-                if self.cursor.line < self.line_count {
+                if self.cursor.line < line_count {
                     let tmp = self.cursor.line + 1;
                     self.set_current_line(tmp);
                     info!("Current line is {}", self.cursor.line);
@@ -344,11 +344,10 @@ impl Viewer {
                 }
             }
             Action::MovePageDown => {
-                if self.cursor.line + self.height < self.line_count {
+                if self.cursor.line + self.height < line_count {
                     let tmp = self.cursor.line + self.height;
                     self.set_current_line(tmp);
                 } else {
-                    let line_count = self.line_count;
                     self.set_current_line(line_count);
                 }
 
@@ -562,7 +561,7 @@ impl Viewer {
         self.mode = Mode::Read;  // Set back to previous mode
         self.line_jump = 0;
 
-        if line_num > self.line_count || line_num == 0 {
+        if line_num > self.model.get_line_count() || line_num == 0 {
             info!("ERROR: Invalid line number {}", line_num);
             self.update();
 
@@ -611,7 +610,7 @@ impl Viewer {
             }
             None => {
                 // If nothing found in current line, search in the rest
-                for ln in self.cursor.line..self.line_count {
+                for ln in self.cursor.line..self.model.get_line_count() {
                     match lines.next() {
                         Some(l) => {
                             if let Some(c) =
@@ -651,8 +650,9 @@ impl Viewer {
 
         info!("Search for previous: {}", self.search_string);
         let text_copy = self.text.clone();  // so we can borrow self as mutable
-        let mut lines =
-            text_copy.lines().rev().skip(self.line_count - self.cursor.line);
+        let mut lines = text_copy.lines()
+            .rev()
+            .skip(self.model.get_line_count() - self.cursor.line);
         let mut line_num = 0;
         let mut col = 0;
 
@@ -713,7 +713,7 @@ impl Viewer {
             }
         }
 
-        if line_num <= self.line_count {
+        if line_num <= self.model.get_line_count() {
             info!("Moving to next word at {}:{}", line_num, col);
             self.set_cursor(line_num, col);
             self.update();
@@ -722,8 +722,9 @@ impl Viewer {
 
     fn move_prev_word(&mut self) {
         let text_copy = self.text.clone();  // so we can borrow self as mutable
-        let mut lines =
-            text_copy.lines().rev().skip(self.line_count - self.cursor.line);
+        let mut lines = text_copy.lines()
+            .rev()
+            .skip(self.model.get_line_count() - self.cursor.line);
         let line_num = self.cursor.line;
         let col: usize;
 
@@ -794,12 +795,13 @@ impl Viewer {
         self.focus_col = col;
 
         self.set_current_line(line_num);
+        let line_count = self.model.get_line_count();
 
         // Update display if line_num is outside of it
         if line_num < self.disp_line ||
            line_num >= self.disp_line + self.height {
-            if line_num > self.line_count - self.height {
-                line_num = self.line_count - self.height + 1;
+            if line_num > line_count - self.height {
+                line_num = line_count - self.height + 1;
             }
             let _ = self.display_chunk(line_num, 1);
         }
@@ -821,7 +823,6 @@ impl Viewer {
             // might fall outside of the display
             self.cursor.col = 1;
             self.cursor.line += 1;
-            self.line_count += 1;
             if self.cursor.line >= disp_line + self.height {
                 disp_line += 1;
             }
@@ -857,7 +858,6 @@ impl Viewer {
             let line_num = self.cursor.line - 1;
             self.set_current_line(line_num);
             self.cursor.col = self.cur_line_len - end_len;
-            self.line_count -= 1;
             if self.cursor.line < disp_line {
                 disp_line -= 1;
             }

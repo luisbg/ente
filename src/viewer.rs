@@ -8,6 +8,8 @@ use std::collections::HashMap;
 use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
 
+use model;
+
 mod errors {}
 
 use errors::*;
@@ -54,6 +56,7 @@ pub struct Cursor {
 pub struct Viewer {
     rustbox: RustBox,
     text: String,
+    model: model::Model,
     mode: Mode,
     actions: HashMap<Key, Action>,
     height: usize, // window height without status line
@@ -83,11 +86,13 @@ impl Viewer {
         rustbox.set_cursor(0, 0);
 
         let cursor = Cursor { line: 1, col: 1 };
+        let model = model::Model::new(text);
         let line_count = text.lines().count();
 
         let mut view = Viewer {
             rustbox: rustbox,
             text: String::from(text),
+            model: model,
             mode: Mode::Read,
             actions: key_map,
             height: height,
@@ -420,18 +425,15 @@ impl Viewer {
                         self.update();
                     }
                     _ => {
-                        let cur_line = self.cursor.line;
-                        let cur_col = self.cursor.col;
-
                         match key {
                             Key::Char(c) => {
-                                self.add_char(c, cur_line, cur_col);
+                                self.add_char(c);
                             }
                             Key::Enter => {
-                                self.add_char('\n', cur_line, cur_col);
+                                self.add_char('\n');
                             }
                             Key::Backspace => {
-                                self.delete_char(cur_line, cur_col);
+                                self.delete_char();
                             }
                             _ => {}
                         }
@@ -803,21 +805,13 @@ impl Viewer {
         }
     }
 
-    fn add_char(&mut self, c: char, line: usize, column: usize) {
-        // TODO: Use better data structure for strings. For example, a Rope
+    fn add_char(&mut self, c: char) {
+        let line = self.cursor.line;
+        let column = self.cursor.col;
         info!("Add {} at {}:{}", c, line, column);
 
-        let mut new_text = String::new();
-        for (x, ln) in self.text.lines().enumerate() {
-            if x == line - 1 {
-                let (beg, end) = ln.split_at(column - 1);
-                new_text.push_str(&format!("{}{}{}\n", beg, c, end));
-            } else {
-                new_text.push_str(ln);
-                new_text.push('\n');
-            }
-        }
-        self.text = new_text;
+        self.model.add_char(c, line, column);
+        self.text = self.model.get_text();
 
         let mut disp_line = self.disp_line;
         let disp_col = self.disp_col;
@@ -841,8 +835,10 @@ impl Viewer {
         self.update();
     }
 
-    fn delete_char(&mut self, line: usize, column: usize) {
+    fn delete_char(&mut self) {
         // TODO: Use better data structure for strings. For example, a Rope
+        let line = self.cursor.line;
+        let column = self.cursor.col;
         info!("Delete char from {}:{}", line, column);
 
         // Can't delete from the beginning of the file
@@ -850,33 +846,13 @@ impl Viewer {
             return;
         }
 
-        let mut new_text = String::new();
-        let mut end_len = 0;
-        for (x, ln) in self.text.lines().enumerate() {
-            if x == line - 1 {
-                let (tmp_beg, tmp_end) = ln.split_at(column - 1);
-                let mut beg = tmp_beg.to_string();
-                let end = tmp_end.to_string();
-
-                if beg.is_empty() {
-                    new_text.pop(); // remove newline from previous line
-                    new_text.push_str(&format!("{}{}\n", beg, end));
-                    end_len = end.len();
-                } else {
-                    beg.pop(); // remove character at the cursor
-                    new_text.push_str(&format!("{}{}\n", beg, end));
-                }
-            } else {
-                new_text.push_str(ln);
-                new_text.push('\n');
-            }
-        }
-        self.text = new_text;
+        let end_len = self.model.delete_char(line, column);
+        self.text = self.model.get_text();
 
         let mut disp_line = self.disp_line;
         let disp_col = self.disp_col;
 
-        if self.cursor.col == 1 {
+        if column == 1 {
             // Removed first character of line, move to line above
             let line_num = self.cursor.line - 1;
             self.set_current_line(line_num);
@@ -892,7 +868,6 @@ impl Viewer {
 
         let _ = self.display_chunk(disp_line, disp_col);
         self.update();
-
     }
 
     fn update(&mut self) {

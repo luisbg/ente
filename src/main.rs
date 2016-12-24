@@ -33,6 +33,7 @@ mod errors {
 use errors::*;
 
 mod viewer;
+mod model;
 mod keyconfig;
 
 const FILE_POS_LOG: usize = 65;

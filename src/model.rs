@@ -14,13 +14,11 @@ impl Model {
     pub fn new(text: &str, filepath: &str) -> Model {
         let line_count = text.lines().count();
 
-        let model = Model {
+        Model {
             text: String::from(text),
             filepath: filepath.to_string(),
             line_count: line_count,
-        };
-
-        model
+        }
     }
 
     pub fn get_text(&mut self) -> String {

@@ -122,19 +122,28 @@ fn main() {
     }
 }
 
-fn run(filepath: &str,
-       actions: HashMap<rustbox::Key, viewer::Action>)
-       -> Result<()> {
+fn open_file(filepath: &str) -> String {
     // Open the file
-    let mut file = File::open(filepath).chain_err(|| "Couldn't open file")?;
+    let mut file = match File::open(filepath) {
+        Ok(file) => file,
+        Err(_) => panic!("Couldn't open file {}", filepath),
+    };
     info!("Opening file: {}", filepath);
 
-    // Read the file and start a Viewer with it
+    // Read the file into a String
     let mut text = String::new();
     match file.read_to_string(&mut text) {
         Ok(_) => {}
-        Err(why) => bail!("couldn't read {}: ", why.description()),
+        Err(error) => panic!("couldn't read {}: ", error.description()),
     }
+    text
+}
+
+fn run(filepath: &str,
+       actions: HashMap<rustbox::Key, viewer::Action>)
+       -> Result<()> {
+    // Get file content and start a Viewer with it
+    let text = open_file(filepath);
     let filename = match filepath.to_string().split('/').last() {
         Some(name) => name.to_string(),
         None => "unknown".to_string(),

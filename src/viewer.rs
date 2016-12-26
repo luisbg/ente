@@ -427,6 +427,7 @@ impl Viewer {
                     }
                     Action::Save => {
                         self.model.save();
+                        self.update();
                     }
                     _ => {
                         match key {
@@ -490,6 +491,7 @@ impl Viewer {
                     }
                     Action::Save => {
                         self.model.save();
+                        self.update();
                     }
                     _ => {}
                 }
@@ -758,7 +760,8 @@ impl Viewer {
                     self.cursor.line = line_num - 1;
                     self.move_prev_word();
 
-                    return; // return to avoid set_cursor() below with old line_num
+                    // return to avoid set_cursor() below with old line_num
+                    return;
                 }
                 _ => {
                     // Already at beginning of file, nothing to do
@@ -884,13 +887,20 @@ impl Viewer {
         let status: String;
         match self.mode {
             Mode::Read | Mode::Edit => {
+                let saved = if self.model.get_saved_stat() {
+                    '*'
+                } else {
+                    '.'
+                };
+
                 let mode = match self.mode {
                     Mode::Read => 'R',
                     Mode::Edit => 'E',
                     _ => ' ',
                 };
-                status = format!("{} -- {} ({},{})",
+                status = format!("{}{} -- {} ({},{})",
                                  mode,
+                                 saved,
                                  self.filename,
                                  self.cursor.line,
                                  self.cursor.col);

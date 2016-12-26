@@ -8,6 +8,7 @@ pub struct Model {
     text: String,
     line_count: usize,
     filepath: String,
+    saved: bool,
 }
 
 impl Model {
@@ -18,6 +19,7 @@ impl Model {
             text: String::from(text),
             filepath: filepath.to_string(),
             line_count: line_count,
+            saved: false,
         }
     }
 
@@ -27,6 +29,10 @@ impl Model {
 
     pub fn get_line_count(&mut self) -> usize {
         self.line_count
+    }
+
+    pub fn get_saved_stat(&mut self) -> bool {
+        self.saved
     }
 
     pub fn add_char(&mut self, c: char, line: usize, column: usize) {
@@ -42,6 +48,7 @@ impl Model {
             }
         }
         self.text = new_text;
+        self.saved = true;
 
         if c == '\n' {
             self.line_count += 1;
@@ -77,6 +84,7 @@ impl Model {
             }
         }
         self.text = new_text;
+        self.saved = true;
 
         if column == 1 {
             self.line_count -= 1;
@@ -109,8 +117,11 @@ impl Model {
             Err(error) => {
                 error!("Couldn't truncate file {} because {}",
                        path.display(),
-                       error)
+                       error);
+                return;
             }
         }
+
+        self.saved = false;
     }
 }

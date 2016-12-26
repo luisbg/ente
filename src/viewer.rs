@@ -859,14 +859,16 @@ impl Viewer {
         if c == '\n' {
             // If adding an Enter, we move the cursor to the newline which
             // might fall outside of the display
-            self.cursor.col = 1;
-            self.cursor.line += 1;
+            let line_num = self.cursor.line + 1;
+            self.focus_col = 1;
+            self.set_current_line(line_num);
             if self.cursor.line >= disp_line + self.height {
                 disp_line += 1;
             }
         } else {
             // If adding any other character move the cursor one past new char
             self.cursor.col += 1;
+            self.cur_line_len += 1;
         }
         self.focus_col = self.cursor.col;
 
@@ -901,6 +903,7 @@ impl Viewer {
             }
         } else {
             self.cursor.col -= 1;
+            self.cur_line_len -= 1;
         }
         self.focus_col = self.cursor.col;
 

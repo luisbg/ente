@@ -62,6 +62,7 @@ pub struct Viewer {
     actions: HashMap<Key, Action>,
     height: usize, // window height without status line
     width: usize,
+    show_line_num: bool,
     filename: String,
     disp_line: usize, // first displayed line
     disp_col: usize, // first displayed col
@@ -87,7 +88,8 @@ impl Viewer {
     pub fn new(text: &str,
                filename: String,
                key_map: HashMap<Key, Action>,
-               filepath: &str)
+               filepath: &str,
+               show_line_num: bool)
                -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height() - 1;
@@ -99,8 +101,11 @@ impl Viewer {
         let cursor = Cursor { line: 1, col: 1 };
         let mut model = model::Model::new(text, filepath);
 
-        let width = rustbox.width() - number_of_digits(model.get_line_count()) -
-                    1;
+        let width = if show_line_num {
+            rustbox.width() - number_of_digits(model.get_line_count()) - 1
+        } else {
+            rustbox.width()
+        };
 
         let mut view = Viewer {
             rustbox: rustbox,
@@ -110,6 +115,7 @@ impl Viewer {
             actions: key_map,
             height: height,
             width: width,
+            show_line_num: show_line_num,
             filename: filename,
             disp_line: 1,
             disp_col: 1,
@@ -198,12 +204,14 @@ impl Viewer {
                                        Color::Black,
                                        "");
                 }
-                self.rustbox.print(RB_COL_START + self.width + 1,
-                                   ln,
-                                   rustbox::RB_NORMAL,
-                                   Color::Blue,
-                                   Color::Black,
-                                   format!("{}", ln + start_line).as_ref());
+                if self.show_line_num {
+                    self.rustbox.print(RB_COL_START + self.width + 1,
+                                       ln,
+                                       rustbox::RB_NORMAL,
+                                       Color::Blue,
+                                       Color::Black,
+                                       format!("{}", ln + start_line).as_ref());
+                }
             } else {
                 info!("Displayed range {} : {} lines",
                       start_line,

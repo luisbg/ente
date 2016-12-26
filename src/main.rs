@@ -44,20 +44,22 @@ const USAGE: &'static str = "
 Ente text editor.
 
 Usage:
-  ente FILE [--keyconfig=<kc>]
+  ente FILE [--keyconfig=<kc>] [--hide-line-num]
   ente (-h | --help)
   ente --version
 
   Options:
     -h --help          Show this screen.
     --version          Show version.
-    --keyconfig=<kc>   Key configurationf file.
+    --keyconfig=<kc>   Key configurationg file.
+    --hide-line-num    Hide line numbers.
 ";
 
 #[derive(Debug, RustcDecodable)]
 struct Args {
     arg_file: String,
     flag_keyconfig: String,
+    flag_hidelinenum: bool,
 }
 
 impl slog_stream::Format for LogFormat {
@@ -107,8 +109,10 @@ fn main() {
     }
     let actions = keyconfig::fill_key_map(key_config_file.as_ref());
 
+    let hide_line_num = args.get_bool("--hide-line-num");
+
     // Run catching errors
-    if let Err(ref e) = run(args.get_str("FILE"), actions) {
+    if let Err(ref e) = run(args.get_str("FILE"), actions, !hide_line_num) {
         println!("error: {}", e);
         for e in e.iter().skip(1) {
             println!("caused by: {}", e);
@@ -140,7 +144,8 @@ fn open_file(filepath: &str) -> String {
 }
 
 fn run(filepath: &str,
-       actions: HashMap<rustbox::Key, viewer::Action>)
+       actions: HashMap<rustbox::Key, viewer::Action>,
+       show_line_num: bool)
        -> Result<()> {
     // Get file content and start a Viewer with it
     let text = open_file(filepath);
@@ -149,7 +154,8 @@ fn run(filepath: &str,
         None => "unknown".to_string(),
     };
 
-    let mut viewer = viewer::Viewer::new(&text, filename, actions, filepath);
+    let mut viewer =
+        viewer::Viewer::new(&text, filename, actions, filepath, show_line_num);
 
     // Wait for keyboard events
     match viewer.poll_event() {

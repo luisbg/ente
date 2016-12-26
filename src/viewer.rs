@@ -72,6 +72,17 @@ pub struct Viewer {
     search_string: String,
 }
 
+fn number_of_digits(number: usize) -> usize {
+    let mut tmp = number;
+    let mut digits: usize = 0;
+    while tmp > 0 {
+        tmp /= 10;
+        digits += 1;
+    }
+
+    digits
+}
+
 impl Viewer {
     pub fn new(text: &str,
                filename: String,
@@ -80,14 +91,16 @@ impl Viewer {
                -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height() - 1;
-        let width = rustbox.width();
         rustbox.set_output_mode(OutputMode::EightBit);
         info!("Terminal window height: {}", height);
 
         rustbox.set_cursor(0, 0);
 
         let cursor = Cursor { line: 1, col: 1 };
-        let model = model::Model::new(text, filepath);
+        let mut model = model::Model::new(text, filepath);
+
+        let width = rustbox.width() - number_of_digits(model.get_line_count()) -
+                    1;
 
         let mut view = Viewer {
             rustbox: rustbox,
@@ -185,6 +198,12 @@ impl Viewer {
                                        Color::Black,
                                        "");
                 }
+                self.rustbox.print(RB_COL_START + self.width + 1,
+                                   ln,
+                                   rustbox::RB_NORMAL,
+                                   Color::Blue,
+                                   Color::Black,
+                                   format!("{}", ln + start_line).as_ref());
             } else {
                 info!("Displayed range {} : {} lines",
                       start_line,

@@ -593,6 +593,11 @@ impl Viewer {
             Key::Char('8') => 8,
             Key::Char('9') => 9,
             Key::Char('0') => 0,
+            Key::Backspace => {
+                self.line_jump /= 10;
+                self.update();
+                return;
+            }
             _ => {
                 return;
             }

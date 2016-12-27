@@ -432,96 +432,10 @@ impl Viewer {
 
         match self.mode {
             Mode::Edit => {
-                match action {
-                    Action::Quit => {
-                        info!("Quitting application");
-                        return false;
-                    }
-                    Action::MoveUp | Action::MoveDown | Action::MoveLeft |
-                    Action::MoveRight | Action::MovePageDown |
-                    Action::MovePageUp | Action::MoveStartLine |
-                    Action::MoveEndLine => {
-                        self.move_cursor(action);
-                    }
-                    Action::ReadMode => {
-                        self.switch_mode(action);
-
-                        // Update current line max column
-                        let cur_line = self.cursor.line;
-                        self.set_current_line(cur_line);
-
-                        self.update();
-                    }
-                    Action::Save => {
-                        self.model.save();
-                        self.update();
-                    }
-                    _ => {
-                        match key {
-                            Key::Char(c) => {
-                                self.add_char(c);
-                            }
-                            Key::Enter => {
-                                self.add_char('\n');
-                            }
-                            Key::Backspace => {
-                                self.delete_char();
-                            }
-                            _ => {}
-                        }
-                    }
-                }
+                return self.match_key_action_edit(action, key);
             }
             Mode::Read => {
-                match action {
-                    Action::Quit => {
-                        info!("Quitting application");
-                        return false;
-                    }
-                    Action::MoveUp | Action::MoveDown | Action::MoveLeft |
-                    Action::MoveRight | Action::MovePageDown |
-                    Action::MovePageUp | Action::MoveStartLine |
-                    Action::MoveEndLine => {
-                        self.move_cursor(action);
-                    }
-                    Action::GoToLine => {
-                        info!("Enter GoToLine mode");
-                        self.mode = Mode::GoToLine;
-                        self.update();
-                    }
-                    Action::Search => {
-                        info!("Enter Search mode");
-                        self.mode = Mode::Search;
-                        self.search_string = String::new();
-                        self.update();
-                    }
-                    Action::SearchNext => {
-                        self.do_forward_search();
-                    }
-                    Action::SearchPrevious => {
-                        self.do_backward_search();
-                    }
-                    Action::MoveNextWord => {
-                        self.move_next_word();
-                    }
-                    Action::MovePrevWord => {
-                        self.move_prev_word();
-                    }
-                    Action::EditMode => {
-                        self.switch_mode(action);
-
-                        // Update current line max column
-                        let cur_line = self.cursor.line;
-                        self.set_current_line(cur_line);
-
-                        self.update();
-                    }
-                    Action::Save => {
-                        self.model.save();
-                        self.update();
-                    }
-                    _ => {}
-                }
+                return self.match_key_action_read(action);
             }
             Mode::GoToLine => {
                 match action {
@@ -548,6 +462,102 @@ impl Viewer {
                     }
                 }
             }
+        }
+
+        true
+    }
+
+    fn match_key_action_edit(&mut self, action: Action, key: Key) -> bool {
+        match action {
+            Action::Quit => {
+                info!("Quitting application");
+                return false;
+            }
+            Action::MoveUp | Action::MoveDown | Action::MoveLeft |
+            Action::MoveRight | Action::MovePageDown | Action::MovePageUp |
+            Action::MoveStartLine | Action::MoveEndLine => {
+                self.move_cursor(action);
+            }
+            Action::ReadMode => {
+                self.switch_mode(action);
+
+                // Update current line max column
+                let cur_line = self.cursor.line;
+                self.set_current_line(cur_line);
+
+                self.update();
+            }
+            Action::Save => {
+                self.model.save();
+                self.update();
+            }
+            _ => {
+                match key {
+                    Key::Char(c) => {
+                        self.add_char(c);
+                    }
+                    Key::Enter => {
+                        self.add_char('\n');
+                    }
+                    Key::Backspace => {
+                        self.delete_char();
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        true
+    }
+
+    fn match_key_action_read(&mut self, action: Action) -> bool {
+        match action {
+            Action::Quit => {
+                info!("Quitting application");
+                return false;
+            }
+            Action::MoveUp | Action::MoveDown | Action::MoveLeft |
+            Action::MoveRight | Action::MovePageDown | Action::MovePageUp |
+            Action::MoveStartLine | Action::MoveEndLine => {
+                self.move_cursor(action);
+            }
+            Action::GoToLine => {
+                info!("Enter GoToLine mode");
+                self.mode = Mode::GoToLine;
+                self.update();
+            }
+            Action::Search => {
+                info!("Enter Search mode");
+                self.mode = Mode::Search;
+                self.search_string = String::new();
+                self.update();
+            }
+            Action::SearchNext => {
+                self.do_forward_search();
+            }
+            Action::SearchPrevious => {
+                self.do_backward_search();
+            }
+            Action::MoveNextWord => {
+                self.move_next_word();
+            }
+            Action::MovePrevWord => {
+                self.move_prev_word();
+            }
+            Action::EditMode => {
+                self.switch_mode(action);
+
+                // Update current line max column
+                let cur_line = self.cursor.line;
+                self.set_current_line(cur_line);
+
+                self.update();
+            }
+            Action::Save => {
+                self.model.save();
+                self.update();
+            }
+            _ => {}
         }
 
         true

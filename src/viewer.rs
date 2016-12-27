@@ -865,6 +865,12 @@ impl Viewer {
             if self.cursor.line >= disp_line + self.height {
                 disp_line += 1;
             }
+
+            if self.show_line_num {
+                self.width = self.rustbox.width() -
+                             number_of_digits(self.model.get_line_count()) -
+                             1;
+            }
         } else {
             // If adding any other character move the cursor one past new char
             self.cursor.col += 1;
@@ -900,6 +906,12 @@ impl Viewer {
             self.cursor.col = self.cur_line_len - end_len;
             if self.cursor.line < disp_line {
                 disp_line -= 1;
+            }
+
+            if self.show_line_num {
+                self.width = self.rustbox.width() -
+                             number_of_digits(self.model.get_line_count()) -
+                             1;
             }
         } else {
             self.cursor.col -= 1;
@@ -961,7 +973,8 @@ impl Viewer {
 
         let help: &'static str = "Press 'q' to quit";
 
-        let mut empty = String::with_capacity(self.width - status.len() -
+        let mut empty = String::with_capacity(self.rustbox.width() -
+                                              status.len() -
                                               help.len());
         for _ in 0..empty.capacity() {
             empty.push(' ');
@@ -979,7 +992,7 @@ impl Viewer {
                            Color::White,
                            Color::Black,
                            empty.as_ref());
-        self.rustbox.print(self.width - help.len(),
+        self.rustbox.print(self.rustbox.width() - help.len(),
                            self.height,
                            rustbox::RB_REVERSE,
                            Color::White,

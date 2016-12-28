@@ -93,6 +93,28 @@ impl Model {
         end_len
     }
 
+    pub fn delete_line(&mut self, line: usize) -> bool {
+        // TODO: Can't delete only line in the file
+        info!("Delete line {}", line);
+        if self.line_count == 1 || line > self.line_count {
+            return false;
+        }
+
+        let mut new_text = String::new();
+        for (x, ln) in self.text.lines().enumerate() {
+            if x != line - 1 {
+                new_text.push_str(ln);
+                new_text.push('\n');
+            }
+        }
+
+        self.text = new_text;
+        self.saved = true;
+        self.line_count -= 1;
+
+        true
+    }
+
     pub fn save(&mut self) {
         let path = Path::new(&self.filepath);
         let mut file = match OpenOptions::new().write(true).open(&path) {

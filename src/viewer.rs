@@ -35,6 +35,7 @@ pub enum Action {
     SearchPrevious,
     MoveNextWord,
     MovePrevWord,
+    KillLine,
     EditMode,
     ReadMode,
     Save,
@@ -491,6 +492,9 @@ impl Viewer {
                 self.model.save();
                 self.update();
             }
+            Action::KillLine => {
+                self.delete_line();
+            }
             _ => {
                 match key {
                     Key::Char(c) => {
@@ -546,6 +550,9 @@ impl Viewer {
             }
             Action::MovePrevWord => {
                 self.move_prev_word();
+            }
+            Action::KillLine => {
+                self.delete_line();
             }
             Action::EditMode => {
                 self.switch_mode(action);
@@ -958,6 +965,34 @@ impl Viewer {
         self.focus_col = self.cursor.col;
 
         let _ = self.display_chunk(disp_line, disp_col);
+        self.update();
+    }
+
+    fn delete_line(&mut self) {
+        let line = self.cursor.line;
+        let line_count = self.model.get_line_count();
+
+        let line_num = if self.cursor.line != line_count {
+            self.cursor.line
+        } else {
+            self.cursor.line - 1
+        };
+
+        if !self.model.delete_line(line) {
+            return;
+        }
+        self.text = self.model.get_text();
+
+        if self.show_line_num {
+            self.width = self.rustbox.width() - number_of_digits(line_count) -
+                         1;
+        }
+
+        self.set_current_line(line_num);
+
+        self.focus_col = 1;
+        let disp_line = self.disp_line;
+        let _ = self.display_chunk(disp_line, 1);
         self.update();
     }
 

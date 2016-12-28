@@ -502,6 +502,9 @@ impl Viewer {
                     Key::Backspace => {
                         self.delete_char();
                     }
+                    Key::Tab => {
+                        self.add_tab();
+                    }
                     _ => {}
                 }
             }
@@ -866,6 +869,22 @@ impl Viewer {
         info!("Add {} at {}:{}", c, line, column);
 
         self.model.add_char(c, line, column);
+        self.update_after_add(c);
+    }
+
+    fn add_tab(&mut self) {
+        let line = self.cursor.line;
+        let column = self.cursor.col;
+
+        info!("Add tab at {}:{}, line, column");
+
+        for c in 0..4 {
+            self.model.add_char(' ', line, column + c);
+        }
+        self.update_after_add('\t');
+    }
+
+    fn update_after_add(&mut self, c: char) {
         self.text = self.model.get_text();
 
         let mut disp_line = self.disp_line;
@@ -886,6 +905,10 @@ impl Viewer {
                              number_of_digits(self.model.get_line_count()) -
                              1;
             }
+        } else if c == '\t' {
+            // If tab, when tab is four spaces
+            self.cursor.col += 4;
+            self.cur_line_len += 4;
         } else {
             // If adding any other character move the cursor one past new char
             self.cursor.col += 1;

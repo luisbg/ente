@@ -1003,9 +1003,9 @@ impl Viewer {
         match self.mode {
             Mode::Read | Mode::Edit => {
                 let saved = if self.model.get_saved_stat() {
-                    '*'
-                } else {
                     '.'
+                } else {
+                    '*'
                 };
 
                 let mode = match self.mode {

@@ -19,7 +19,7 @@ impl Model {
             text: String::from(text),
             filepath: filepath.to_string(),
             line_count: line_count,
-            saved: false,
+            saved: true,
         }
     }
 
@@ -48,7 +48,7 @@ impl Model {
             }
         }
         self.text = new_text;
-        self.saved = true;
+        self.saved = false;
 
         if c == '\n' {
             self.line_count += 1;
@@ -84,7 +84,7 @@ impl Model {
             }
         }
         self.text = new_text;
-        self.saved = true;
+        self.saved = false;
 
         if column == 1 {
             self.line_count -= 1;
@@ -109,7 +109,7 @@ impl Model {
         }
 
         self.text = new_text;
-        self.saved = true;
+        self.saved = false;
         self.line_count -= 1;
 
         true
@@ -144,6 +144,6 @@ impl Model {
             }
         }
 
-        self.saved = false;
+        self.saved = true;
     }
 }

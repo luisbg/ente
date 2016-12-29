@@ -1121,11 +1121,13 @@ impl Viewer {
         self.rustbox.set_cursor(cur_col,
                                 (self.cursor.line - self.disp_line) as isize);
 
-        let help: &'static str = "Press 'q' to quit";
+        let perc = format!("{}% ",
+                           (self.cursor.line * 100) /
+                           self.model.get_line_count());
 
         let mut empty = String::with_capacity(self.rustbox.width() -
                                               status.len() -
-                                              help.len());
+                                              perc.len());
         for _ in 0..empty.capacity() {
             empty.push(' ');
         }
@@ -1142,12 +1144,12 @@ impl Viewer {
                            Color::White,
                            Color::Black,
                            empty.as_ref());
-        self.rustbox.print(self.rustbox.width() - help.len(),
+        self.rustbox.print(self.rustbox.width() - perc.len(),
                            self.height,
                            rustbox::RB_REVERSE,
                            Color::White,
                            Color::Black,
-                           help);
+                           perc.as_ref());
 
         self.rustbox.present();
     }

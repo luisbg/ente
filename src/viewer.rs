@@ -472,8 +472,9 @@ impl Viewer {
     fn match_key_action_edit(&mut self, action: Action, key: Key) -> bool {
         match action {
             Action::Quit => {
-                info!("Quitting application");
-                return false;
+                if self.confirm_quit() {
+                    return false;
+                }
             }
             Action::MoveUp | Action::MoveDown | Action::MoveLeft |
             Action::MoveRight | Action::MovePageDown | Action::MovePageUp |
@@ -524,8 +525,9 @@ impl Viewer {
     fn match_key_action_read(&mut self, action: Action) -> bool {
         match action {
             Action::Quit => {
-                info!("Quitting application");
-                return false;
+                if self.confirm_quit() {
+                    return false;
+                }
             }
             Action::MoveUp | Action::MoveDown | Action::MoveLeft |
             Action::MoveRight | Action::MovePageDown | Action::MovePageUp |
@@ -1020,6 +1022,55 @@ impl Viewer {
         let disp_line = self.disp_line;
         let _ = self.display_chunk(disp_line, 1);
         self.update();
+    }
+
+    fn confirm_quit(&mut self) -> bool {
+        if self.model.get_saved_stat() {
+            info!("Quitting application");
+            return true;
+        }
+
+        let prompt: &'static str = "Unsaved changes. Quit? (y/s/n)";
+        let mut empty = String::with_capacity(self.rustbox.width() -
+                                              prompt.len());
+        for _ in 0..empty.capacity() {
+            empty.push(' ');
+        }
+        self.rustbox.print(RB_COL_START,
+                           self.height,
+                           rustbox::RB_NORMAL,
+                           Color::White,
+                           Color::Black,
+                           empty.as_ref());
+        self.rustbox.print(self.rustbox.width() - prompt.len(),
+                           self.height,
+                           rustbox::RB_REVERSE,
+                           Color::White,
+                           Color::Black,
+                           prompt);
+        self.rustbox.present();
+
+        match self.rustbox.poll_event(false) {
+            Ok(rustbox::Event::KeyEvent(key)) => {
+                match key {
+                    Key::Char('y') | Key::Char('Y') => {
+                        return true;
+                    }
+                    Key::Char('s') | Key::Char('S') => {
+                        self.model.save();
+                        return true;
+                    }
+                    _ => {}
+                }
+            }
+            Err(_) => {
+                error!("Something went wrong polling for Rustbox events");
+            }
+            _ => {}
+        }
+
+        self.update();
+        false
     }
 
     fn update(&mut self) {

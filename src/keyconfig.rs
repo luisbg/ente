@@ -37,6 +37,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::Char('w') => viewer::Action::MoveNextWord,
         Key::Char('s') => viewer::Action::MovePrevWord,
         Key::Ctrl('d') => viewer::Action::KillLine,
+        Key::Delete => viewer::Action::Delete,
         Key::Enter => viewer::Action::Go,
         Key::Ctrl('s') => viewer::Action::Save,
         Key::Ctrl('q') => viewer::Action::Quit

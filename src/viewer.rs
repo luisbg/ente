@@ -36,6 +36,7 @@ pub enum Action {
     MoveNextWord,
     MovePrevWord,
     KillLine,
+    Delete,
     EditMode,
     ReadMode,
     Save,
@@ -504,7 +505,10 @@ impl Viewer {
                         self.add_char('\n');
                     }
                     Key::Backspace => {
-                        self.delete_char();
+                        self.delete_backspace();
+                    }
+                    Key::Delete => {
+                        self.delete_at_cursor();
                     }
                     Key::Tab => {
                         self.add_tab();
@@ -553,6 +557,9 @@ impl Viewer {
             }
             Action::KillLine => {
                 self.delete_line();
+            }
+            Action::Delete => {
+                self.delete_at_cursor();
             }
             Action::EditMode => {
                 self.switch_mode(action);
@@ -927,45 +934,64 @@ impl Viewer {
         self.update();
     }
 
-    fn delete_char(&mut self) {
+    fn delete_char(&mut self, backspace: bool) {
         // TODO: Use better data structure for strings. For example, a Rope
         let line = self.cursor.line;
-        let column = self.cursor.col;
-        info!("Delete char from {}:{}", line, column);
+        let column = if backspace {
+            self.cursor.col
+        } else {
+            self.cursor.col + 1
+        };
 
-        // Can't delete from the beginning of the file
-        if line == 1 && column == 1 {
+        // Can't delete from the beginning of the file or past the line
+        if (line == 1 && column == 1) || self.cur_line_len == 0 ||
+           self.mode == Mode::Edit && (column > self.cur_line_len) {
             return;
         }
 
+        info!("Delete char from {}:{}", line, column);
         let end_len = self.model.delete_char(line, column);
         self.text = self.model.get_text();
 
         let mut disp_line = self.disp_line;
         let disp_col = self.disp_col;
 
-        if column == 1 {
-            // Removed first character of line, move to line above
-            let line_num = self.cursor.line - 1;
-            self.set_current_line(line_num);
-            self.cursor.col = self.cur_line_len - end_len;
-            if self.cursor.line < disp_line {
-                disp_line -= 1;
-            }
+        if backspace {
+            if column == 1 {
+                // Removed first character of line, move to line above
+                let line_num = self.cursor.line - 1;
+                self.set_current_line(line_num);
+                self.cursor.col = self.cur_line_len - end_len;
+                if self.cursor.line < disp_line {
+                    disp_line -= 1;
+                }
 
-            if self.show_line_num {
-                self.width = self.rustbox.width() -
-                             number_of_digits(self.model.get_line_count()) -
-                             1;
+                if self.show_line_num {
+                    let line_count = self.model.get_line_count();
+                    self.width =
+                        self.rustbox.width() - number_of_digits(line_count) - 1;
+                }
+            } else {
+                self.cursor.col -= 1;
             }
-        } else {
+        } else if column == self.cur_line_len + 1 {
+            // Move cursor back if doing Delete in last character in line
             self.cursor.col -= 1;
-            self.cur_line_len -= 1;
         }
+
+        self.cur_line_len -= 1;
         self.focus_col = self.cursor.col;
 
         let _ = self.display_chunk(disp_line, disp_col);
         self.update();
+    }
+
+    fn delete_backspace(&mut self) {
+        self.delete_char(true);
+    }
+
+    fn delete_at_cursor(&mut self) {
+        self.delete_char(false);
     }
 
     fn delete_line(&mut self) {

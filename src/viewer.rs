@@ -228,9 +228,9 @@ impl Viewer {
         Ok(())
     }
 
-    fn vertical_scroll(&mut self, action: Action) {
+    fn do_vertical_scroll(&mut self, action: Action) {
         let mut disp_line = self.disp_line;
-        let mut disp_col = self.disp_col;
+        let disp_col = self.disp_col;
         let line_count = self.model.get_line_count();
 
         match action {
@@ -268,18 +268,6 @@ impl Viewer {
                     disp_line = 1;
                 }
             }
-            Action::MoveLeft => {
-                disp_col = self.disp_col - 1;
-            }
-            Action::MoveRight => {
-                disp_col = self.disp_col + 1;
-            }
-            Action::MoveStartLine => {
-                disp_col = 1;
-            }
-            Action::MoveEndLine => {
-                disp_col = self.cursor.col - self.width + 1;
-            }
             _ => {
                 return;
             }
@@ -287,10 +275,12 @@ impl Viewer {
         let _ = self.display_chunk(disp_line, disp_col);
     }
 
-    fn horizontal_scroll(&mut self, action: Action) {
+    fn consider_horizontal_scroll(&mut self, action: Action) {
         match action {
-            Action::MoveDown | Action::MoveUp | Action::MovePageDown |
-            Action::MovePageUp => {
+            Action::MoveDown | Action::MoveUp |
+            Action::MovePageDown | Action::MovePageUp |
+            Action::MoveLeft | Action::MoveRight |
+            Action::MoveStartLine | Action::MoveEndLine => {
                 let tmp_cur_col = if self.cursor.col == 0 {
                     1
                 } else {
@@ -301,9 +291,7 @@ impl Viewer {
                     let disp_col = tmp_cur_col;
                     let disp_line = self.disp_line;
                     let _ = self.display_chunk(disp_line, disp_col);
-                }
-
-                if self.cursor.col > self.disp_col + self.width - 1 {
+                } else if self.cursor.col > self.disp_col + self.width - 1 {
                     // Cursor past display, scroll right
                     let disp_col = self.cursor.col - self.width + 1;
                     let disp_line = self.disp_line;
@@ -327,10 +315,10 @@ impl Viewer {
                 self.move_cursor_up(action);
             }
             Action::MoveLeft => {
-                self.move_cursor_left(action);
+                self.move_cursor_left();
             }
             Action::MoveRight => {
-                self.move_cursor_right(action);
+                self.move_cursor_right();
             }
             Action::MovePageDown => {
                 self.move_cursor_page_down(action, line_count);
@@ -339,17 +327,17 @@ impl Viewer {
                 self.move_cursor_page_up(action);
             }
             Action::MoveStartLine => {
-                self.move_cursor_start_line(action);
+                self.move_cursor_start_line();
             }
             Action::MoveEndLine => {
-                self.move_cursor_end_line(action);
+                self.move_cursor_end_line();
             }
             _ => {}
         }
 
         // Depending on differences in lines we might have to scroll
         // horizontally
-        self.horizontal_scroll(action);
+        self.consider_horizontal_scroll(action);
 
         self.update();
     }
@@ -361,7 +349,7 @@ impl Viewer {
             info!("Current line is {}", self.cursor.line);
 
             if self.cursor.line + 1 > (self.disp_line + self.height) {
-                self.vertical_scroll(action);
+                self.do_vertical_scroll(action);
             }
         } else {
             info!("Can't go down, already at the bottom of file");
@@ -376,7 +364,7 @@ impl Viewer {
             info!("Current line is {}", self.cursor.line);
 
             if self.cursor.line < self.disp_line {
-                self.vertical_scroll(action);
+                self.do_vertical_scroll(action);
             }
         } else {
             info!("Can't go up, already at the top of file");
@@ -384,28 +372,20 @@ impl Viewer {
         }
     }
 
-    fn move_cursor_left(&mut self, action: Action) {
+    fn move_cursor_left(&mut self) {
         if self.cursor.col > 1 {
             self.cursor.col -= 1;
             self.focus_col = self.cursor.col;
-
-            if self.cursor.col < self.disp_col {
-                self.vertical_scroll(action);
-            }
         } else {
             info!("Can't go left, already at beginning of the line");
             return;
         }
     }
 
-    fn move_cursor_right(&mut self, action: Action) {
+    fn move_cursor_right(&mut self) {
         if self.focus_col < self.cur_line_len {
             self.cursor.col += 1;
             self.focus_col = self.cursor.col;
-
-            if self.cursor.col > self.disp_col + self.width - 1 {
-                self.vertical_scroll(action);
-            }
         } else {
             info!("Can't go right, already at end of the line");
             return;
@@ -420,7 +400,7 @@ impl Viewer {
             self.set_current_line(line_count);
         }
 
-        self.vertical_scroll(action);
+        self.do_vertical_scroll(action);
     }
 
     fn move_cursor_page_up(&mut self, action: Action) {
@@ -431,32 +411,24 @@ impl Viewer {
             self.set_current_line(1);
         }
 
-        self.vertical_scroll(action);
+        self.do_vertical_scroll(action);
     }
 
-    fn move_cursor_start_line(&mut self, action: Action) {
+    fn move_cursor_start_line(&mut self) {
         if self.cur_line_len > 0 {
             self.cursor.col = 1;
             self.focus_col = 1;
         } else {
             info!("Can't move to the beginning of an empty line");
         }
-
-        if self.cursor.col < self.disp_col {
-            self.vertical_scroll(action);
-        }
     }
 
-    fn move_cursor_end_line(&mut self, action: Action) {
+    fn move_cursor_end_line(&mut self) {
         if self.cur_line_len > 0 {
             self.cursor.col = self.cur_line_len;
             self.focus_col = self.cur_line_len;
         } else {
             info!("Can't move to the end of an empty line");
-        }
-
-        if self.cursor.col > self.disp_col + self.width - 1 {
-            self.vertical_scroll(action);
         }
     }
 

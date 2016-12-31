@@ -29,6 +29,8 @@ pub enum Action {
     MovePageDown,
     MoveStartLine,
     MoveEndLine,
+    MoveStartFile,
+    MoveEndFile,
     GoToLine,
     Search,
     SearchNext,
@@ -278,9 +280,8 @@ impl Viewer {
 
     fn consider_horizontal_scroll(&mut self, action: Action) {
         match action {
-            Action::MoveDown | Action::MoveUp |
-            Action::MovePageDown | Action::MovePageUp |
-            Action::MoveLeft | Action::MoveRight |
+            Action::MoveDown | Action::MoveUp | Action::MovePageDown |
+            Action::MovePageUp | Action::MoveLeft | Action::MoveRight |
             Action::MoveStartLine | Action::MoveEndLine => {
                 let tmp_cur_col = if self.cursor.col == 0 {
                     1
@@ -332,6 +333,12 @@ impl Viewer {
             }
             Action::MoveEndLine => {
                 self.move_cursor_end_line();
+            }
+            Action::MoveStartFile => {
+                self.move_cursor_start_file();
+            }
+            Action::MoveEndFile => {
+                self.move_cursor_end_file();
             }
             _ => {}
         }
@@ -431,6 +438,28 @@ impl Viewer {
         } else {
             info!("Can't move to the end of an empty line");
         }
+    }
+
+    fn move_cursor_start_file(&mut self) {
+        self.cursor.col = 1;
+        self.focus_col = 1;
+        self.set_current_line(1);
+
+        if self.disp_line > 1 || self.disp_col > 1 {
+            let _ = self.display_chunk(1, 1);
+        }
+    }
+
+    fn move_cursor_end_file(&mut self) {
+        let line_count = self.model.get_line_count();
+        self.set_current_line(line_count);
+
+        self.cursor.col = self.cur_line_len;
+
+        if self.disp_line + self.height <= line_count {
+            self.do_vertical_scroll(Action::MovePageDown);
+        }
+        self.consider_horizontal_scroll(Action::MovePageDown);
     }
 
     fn match_key_action(&mut self, key: Key) -> bool {
@@ -536,7 +565,8 @@ impl Viewer {
             }
             Action::MoveUp | Action::MoveDown | Action::MoveLeft |
             Action::MoveRight | Action::MovePageDown | Action::MovePageUp |
-            Action::MoveStartLine | Action::MoveEndLine => {
+            Action::MoveStartLine | Action::MoveEndLine |
+            Action::MoveStartFile | Action::MoveEndFile => {
                 self.move_cursor(action);
             }
             Action::GoToLine => {

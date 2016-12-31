@@ -39,6 +39,7 @@ pub enum Action {
     Delete,
     EditMode,
     ReadMode,
+    Append,
     Save,
     Quit,
 }
@@ -575,6 +576,10 @@ impl Viewer {
                 self.set_current_line(cur_line);
 
                 self.update();
+            }
+            Action::Append => {
+                self.match_key_action_read(Action::EditMode);
+                self.move_cursor(Action::MoveRight);
             }
             Action::Save => {
                 self.model.save();

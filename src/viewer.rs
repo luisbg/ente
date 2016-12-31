@@ -517,12 +517,6 @@ impl Viewer {
             }
             Action::ReadMode => {
                 self.switch_mode(action);
-
-                // Update current line max column
-                let cur_line = self.cursor.line;
-                self.set_current_line(cur_line);
-
-                self.update();
             }
             Action::Save => {
                 self.model.save();
@@ -600,12 +594,6 @@ impl Viewer {
             }
             Action::EditMode => {
                 self.switch_mode(action);
-
-                // Update current line max column
-                let cur_line = self.cursor.line;
-                self.set_current_line(cur_line);
-
-                self.update();
             }
             Action::Append => {
                 self.match_key_action_read(Action::EditMode);
@@ -622,6 +610,8 @@ impl Viewer {
     }
 
     fn switch_mode(&mut self, action: Action) {
+        let cur_line = self.cursor.line;
+
         match action {
             Action::EditMode => {
                 if self.mode != Mode::Edit {
@@ -637,6 +627,11 @@ impl Viewer {
             }
             _ => {}
         }
+
+        // Update current line max column
+        self.set_current_line(cur_line);
+
+        self.update();
     }
 
     fn go_to_line_mode(&mut self, key: Key) {

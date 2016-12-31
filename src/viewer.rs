@@ -307,11 +307,9 @@ impl Viewer {
     }
 
     fn move_cursor(&mut self, action: Action) {
-        let line_count = self.model.get_line_count();
-
         match action {
             Action::MoveDown => {
-                self.move_cursor_down(action, line_count);
+                self.move_cursor_down(action);
             }
             Action::MoveUp => {
                 self.move_cursor_up(action);
@@ -323,7 +321,7 @@ impl Viewer {
                 self.move_cursor_right();
             }
             Action::MovePageDown => {
-                self.move_cursor_page_down(action, line_count);
+                self.move_cursor_page_down(action);
             }
             Action::MovePageUp => {
                 self.move_cursor_page_up(action);
@@ -350,7 +348,9 @@ impl Viewer {
         self.update();
     }
 
-    fn move_cursor_down(&mut self, action: Action, line_count: usize) {
+    fn move_cursor_down(&mut self, action: Action) {
+        let line_count = self.model.get_line_count();
+
         if self.cursor.line < line_count {
             let tmp = self.cursor.line + 1;
             self.set_current_line(tmp);
@@ -400,7 +400,9 @@ impl Viewer {
         }
     }
 
-    fn move_cursor_page_down(&mut self, action: Action, line_count: usize) {
+    fn move_cursor_page_down(&mut self, action: Action) {
+        let line_count = self.model.get_line_count();
+
         if self.cursor.line + self.height < line_count {
             let tmp = self.cursor.line + self.height;
             self.set_current_line(tmp);

@@ -42,6 +42,7 @@ pub enum Action {
     Delete,
     CopyStartMark,
     CopyEndMark,
+    Paste,
     EditMode,
     ReadMode,
     Append,
@@ -540,6 +541,9 @@ impl Viewer {
             }
             Action::CopyEndMark => {
                 self.select_copy_end_marker();
+            }
+            Action::Paste => {
+                self.paste();
             }
             _ => {
                 match key {
@@ -1130,6 +1134,17 @@ impl Viewer {
             };
             let (end, _) = last_line.split_at(col);
             self.copy_string.push_str(end);
+        }
+    }
+
+    fn paste(&mut self) {
+        info!("Paste copy string");
+
+        // TODO: More efficient solution
+        let copy_string = self.copy_string.clone();
+        let chars = copy_string.chars();
+        for c in chars {
+            self.add_char(c);
         }
     }
 

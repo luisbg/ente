@@ -16,6 +16,7 @@ use errors::*;
 
 const RB_COL_START: usize = 0;
 const RB_ROW_START: usize = 0;
+const TAB_SPACES: usize = 4;
 
 #[derive(Copy,Clone)]
 pub enum Action {
@@ -930,7 +931,7 @@ impl Viewer {
 
         info!("Add tab at {}:{}, line, column");
 
-        for c in 0..4 {
+        for c in 0..TAB_SPACES {
             self.model.add_char(' ', line, column + c);
         }
         self.update_after_add('\t');
@@ -959,8 +960,8 @@ impl Viewer {
             }
         } else if c == '\t' {
             // If tab, when tab is four spaces
-            self.cursor.col += 4;
-            self.cur_line_len += 4;
+            self.cursor.col += TAB_SPACES;
+            self.cur_line_len += TAB_SPACES;
         } else {
             // If adding any other character move the cursor one past new char
             self.cursor.col += 1;

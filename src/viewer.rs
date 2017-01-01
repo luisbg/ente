@@ -40,6 +40,8 @@ pub enum Action {
     MovePrevWord,
     KillLine,
     Delete,
+    CopyStartMark,
+    CopyEndMark,
     EditMode,
     ReadMode,
     Append,
@@ -77,6 +79,8 @@ pub struct Viewer {
     line_jump: usize,
     cursor: Cursor,
     search_string: String,
+    copy_start: Cursor,
+    copy_string: String,
 }
 
 fn number_of_digits(number: usize) -> usize {
@@ -105,6 +109,7 @@ impl Viewer {
         rustbox.set_cursor(0, 0);
 
         let cursor = Cursor { line: 1, col: 1 };
+        let copy_start = Cursor { line: 1, col: 1 };
         let mut model = model::Model::new(text, filepath);
 
         let width = if show_line_num {
@@ -130,6 +135,8 @@ impl Viewer {
             line_jump: 0,
             cursor: cursor,
             search_string: String::new(),
+            copy_start: copy_start,
+            copy_string: String::new(),
         };
 
         view.set_current_line(1);
@@ -528,6 +535,12 @@ impl Viewer {
             Action::KillLine => {
                 self.delete_line();
             }
+            Action::CopyStartMark => {
+                self.select_copy_start_marker();
+            }
+            Action::CopyEndMark => {
+                self.select_copy_end_marker();
+            }
             _ => {
                 match key {
                     Key::Char(c) => {
@@ -594,6 +607,12 @@ impl Viewer {
             }
             Action::Delete => {
                 self.delete_at_cursor();
+            }
+            Action::CopyStartMark => {
+                self.select_copy_start_marker();
+            }
+            Action::CopyEndMark => {
+                self.select_copy_end_marker();
             }
             Action::EditMode => {
                 self.switch_mode(action);
@@ -1051,6 +1070,67 @@ impl Viewer {
 
     fn delete_at_cursor(&mut self) {
         self.delete_char(false);
+    }
+
+    fn select_copy_start_marker(&mut self) {
+        info!("Select copy start marker {}:{}",
+              self.cursor.line,
+              self.cursor.col);
+
+        self.copy_start.line = self.cursor.line;
+        self.copy_start.col = self.cursor.col;
+    }
+
+    fn select_copy_end_marker(&mut self) {
+        info!("Select copy end marker {}:{}",
+              self.cursor.line,
+              self.cursor.col);
+
+        if self.cursor.line < self.copy_start.line ||
+           (self.cursor.line == self.copy_start.line &&
+            self.cursor.col < self.copy_start.line) {
+            error!("Copy end marker can't be before start marker");
+        }
+
+        let text_copy = self.text.clone();
+        let mut lines = text_copy.lines().skip(self.copy_start.line - 1);
+
+        if self.copy_start.line == self.cursor.line {
+            let line = lines.next().unwrap();
+            // Check cursor isn't past the line
+            let col = if self.cursor.col <= line.len() {
+                self.cursor.col
+            } else {
+                line.len()
+            };
+
+            self.copy_string = line[self.copy_start.col - 1..col].to_string();
+        } else {
+            self.copy_string = String::new();
+
+            let (_, start) =
+                lines.next().unwrap().split_at(self.copy_start.col - 1);
+            self.copy_string.push_str(start);
+            self.copy_string.push('\n');
+
+            let mid_lines = self.cursor.line - self.copy_start.line - 1;
+            if mid_lines > 0 {
+                for _ in 0..mid_lines {
+                    self.copy_string.push_str(lines.next().unwrap());
+                    self.copy_string.push('\n');
+                }
+            }
+
+            // Check cursor isn't past the last line
+            let last_line = lines.next().unwrap();
+            let col = if self.cursor.col <= last_line.len () {
+                self.cursor.col
+            } else {
+                last_line.len()
+            };
+            let (end, _) = last_line.split_at(col);
+            self.copy_string.push_str(end);
+        }
     }
 
     fn delete_line(&mut self) {

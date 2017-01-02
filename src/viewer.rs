@@ -462,13 +462,14 @@ impl Viewer {
     }
 
     fn move_cursor_end_file(&mut self) {
+        let height = self.height;
         let line_count = self.model.get_line_count();
         self.set_current_line(line_count);
 
         self.cursor.col = self.cur_line_len;
 
-        if self.disp_line + self.height <= line_count {
-            self.do_vertical_scroll(Action::MovePageDown);
+        if self.disp_line + height <= line_count {
+            let _ = self.display_chunk(line_count - height + 1, 1);
         }
         self.consider_horizontal_scroll(Action::MovePageDown);
     }

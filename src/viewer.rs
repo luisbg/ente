@@ -1127,7 +1127,7 @@ impl Viewer {
 
             // Check cursor isn't past the last line
             let last_line = lines.next().unwrap();
-            let col = if self.cursor.col <= last_line.len () {
+            let col = if self.cursor.col <= last_line.len() {
                 self.cursor.col
             } else {
                 last_line.len()
@@ -1273,15 +1273,21 @@ impl Viewer {
         self.rustbox.set_cursor(cur_col,
                                 (self.cursor.line - self.disp_line) as isize);
 
-        let perc = format!("{}% ",
+        let perc = format!(" {}% ",
                            (self.cursor.line * 100) /
                            self.model.get_line_count());
 
-        let mut empty = String::with_capacity(self.rustbox.width() -
-                                              status.len() -
-                                              perc.len());
-        for _ in 0..empty.capacity() {
-            empty.push(' ');
+        let mut first_empty = String::with_capacity((self.rustbox.width() / 2) -
+                                                    status.len() -
+                                                    2);
+        for _ in 0..first_empty.capacity() {
+            first_empty.push(' ');
+        }
+        let mut second_empty = String::with_capacity((self.rustbox.width() /
+                                                      2) -
+                                                     (perc.len() / 2));
+        for _ in 0..second_empty.capacity() {
+            second_empty.push(' ');
         }
 
         self.rustbox.print(RB_COL_START,
@@ -1295,13 +1301,20 @@ impl Viewer {
                            rustbox::RB_NORMAL,
                            Color::White,
                            Color::Black,
-                           empty.as_ref());
-        self.rustbox.print(self.rustbox.width() - perc.len(),
+                           first_empty.as_ref());
+        self.rustbox.print(RB_COL_START + status.len() + first_empty.len(),
                            self.height,
                            rustbox::RB_REVERSE,
                            Color::White,
                            Color::Black,
                            perc.as_ref());
+        self.rustbox.print(RB_COL_START + status.len() + first_empty.len() +
+                           perc.len(),
+                           self.height,
+                           rustbox::RB_NORMAL,
+                           Color::White,
+                           Color::Black,
+                           second_empty.as_ref());
 
         self.rustbox.present();
     }

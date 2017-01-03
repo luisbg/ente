@@ -93,6 +93,34 @@ impl Model {
         end_len
     }
 
+    pub fn delete_block(&mut self, line: usize, column: usize, chars: usize) {
+        if chars <= 0 {
+            return;
+        }
+        // There needs to be enough chars left of the cursor in the line
+        if column <= chars {
+            return;
+        }
+
+        info!("Deleting {} chars from {}:{}", chars, line, column);
+
+        let mut new_text = String::new();
+        for (x, ln) in self.text.lines().enumerate() {
+            if x == line - 1 {
+                let (tmp_beg, tmp_end) = ln.split_at(column - 1);
+                let beg = tmp_beg[0..(tmp_beg.len() - chars)].to_string();
+                let end = tmp_end.to_string();
+                new_text.push_str(&format!("{}{}\n", beg, end));
+            } else {
+                new_text.push_str(ln);
+                new_text.push('\n');
+            }
+        }
+
+        self.text = new_text;
+        self.saved = false;
+    }
+
     pub fn delete_line(&mut self, line: usize) -> bool {
         // TODO: Can't delete only line in the file
         info!("Delete line {}", line);

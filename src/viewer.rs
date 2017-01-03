@@ -1050,7 +1050,7 @@ impl Viewer {
     }
 
     fn delete_backspace(&mut self) {
-        if self.cursor.col >= TAB_SPACES {
+        if self.cursor.col > TAB_SPACES {
             // Check if we should delete an indentation level
             let text_copy = self.text.clone();
             let mut lines = text_copy.lines().skip(self.cursor.line - 1);
@@ -1063,9 +1063,18 @@ impl Viewer {
             }
             let len = beg_line.len();
             if beg_line[len - TAB_SPACES..len] == tab_space {
-                for _ in 0..TAB_SPACES {
-                    self.delete_char(true);
-                }
+                self.model.delete_block(self.cursor.line,
+                                        self.cursor.col,
+                                        TAB_SPACES);
+
+                self.cursor.col -= TAB_SPACES;
+                self.focus_col = self.cursor.col;
+
+                let disp_line = self.disp_line;
+                let disp_col = self.disp_col;
+                self.text = self.model.get_text();
+                let _ = self.display_chunk(disp_line, disp_col);
+                self.update();
 
                 return;
             }

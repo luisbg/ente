@@ -69,10 +69,15 @@ impl slog_stream::Format for LogFormat {
               _logger_values: &slog::OwnedKeyValueList)
               -> io::Result<()> {
         let mut msg = format!("{}: {}", rinfo.level(), rinfo.msg());
-        for _ in 0..(FILE_POS_LOG - msg.len()) {
-            msg.push(' ');
+        if msg.len() < FILE_POS_LOG {
+            for _ in 0..(FILE_POS_LOG - msg.len()) {
+                msg.push(' ');
+            }
+
+            msg += format!("[{} : {}]\n", rinfo.file(), rinfo.line()).as_ref();
+        } else {
+            msg += "\n";
         }
-        msg += format!("[{} : {}]\n", rinfo.file(), rinfo.line()).as_ref();
         try!(io.write_all(msg.as_bytes()));
         Ok(())
     }

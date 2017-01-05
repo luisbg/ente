@@ -39,6 +39,7 @@ pub enum Action {
     MoveNextWord,
     MovePrevWord,
     KillLine,
+    KillEndLine,
     Delete,
     CopyStartMark,
     CopyEndMark,
@@ -540,6 +541,9 @@ impl Viewer {
             Action::KillLine => {
                 self.delete_line();
             }
+            Action::KillEndLine => {
+                self.delete_end_of_line();
+            }
             Action::CopyStartMark => {
                 self.select_copy_start_marker();
             }
@@ -612,6 +616,9 @@ impl Viewer {
             }
             Action::KillLine => {
                 self.delete_line();
+            }
+            Action::KillEndLine => {
+                self.delete_end_of_line();
             }
             Action::Delete => {
                 self.delete_at_cursor();
@@ -1226,6 +1233,31 @@ impl Viewer {
         self.focus_col = 1;
         let disp_line = self.disp_line;
         let _ = self.display_chunk(disp_line, 1);
+        self.update();
+    }
+
+    fn delete_end_of_line(&mut self) {
+        let line = self.cursor.line;
+        let line_len = self.cur_line_len;
+        let col = self.cursor.col;
+
+        if col == line_len {
+            return;
+        }
+
+        // Account for having one extra character in Edit Mode
+        if self.mode == Mode::Edit {
+            self.model.delete_block(line, line_len, line_len - col);
+        } else {
+            self.model.delete_block(line, line_len + 1, line_len - col);
+        }
+        self.cur_line_len -= line_len - col;
+
+        self.text = self.model.get_text();
+
+        let disp_line = self.disp_line;
+        let disp_col = self.disp_col;
+        let _ = self.display_chunk(disp_line, disp_col);
         self.update();
     }
 

@@ -77,6 +77,7 @@ pub struct Viewer {
     disp_col: usize, // first displayed col
     focus_col: usize,
     cur_line_len: usize,
+    num_lines_digits: usize,
     line_jump: usize,
     cursor: Cursor,
     search_string: String,
@@ -112,9 +113,10 @@ impl Viewer {
         let cursor = Cursor { line: 1, col: 1 };
         let copy_start = Cursor { line: 1, col: 1 };
         let mut model = model::Model::new(text, filepath);
+        let num_lines_digits = number_of_digits(model.get_line_count());
 
         let width = if show_line_num {
-            rustbox.width() - number_of_digits(model.get_line_count()) - 1
+            rustbox.width() - num_lines_digits - 1
         } else {
             rustbox.width()
         };
@@ -133,6 +135,7 @@ impl Viewer {
             disp_col: 1,
             focus_col: 1,
             cur_line_len: 1,
+            num_lines_digits: num_lines_digits,
             line_jump: 0,
             cursor: cursor,
             search_string: String::new(),
@@ -940,6 +943,32 @@ impl Viewer {
         }
     }
 
+    fn update_num_lines_digits(&mut self,
+                               add: bool,
+                               amount: usize,
+                               line_count: usize)
+                               -> bool {
+        let num_lines_digits: usize;
+
+        if amount == 1 {
+            if (add && (line_count % 10) == 0) ||
+               (!add && (line_count % 10) == 9) {
+                num_lines_digits = number_of_digits(line_count);
+            } else {
+                return false;
+            }
+        } else {
+            num_lines_digits = number_of_digits(line_count);
+        }
+
+        if self.num_lines_digits != num_lines_digits {
+            self.num_lines_digits = num_lines_digits;
+            return true;
+        }
+
+        return false;
+    }
+
     fn add_char(&mut self, c: char) {
         let line = self.cursor.line;
         let column = self.cursor.col;
@@ -978,9 +1007,11 @@ impl Viewer {
             }
 
             if self.show_line_num {
-                self.width = self.rustbox.width() -
-                             number_of_digits(self.model.get_line_count()) -
-                             1;
+                let line_count = self.model.get_line_count();
+                if self.update_num_lines_digits(true, 1, line_count) {
+                    self.width = self.rustbox.width() - self.num_lines_digits -
+                                 1;
+                }
             }
         } else if c == '\t' {
             // If tab, when tab is four spaces
@@ -1031,8 +1062,10 @@ impl Viewer {
 
                 if self.show_line_num {
                     let line_count = self.model.get_line_count();
-                    self.width =
-                        self.rustbox.width() - number_of_digits(line_count) - 1;
+                    if self.update_num_lines_digits(false, 1, line_count) {
+                        self.width =
+                            self.rustbox.width() - self.num_lines_digits - 1;
+                    }
                 }
             } else {
                 self.cursor.col -= 1;
@@ -1174,8 +1207,9 @@ impl Viewer {
         self.text = self.model.get_text();
 
         if self.show_line_num {
-            self.width = self.rustbox.width() - number_of_digits(line_count) -
-                         1;
+            if self.update_num_lines_digits(false, 1, line_count - 1) {
+                self.width = self.rustbox.width() - self.num_lines_digits - 1;
+            }
         }
 
         self.set_current_line(line_num);

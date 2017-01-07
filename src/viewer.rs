@@ -1038,8 +1038,13 @@ impl Viewer {
         };
 
         // Can't delete from the beginning of the file or past the line
-        if (line == 1 && column == 1) || self.cur_line_len == 0 ||
-           self.mode == Mode::Edit && (column > self.cur_line_len) {
+        if (line == 1 && column == 1) ||
+           self.mode == Mode::Edit && (column - 1 > self.cur_line_len) {
+            return;
+        }
+
+        if self.cur_line_len == 0 {
+            self.delete_line();
             return;
         }
 

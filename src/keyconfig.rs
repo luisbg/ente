@@ -42,7 +42,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::Ctrl('d') => viewer::Action::KillLine,
         Key::Ctrl('r') => viewer::Action::KillEndLine,
         Key::Delete => viewer::Action::Delete,
-        Key::Ctrl('z') => viewer::Action::CopyStartMark,
+        Key::Ctrl('x') => viewer::Action::CopyStartMark,
         Key::Ctrl('c') => viewer::Action::CopyEndMark,
         Key::Ctrl('v') => viewer::Action::Paste,
         Key::Enter => viewer::Action::Go,

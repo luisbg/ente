@@ -47,6 +47,7 @@ pub enum Action {
     EditMode,
     ReadMode,
     Append,
+    Undo,
     Save,
     Quit,
 }
@@ -552,6 +553,9 @@ impl Viewer {
             }
             Action::Paste => {
                 self.paste();
+            }
+            Action::Undo => {
+                self.undo();
             }
             _ => {
                 match key {
@@ -1203,6 +1207,30 @@ impl Viewer {
 
         self.model.add_block(copy_string, line, column);
         self.text = self.model.get_text();
+        let _ = self.display_chunk(disp_line, disp_col);
+        self.update();
+    }
+
+    fn undo(&mut self) {
+        info!("Undo last change");
+        let mut disp_line = self.disp_line;
+        let disp_col = self.disp_col;
+
+        self.model.undo();
+        self.text = self.model.get_text();
+
+        let line_count = self.model.get_line_count();
+        if self.cursor.line > line_count {
+            self.move_cursor_end_file();
+        }
+
+        if self.cursor.line < disp_line {
+            if line_count > self.height {
+                disp_line = line_count - self.height + 1;
+            } else {
+                disp_line = 1;
+            }
+        }
         let _ = self.display_chunk(disp_line, disp_col);
         self.update();
     }

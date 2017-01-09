@@ -6,6 +6,7 @@ mod errors {}
 
 pub struct Model {
     text: String,
+    old_text: String,
     line_count: usize,
     filepath: String,
     saved: bool,
@@ -17,6 +18,7 @@ impl Model {
 
         Model {
             text: String::from(text),
+            old_text: String::new(),
             filepath: filepath.to_string(),
             line_count: line_count,
             saved: true,
@@ -47,6 +49,7 @@ impl Model {
                 new_text.push('\n');
             }
         }
+        self.old_text = self.text.clone();
         self.text = new_text;
         self.saved = false;
 
@@ -67,6 +70,9 @@ impl Model {
                 new_text.push('\n');
             }
         }
+
+        self.line_count += copy_str.lines().count() - 1;
+
         self.text = new_text;
         self.saved = false;
     }
@@ -99,6 +105,7 @@ impl Model {
                 new_text.push('\n');
             }
         }
+        self.old_text = self.text.clone();
         self.text = new_text;
         self.saved = false;
 
@@ -133,6 +140,7 @@ impl Model {
             }
         }
 
+        self.old_text = self.text.clone();
         self.text = new_text;
         self.saved = false;
     }
@@ -152,11 +160,20 @@ impl Model {
             }
         }
 
+        self.old_text = self.text.clone();
         self.text = new_text;
         self.saved = false;
         self.line_count -= 1;
 
         true
+    }
+
+    pub fn undo(&mut self) {
+        // TODO: Optimize. For example with a stack of changes
+        // This only reverts back one change :(
+        self.text = self.old_text.clone();
+        self.line_count = self.text.lines().count();
+        self.saved = false;
     }
 
     pub fn save(&mut self) {

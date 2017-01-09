@@ -45,6 +45,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::Ctrl('x') => viewer::Action::CopyStartMark,
         Key::Ctrl('c') => viewer::Action::CopyEndMark,
         Key::Ctrl('v') => viewer::Action::Paste,
+        Key::Ctrl('z') => viewer::Action::Undo,
         Key::Enter => viewer::Action::Go,
         Key::Ctrl('s') => viewer::Action::Save,
         Key::Ctrl('q') => viewer::Action::Quit
@@ -189,6 +190,7 @@ fn parse_config_file(text: String,
             "CopyStartMark" => viewer::Action::CopyStartMark,
             "CopyEndMark" => viewer::Action::CopyEndMark,
             "Paste" => viewer::Action::Paste,
+            "Undo" => viewer::Action::Undo,
             "Save" => viewer::Action::Save,
             "Quit" => viewer::Action::Quit,
             _ => {

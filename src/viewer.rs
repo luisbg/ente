@@ -1432,3 +1432,21 @@ impl Viewer {
         self.rustbox.present();
     }
 }
+
+#[test]
+fn test_new() {
+    use keyconfig;
+
+    let text = String::from("test");
+    let name = String::from("name");
+    let actions = keyconfig::fill_key_map("");
+
+    let mut test_view =
+        Viewer::new(text.as_str(), name, actions, "path", false);
+    match test_view.display_chunk(1, 1) {
+        Ok(_) => {}
+        Err(_) => {
+            panic!();
+        }
+    }
+}

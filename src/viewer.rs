@@ -9,6 +9,7 @@ use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
 
 use model;
+use keyconfig;
 
 mod errors {}
 
@@ -1435,8 +1436,6 @@ impl Viewer {
 
 #[test]
 fn test_new() {
-    use keyconfig;
-
     let text = String::from("test");
     let name = String::from("name");
     let actions = keyconfig::fill_key_map("");
@@ -1448,5 +1447,22 @@ fn test_new() {
         Err(_) => {
             panic!();
         }
+    }
+}
+
+#[test]
+fn test_display_chunk_outside_file() {
+    let text = String::from("test");
+    let name = String::from("name");
+    let actions = keyconfig::fill_key_map("");
+
+    // Run with: RUST_TEST_THREADS=1 cargo test
+    let mut test_view =
+        Viewer::new(text.as_str(), name, actions, "path", false);
+    match test_view.display_chunk(2, 1) {
+        Ok(_) => {
+            panic!();
+        }
+        Err(_) => {}
     }
 }

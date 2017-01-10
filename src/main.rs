@@ -36,6 +36,9 @@ mod viewer;
 mod model;
 mod keyconfig;
 
+#[cfg(test)]
+mod modeltest;
+
 const FILE_POS_LOG: usize = 65;
 
 struct LogFormat;

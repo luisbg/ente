@@ -9,6 +9,7 @@ use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
 
 use model;
+#[allow(unused_imports)]
 use keyconfig;
 
 mod errors {}

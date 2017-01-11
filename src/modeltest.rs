@@ -75,3 +75,19 @@ fn delete_char() {
 
     assert_eq!("Text test\n", test_model.get_text());
 }
+
+#[test]
+fn delete_block() {
+    // TODO: protect out of bounds
+    let text = String::from("Text.._block_ test");
+    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+
+    // TODO: it would make more sense for this to be (1, 5, 9)
+    test_model.delete_block(1, 14, 9);
+
+    // These should do nothing
+    test_model.delete_block(1, 1, 0);
+    test_model.delete_block(3, 2, 1);
+
+    assert_eq!("Text test\n", test_model.get_text());
+}

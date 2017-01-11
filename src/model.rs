@@ -117,7 +117,7 @@ impl Model {
     }
 
     pub fn delete_block(&mut self, line: usize, column: usize, chars: usize) {
-        if chars <= 0 {
+        if chars == 0 {
             return;
         }
         // There needs to be enough chars left of the cursor in the line

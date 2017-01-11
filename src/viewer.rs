@@ -979,7 +979,7 @@ impl Viewer {
             return true;
         }
 
-        return false;
+        false
     }
 
     fn add_char(&mut self, c: char) {
@@ -1252,10 +1252,9 @@ impl Viewer {
         }
         self.text = self.model.get_text();
 
-        if self.show_line_num {
-            if self.update_num_lines_digits(false, 1, line_count - 1) {
-                self.width = self.rustbox.width() - self.num_lines_digits - 1;
-            }
+        if self.show_line_num &&
+           self.update_num_lines_digits(false, 1, line_count - 1) {
+            self.width = self.rustbox.width() - self.num_lines_digits - 1;
         }
 
         self.set_current_line(line_num);

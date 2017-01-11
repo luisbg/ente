@@ -61,3 +61,17 @@ fn add_block() {
     assert_eq!("Start\nThis is a block\nEnd\n",
                test_model.get_text());
 }
+
+#[test]
+fn delete_char() {
+    // TODO: test out of bounds
+    let text = String::from("Text _test_");
+    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+
+    // TODO: it would make more sense for this to be character 6
+    test_model.delete_char(1, 7);
+    test_model.delete_char(1, 1);  // this should do nothing
+    test_model.delete_char(1, 11);
+
+    assert_eq!("Text test\n", test_model.get_text());
+}

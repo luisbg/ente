@@ -37,3 +37,16 @@ fn add_char_end() {
 
     assert_eq!("Start\nSecond line\n", test_model.get_text());
 }
+
+#[test]
+fn get_line_count() {
+    let text = String::from("1\n2\n3\n");
+    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+
+    assert_eq!(3, test_model.get_line_count());
+
+    test_model.add_char('4', 4, 1);
+    test_model.add_char('\n', 4, 2);
+
+    assert_eq!(4, test_model.get_line_count());
+}

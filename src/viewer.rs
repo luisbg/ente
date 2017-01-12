@@ -956,11 +956,8 @@ impl Viewer {
         }
     }
 
-    fn update_num_lines_digits(&mut self,
-                               add: bool,
-                               amount: usize,
-                               line_count: usize)
-                               -> bool {
+    fn update_num_lines_digits(&mut self, add: bool, amount: usize) -> bool {
+        let line_count = self.model.get_line_count();
         let num_lines_digits: usize;
 
         if amount == 1 {
@@ -1019,12 +1016,8 @@ impl Viewer {
                 disp_line += 1;
             }
 
-            if self.show_line_num {
-                let line_count = self.model.get_line_count();
-                if self.update_num_lines_digits(true, 1, line_count) {
-                    self.width = self.rustbox.width() - self.num_lines_digits -
-                                 1;
-                }
+            if self.show_line_num && self.update_num_lines_digits(true, 1) {
+                self.width = self.rustbox.width() - self.num_lines_digits - 1;
             }
         } else if c == '\t' {
             // If tab, when tab is four spaces
@@ -1078,12 +1071,10 @@ impl Viewer {
                     disp_line -= 1;
                 }
 
-                if self.show_line_num {
-                    let line_count = self.model.get_line_count();
-                    if self.update_num_lines_digits(false, 1, line_count) {
-                        self.width =
-                            self.rustbox.width() - self.num_lines_digits - 1;
-                    }
+                if self.show_line_num &&
+                   self.update_num_lines_digits(false, 1) {
+                    self.width = self.rustbox.width() - self.num_lines_digits -
+                                 1;
                 }
             } else {
                 self.cursor.col -= 1;
@@ -1206,9 +1197,15 @@ impl Viewer {
         let disp_col = self.disp_col;
 
         let copy_string = self.copy_string.clone();
+        let num_lines = copy_string.lines().count();
 
         self.model.add_block(copy_string, line, column);
         self.text = self.model.get_text();
+
+        if self.show_line_num && self.update_num_lines_digits(true, num_lines) {
+            self.width = self.rustbox.width() - self.num_lines_digits - 1;
+        }
+
         let _ = self.display_chunk(disp_line, disp_col);
         self.update();
     }
@@ -1252,8 +1249,7 @@ impl Viewer {
         }
         self.text = self.model.get_text();
 
-        if self.show_line_num &&
-           self.update_num_lines_digits(false, 1, line_count - 1) {
+        if self.show_line_num && self.update_num_lines_digits(false, 1) {
             self.width = self.rustbox.width() - self.num_lines_digits - 1;
         }
 

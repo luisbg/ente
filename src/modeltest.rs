@@ -91,3 +91,16 @@ fn delete_block() {
 
     assert_eq!("Text test\n", test_model.get_text());
 }
+
+#[test]
+fn delete_line() {
+    let text = String::from("First\nSecond\nThird\n");
+    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+
+    test_model.delete_line(2);
+
+    // This should do nothing
+    test_model.delete_line(4);
+
+    assert_eq!("First\nThird\n", test_model.get_text());
+}

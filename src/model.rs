@@ -60,9 +60,19 @@ impl Model {
 
     pub fn add_block(&mut self, copy_str: String, line: usize, column: usize) {
         // TODO: Too similar to add_char(), overload?
+        if line > self.text.lines().count() {
+            warn!("line parameter is past the end of file");
+            return;
+        }
+
         let mut new_text = String::new();
         for (x, ln) in self.text.lines().enumerate() {
             if x == line - 1 {
+                if column != 1 && ln.len() < column {
+                    warn!("column parameter is past line text");
+                    return;
+                }
+
                 let (beg, end) = ln.split_at(column - 1);
                 new_text.push_str(&format!("{}{}{}\n", beg, copy_str, end));
             } else {

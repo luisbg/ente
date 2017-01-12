@@ -53,11 +53,15 @@ fn get_line_count() {
 
 #[test]
 fn add_block() {
-    // TODO: Test block at line past end and test blocks past characters in line
     let text = String::from("Start\n\nEnd\n");
     let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
 
     test_model.add_block(String::from("This is a block"), 2, 1);
+
+    // These should do nothing
+    test_model.add_block(String::from("This is past the line"), 2, 25);
+    test_model.add_block(String::from("Past EOF"), 4, 1);
+
     assert_eq!("Start\nThis is a block\nEnd\n",
                test_model.get_text());
 }

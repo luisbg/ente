@@ -1217,6 +1217,10 @@ impl Viewer {
         self.model.undo();
         self.text = self.model.get_text();
 
+        if self.show_line_num && self.update_num_lines_digits(true, false) {
+            self.width = self.rustbox.width() - self.num_lines_digits - 1;
+        }
+
         let line_count = self.model.get_line_count();
         if self.cursor.line > line_count {
             self.move_cursor_end_file();

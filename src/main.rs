@@ -20,6 +20,7 @@ use std::error::Error as StdError;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io;
+use std::path::Path;
 
 use std::env;
 use slog::DrainExt;
@@ -136,18 +137,28 @@ fn main() {
 
 fn open_file(filepath: &str) -> String {
     // Open the file
-    let mut file = match File::open(filepath) {
-        Ok(file) => file,
-        Err(_) => panic!("Couldn't open file {}", filepath),
-    };
-    info!("Opening file: {}", filepath);
-
-    // Read the file into a String
     let mut text = String::new();
-    match file.read_to_string(&mut text) {
-        Ok(_) => {}
-        Err(error) => panic!("couldn't read {}: ", error.description()),
+
+    let path = Path::new(filepath);
+    if path.is_file() {
+        let mut file = match File::open(path) {
+            Ok(file) => file,
+            Err(_) => panic!("File {} does not exist. Creating it.", filepath),
+        };
+
+        info!("Opening file: {}", filepath);
+
+        // Read the file into a String
+        match file.read_to_string(&mut text) {
+            Ok(_) => {}
+            Err(error) => panic!("couldn't read {}: ", error.description()),
+        }
+    } else {
+        info!("Creating new file: {}", filepath);
+        File::create(path).expect("Couldn't create file");
+        text.push('\n');
     }
+
     text
 }
 

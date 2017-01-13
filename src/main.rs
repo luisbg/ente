@@ -160,6 +160,9 @@ fn open_file(filepath: &str) -> String {
     } else {
         info!("Creating new file: {}", filepath);
         File::create(path).expect("Couldn't create file");
+    }
+
+    if text.lines().count() == 0 {
         text.push('\n');
     }
 

@@ -50,6 +50,7 @@ pub enum Action {
     ReadMode,
     Append,
     Undo,
+    ToggleLineNumbers,
     Save,
     Quit,
 }
@@ -559,6 +560,9 @@ impl Viewer {
             Action::Undo => {
                 self.undo();
             }
+            Action::ToggleLineNumbers => {
+                self.toggle_line_numbers();
+            }
             _ => {
                 match key {
                     Key::Char(c) => {
@@ -641,6 +645,9 @@ impl Viewer {
             Action::Append => {
                 self.match_key_action_read(Action::EditMode);
                 self.move_cursor(Action::MoveRight);
+            }
+            Action::ToggleLineNumbers => {
+                self.toggle_line_numbers();
             }
             Action::Save => {
                 self.model.save();
@@ -1287,6 +1294,23 @@ impl Viewer {
 
         let disp_line = self.disp_line;
         let disp_col = self.disp_col;
+        let _ = self.display_chunk(disp_line, disp_col);
+        self.update();
+    }
+
+    fn toggle_line_numbers(&mut self) {
+        let disp_line = self.disp_line;
+        let disp_col = self.disp_col;
+
+        self.show_line_num = !self.show_line_num;
+        info!("Toggle showing line numbers: {}", self.show_line_num);
+
+        self.width = if self.show_line_num {
+            self.rustbox.width() - self.num_lines_digits - 1
+        } else {
+            self.rustbox.width()
+        };
+
         let _ = self.display_chunk(disp_line, disp_col);
         self.update();
     }

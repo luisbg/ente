@@ -1195,6 +1195,7 @@ impl Viewer {
         let column = self.cursor.col;
         let disp_line = self.disp_line;
         let disp_col = self.disp_col;
+        let paste_lines = self.copy_string.lines().count();
 
         let copy_string = self.copy_string.clone();
 
@@ -1205,6 +1206,7 @@ impl Viewer {
             self.width = self.rustbox.width() - self.num_lines_digits - 1;
         }
 
+        self.set_current_line(line + paste_lines - 1);
         let _ = self.display_chunk(disp_line, disp_col);
         self.update();
     }

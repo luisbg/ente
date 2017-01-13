@@ -6,12 +6,11 @@ ENTE (Educational Nimble Text Editor)
 
 A text editor project to keep learning Rust through practice.
 
-For now it views files. Will play with simple editing over the December
-vacations.
+It edits files now. Check out the Actions list in keys.conf.
 
 Comments and patches welcome :)
 
 To run:
 $ cargo run text_file
 or
-$ cargo run text_file --keyconfig=<config_file>
+$ cargo run text_file --keyconfig=<config_file>  --hide-line-num

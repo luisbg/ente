@@ -140,6 +140,10 @@ fn open_file(filepath: &str) -> String {
     let mut text = String::new();
 
     let path = Path::new(filepath);
+    if path.is_dir() {
+        panic!("Can't open a folder. {}", filepath);
+    }
+
     if path.is_file() {
         let mut file = match File::open(path) {
             Ok(file) => file,

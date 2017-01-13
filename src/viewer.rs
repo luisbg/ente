@@ -1043,14 +1043,14 @@ impl Viewer {
             self.cursor.col + 1
         };
 
-        // Can't delete from the beginning of the file or past the line
-        if (line == 1 && column == 1) ||
-           self.mode == Mode::Edit && (column - 1 > self.cur_line_len) {
-            return;
-        }
-
-        if self.cur_line_len == 0 {
-            self.delete_line();
+        // Can't delete char from the beginning of the file or past the line
+        // and can't do Delete action past the line (Edit Mode)
+        if backspace {
+            if (line == 1 && column == 1) || column - 1 > self.cur_line_len {
+                return;
+            }
+        } else if self.cur_line_len == 0 ||
+                  (self.mode == Mode::Edit && (column > self.cur_line_len)) {
             return;
         }
 

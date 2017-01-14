@@ -1011,12 +1011,13 @@ impl Viewer {
         self.text = self.model.get_text();
 
         let mut disp_line = self.disp_line;
-        let disp_col = self.disp_col;
+        let mut disp_col = self.disp_col;
 
         if c == '\n' {
             // If adding an Enter, we move the cursor to the newline which
             // might fall outside of the display
             let line_num = self.cursor.line + 1;
+            disp_col = 1;
             self.focus_col = 1;
             self.set_current_line(line_num);
             if self.cursor.line >= disp_line + self.height {
@@ -1036,6 +1037,10 @@ impl Viewer {
             self.cur_line_len += 1;
         }
         self.focus_col = self.cursor.col;
+
+        if self.cursor.col > disp_col + self.width {
+            disp_col = self.cursor.col - self.width;
+        }
 
         let _ = self.display_chunk(disp_line, disp_col);
         self.update();

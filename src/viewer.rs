@@ -68,6 +68,13 @@ pub struct Cursor {
     col: usize,
 }
 
+pub struct Colors {
+    fg: Color,
+    bg: Color,
+    line_num: Color,
+    error: Color,
+}
+
 pub struct Viewer {
     rustbox: RustBox,
     text: String,
@@ -85,6 +92,7 @@ pub struct Viewer {
     num_lines_digits: usize,
     line_jump: usize,
     cursor: Cursor,
+    colors: Colors,
     search_string: String,
     copy_start: Cursor,
     copy_string: String,
@@ -116,6 +124,12 @@ impl Viewer {
         rustbox.set_cursor(0, 0);
 
         let cursor = Cursor { line: 1, col: 1 };
+        let colors = Colors {
+            fg: Color::White,
+            bg: Color::Black,
+            line_num: Color::Blue,
+            error: Color::Red,
+        };
         let copy_start = Cursor { line: 1, col: 1 };
         let mut model = model::Model::new(text, filepath);
         let num_lines_digits = number_of_digits(model.get_line_count());
@@ -143,6 +157,7 @@ impl Viewer {
             num_lines_digits: num_lines_digits,
             line_jump: 0,
             cursor: cursor,
+            colors: colors,
             search_string: String::new(),
             copy_start: copy_start,
             copy_string: String::new(),
@@ -155,8 +170,8 @@ impl Viewer {
                 view.rustbox.print(RB_COL_START,
                                    RB_ROW_START,
                                    rustbox::RB_NORMAL,
-                                   Color::Red,
-                                   Color::Black,
+                                   view.colors.error,
+                                   view.colors.bg,
                                    "Empty file!");
                 view.disp_line = 0;
                 view.update()
@@ -215,23 +230,23 @@ impl Viewer {
                     self.rustbox.print(RB_COL_START,
                                        ln,
                                        rustbox::RB_NORMAL,
-                                       Color::White,
-                                       Color::Black,
+                                       self.colors.fg,
+                                       self.colors.bg,
                                        &line[beg..end]);
                 } else {
                     self.rustbox.print(RB_COL_START,
                                        ln,
                                        rustbox::RB_NORMAL,
-                                       Color::White,
-                                       Color::Black,
+                                       self.colors.fg,
+                                       self.colors.bg,
                                        "");
                 }
                 if self.show_line_num {
                     self.rustbox.print(RB_COL_START + self.width + 1,
                                        ln,
                                        rustbox::RB_NORMAL,
-                                       Color::Blue,
-                                       Color::Black,
+                                       self.colors.line_num,
+                                       self.colors.bg,
                                        format!("{}", ln + start_line).as_ref());
                 }
             } else {
@@ -1335,14 +1350,14 @@ impl Viewer {
         self.rustbox.print(RB_COL_START,
                            self.height,
                            rustbox::RB_NORMAL,
-                           Color::White,
-                           Color::Black,
+                           self.colors.fg,
+                           self.colors.bg,
                            empty.as_ref());
         self.rustbox.print(self.rustbox.width() - prompt.len(),
                            self.height,
                            rustbox::RB_REVERSE,
-                           Color::White,
-                           Color::Black,
+                           self.colors.fg,
+                           self.colors.bg,
                            prompt);
         self.rustbox.present();
 
@@ -1437,27 +1452,27 @@ impl Viewer {
         self.rustbox.print(RB_COL_START,
                            self.height,
                            rustbox::RB_REVERSE,
-                           Color::White,
-                           Color::Black,
+                           self.colors.fg,
+                           self.colors.bg,
                            status.as_ref());
         self.rustbox.print(RB_COL_START + status.len(),
                            self.height,
                            rustbox::RB_NORMAL,
-                           Color::White,
-                           Color::Black,
+                           self.colors.fg,
+                           self.colors.bg,
                            first_empty.as_ref());
         self.rustbox.print(RB_COL_START + status.len() + first_empty.len(),
                            self.height,
                            rustbox::RB_REVERSE,
-                           Color::White,
-                           Color::Black,
+                           self.colors.fg,
+                           self.colors.bg,
                            perc.as_ref());
         self.rustbox.print(RB_COL_START + status.len() + first_empty.len() +
                            perc.len(),
                            self.height,
                            rustbox::RB_NORMAL,
-                           Color::White,
-                           Color::Black,
+                           self.colors.fg,
+                           self.colors.bg,
                            second_empty.as_ref());
 
         self.rustbox.present();

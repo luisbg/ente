@@ -11,6 +11,8 @@ use rustbox::Key;
 use model;
 #[allow(unused_imports)]
 use keyconfig;
+#[allow(unused_imports)]
+use colorconfig;
 
 mod errors {}
 
@@ -69,10 +71,10 @@ pub struct Cursor {
 }
 
 pub struct Colors {
-    fg: Color,
-    bg: Color,
-    line_num: Color,
-    error: Color,
+    pub fg: Color,
+    pub bg: Color,
+    pub line_num: Color,
+    pub error: Color,
 }
 
 pub struct Viewer {
@@ -113,6 +115,7 @@ impl Viewer {
     pub fn new(text: &str,
                filename: String,
                key_map: HashMap<Key, Action>,
+               colors: Colors,
                filepath: &str,
                show_line_num: bool)
                -> Viewer {
@@ -124,12 +127,6 @@ impl Viewer {
         rustbox.set_cursor(0, 0);
 
         let cursor = Cursor { line: 1, col: 1 };
-        let colors = Colors {
-            fg: Color::White,
-            bg: Color::Black,
-            line_num: Color::Blue,
-            error: Color::Red,
-        };
         let copy_start = Cursor { line: 1, col: 1 };
         let mut model = model::Model::new(text, filepath);
         let num_lines_digits = number_of_digits(model.get_line_count());
@@ -1484,9 +1481,14 @@ fn test_new() {
     let text = String::from("test");
     let name = String::from("name");
     let actions = keyconfig::fill_key_map("");
+    let colors = colorconfig::fill_colors("");
 
-    let mut test_view =
-        Viewer::new(text.as_str(), name, actions, "path", false);
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false);
     match test_view.display_chunk(1, 1) {
         Ok(_) => {}
         Err(_) => {
@@ -1500,10 +1502,15 @@ fn test_display_chunk_outside_file() {
     let text = String::from("test");
     let name = String::from("name");
     let actions = keyconfig::fill_key_map("");
+    let colors = colorconfig::fill_colors("");
 
     // Run with: RUST_TEST_THREADS=1 cargo test
-    let mut test_view =
-        Viewer::new(text.as_str(), name, actions, "path", false);
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false);
     match test_view.display_chunk(2, 1) {
         Ok(_) => {
             panic!();

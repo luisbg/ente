@@ -36,6 +36,7 @@ use errors::*;
 mod viewer;
 mod model;
 mod keyconfig;
+mod colorconfig;
 
 #[cfg(test)]
 mod modeltest;
@@ -116,12 +117,25 @@ fn main() {
             None => String::from("keys.conf"),
         }
     }
+
+    let color_config_file = match env::home_dir() {
+        Some(mut path) => {
+            path.push(".config/ente/colors.conf");
+            path.to_str().unwrap().to_string()
+        }
+        None => String::from("colors.conf"),
+    };
+
     let actions = keyconfig::fill_key_map(key_config_file.as_ref());
+    let colors = colorconfig::fill_colors(color_config_file.as_ref());
 
     let hide_line_num = args.get_bool("--hide-line-num");
 
     // Run catching errors
-    if let Err(ref e) = run(args.get_str("FILE"), actions, !hide_line_num) {
+    if let Err(ref e) = run(args.get_str("FILE"),
+                            actions,
+                            colors,
+                            !hide_line_num) {
         println!("error: {}", e);
         for e in e.iter().skip(1) {
             println!("caused by: {}", e);
@@ -171,6 +185,7 @@ fn open_file(filepath: &str) -> String {
 
 fn run(filepath: &str,
        actions: HashMap<rustbox::Key, viewer::Action>,
+       colors: viewer::Colors,
        show_line_num: bool)
        -> Result<()> {
     // Get file content and start a Viewer with it
@@ -180,8 +195,12 @@ fn run(filepath: &str,
         None => "unknown".to_string(),
     };
 
-    let mut viewer =
-        viewer::Viewer::new(&text, filename, actions, filepath, show_line_num);
+    let mut viewer = viewer::Viewer::new(&text,
+                                         filename,
+                                         actions,
+                                         colors,
+                                         filepath,
+                                         show_line_num);
 
     // Wait for keyboard events
     match viewer.poll_event() {

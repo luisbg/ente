@@ -65,7 +65,17 @@ fn parse_config_file(text: String, colors: &mut viewer::Colors) {
             "Cyan" => Color::Cyan,
             "White" => Color::White,
             _ => {
-                continue;
+                let number_color: Color;
+                match color.trim().parse::<i32>() {
+                    Ok(color_num) => {
+                        number_color = Color::Byte(color_num as u16);
+                    }
+                    Err(_) => {
+                        info!("{} isn't a correct color number", color.trim());
+                        continue;
+                    }
+                }
+                number_color
             }
         };
 

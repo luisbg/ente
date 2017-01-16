@@ -49,21 +49,23 @@ const USAGE: &'static str = "
 Ente text editor.
 
 Usage:
-  ente FILE [--keyconfig=<kc>] [--hide-line-num]
+  ente FILE [--keyconfig=<kc>] [--colorconfig=<cc>] [--hide-line-num]
   ente (-h | --help)
   ente --version
 
   Options:
-    -h --help          Show this screen.
-    --version          Show version.
-    --keyconfig=<kc>   Key configurationg file.
-    --hide-line-num    Hide line numbers.
+    -h --help             Show this screen.
+    --version             Show version.
+    --keyconfig=<kc>      Key configuration file.
+    --colorconfig=<cc>    Color configuration file.
+    --hide-line-num       Hide line numbers.
 ";
 
 #[derive(Debug, RustcDecodable)]
 struct Args {
     arg_file: String,
     flag_keyconfig: String,
+    flag_colorconfig: String,
     flag_hidelinenum: bool,
 }
 
@@ -108,7 +110,7 @@ fn main() {
 
     let mut key_config_file = args.get_str("--keyconfig").to_string();
     if key_config_file.is_empty() {
-        // No config file set
+        // No key config file set
         key_config_file = match env::home_dir() {
             Some(mut path) => {
                 path.push(".config/ente/keys.conf");
@@ -118,13 +120,17 @@ fn main() {
         }
     }
 
-    let color_config_file = match env::home_dir() {
-        Some(mut path) => {
-            path.push(".config/ente/colors.conf");
-            path.to_str().unwrap().to_string()
+    let mut color_config_file = args.get_str("--colorconfig").to_string();
+    if color_config_file.is_empty() {
+        // No color config file set
+        color_config_file = match env::home_dir() {
+            Some(mut path) => {
+                path.push(".config/ente/colors.conf");
+                path.to_str().unwrap().to_string()
+            }
+            None => String::from("colors.conf"),
         }
-        None => String::from("colors.conf"),
-    };
+    }
 
     let actions = keyconfig::fill_key_map(key_config_file.as_ref());
     let colors = colorconfig::fill_colors(color_config_file.as_ref());

@@ -38,7 +38,7 @@ pub fn fill_colors(filepath: &str) -> viewer::Colors {
 }
 
 fn parse_config_file(text: String, colors: &mut viewer::Colors) {
-    for ln in text.lines() {
+    'color_list: for ln in text.lines() {
         if ln.is_empty() || &ln[0..1] == "#" {
             continue;
         }
@@ -65,17 +65,30 @@ fn parse_config_file(text: String, colors: &mut viewer::Colors) {
             "Cyan" => Color::Cyan,
             "White" => Color::White,
             _ => {
-                let number_color: Color;
-                match color.trim().parse::<i32>() {
-                    Ok(color_num) => {
-                        number_color = Color::Byte(color_num as u16);
-                    }
-                    Err(_) => {
-                        info!("{} isn't a correct color number", color.trim());
-                        continue;
+                let mut parsing_ok = 0;
+                let mut colors = Vec::new();
+
+                // We run it as an iterator to avoid assuming a length for the
+                // split
+                for v in color.trim().split('-') {
+                    match v.parse::<u16>() {
+                        Ok(value) => {
+                            colors.push(value);
+                            parsing_ok += 1;
+                        }
+                        Err(_) => {
+                            info!("{} isn't a correct color format",
+                                  color.trim());
+                            continue 'color_list;
+                        }
                     }
                 }
-                number_color
+                if parsing_ok != 3 {
+                    info!("{} isn't a correct color format", color.trim());
+                    continue 'color_list;
+                }
+
+                Color::Byte(16 + colors[0] * 36 + colors[1] * 6 + colors[2])
             }
         };
 

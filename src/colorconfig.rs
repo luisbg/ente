@@ -88,7 +88,14 @@ fn parse_config_file(text: String, colors: &mut viewer::Colors) {
                     continue 'color_list;
                 }
 
-                Color::Byte(16 + colors[0] * 36 + colors[1] * 6 + colors[2])
+                let color_num = 16 + colors[0] * 36 + colors[1] * 6 + colors[2];
+                if color_num > 231 {
+                    info!("Bad color {}. Each component must be in range 0-5",
+                          color_num);
+                    continue 'color_list;
+                }
+
+                Color::Byte(color_num)
             }
         };
 

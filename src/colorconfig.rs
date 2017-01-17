@@ -83,19 +83,27 @@ fn parse_config_file(text: String, colors: &mut viewer::Colors) {
                         }
                     }
                 }
-                if parsing_ok != 3 {
+                if parsing_ok == 1 {
+                    if colors[0] > 255 {
+                        info!("{} isn't a correct color format", color.trim());
+                        continue 'color_list;
+                    }
+
+                    Color::Byte(colors[0])
+                } else if parsing_ok == 3 {
+                    let color_num = 16 + colors[0] * 36 + colors[1] * 6 +
+                                    colors[2];
+                    if color_num > 231 {
+                        info!("Bad color {}. Each component must be in range 0-5",
+                              color_num);
+                        continue 'color_list;
+                    }
+
+                    Color::Byte(color_num)
+                } else {
                     info!("{} isn't a correct color format", color.trim());
                     continue 'color_list;
                 }
-
-                let color_num = 16 + colors[0] * 36 + colors[1] * 6 + colors[2];
-                if color_num > 231 {
-                    info!("Bad color {}. Each component must be in range 0-5",
-                          color_num);
-                    continue 'color_list;
-                }
-
-                Color::Byte(color_num)
             }
         };
 

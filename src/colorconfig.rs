@@ -150,3 +150,21 @@ fn test_predefined_colors() {
     assert_eq!(colors.line_num, Color::Magenta);
     assert_eq!(colors.error, Color::Cyan);
 }
+
+#[test]
+fn test_rgb_colors() {
+    let mut colors = viewer::Colors::new();
+    let text = String::from("\
+        foreground: 1-2-3
+        background: 4-5-0
+        line_numbers: 5-4-3
+        errors: 2-1-0
+    ");
+
+    parse_config_file(text, &mut colors);
+
+    assert_eq!(colors.fg, Color::Byte(67));
+    assert_eq!(colors.bg, Color::Byte(190));
+    assert_eq!(colors.line_num, Color::Byte(223));
+    assert_eq!(colors.error, Color::Byte(94));
+}

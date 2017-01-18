@@ -1476,6 +1476,19 @@ impl Viewer {
     }
 }
 
+impl Colors {
+    pub fn new() -> Colors {
+        let default = Colors {
+            fg: Color::White,
+            bg: Color::Black,
+            line_num: Color::Blue,
+            error: Color::Red,
+        };
+
+        default
+    }
+}
+
 #[test]
 fn test_new() {
     let text = String::from("test");

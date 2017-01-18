@@ -6,12 +6,7 @@ use viewer;
 
 pub fn fill_colors(filepath: &str) -> viewer::Colors {
     // Default colors
-    let mut colors = viewer::Colors {
-        fg: Color::White,
-        bg: Color::Black,
-        line_num: Color::Blue,
-        error: Color::Red,
-    };
+    let mut colors = viewer::Colors::new();
 
     // Load config file for colors
     let mut config_file = match File::open(filepath) {
@@ -129,12 +124,7 @@ fn parse_config_file(text: String, colors: &mut viewer::Colors) {
 
 #[test]
 fn test_default_colors() {
-    let colors = viewer::Colors {
-        fg: Color::White,
-        bg: Color::Black,
-        line_num: Color::Blue,
-        error: Color::Red,
-    };
+    let colors = viewer::Colors::new();
 
     assert_eq!(colors.fg, Color::White);
     assert_eq!(colors.bg, Color::Black);

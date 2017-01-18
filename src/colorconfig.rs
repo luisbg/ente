@@ -89,7 +89,8 @@ fn parse_config_file(text: String, colors: &mut viewer::Colors) {
                     let color_num = 16 + colors[0] * 36 + colors[1] * 6 +
                                     colors[2];
                     if color_num > 231 {
-                        info!("Bad color {}. Each component must be in range 0-5",
+                        info!("Bad color {}. Each component must be in range \
+                               0-5",
                               color_num);
                         continue 'color_list;
                     }
@@ -130,4 +131,22 @@ fn test_default_colors() {
     assert_eq!(colors.bg, Color::Black);
     assert_eq!(colors.line_num, Color::Blue);
     assert_eq!(colors.error, Color::Red);
+}
+
+#[test]
+fn test_predefined_colors() {
+    let mut colors = viewer::Colors::new();
+    let text = String::from("\
+        foreground: Green
+        background: Yellow
+        line_numbers: Magenta
+        errors: Cyan
+    ");
+
+    parse_config_file(text, &mut colors);
+
+    assert_eq!(colors.fg, Color::Green);
+    assert_eq!(colors.bg, Color::Yellow);
+    assert_eq!(colors.line_num, Color::Magenta);
+    assert_eq!(colors.error, Color::Cyan);
 }

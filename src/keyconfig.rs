@@ -18,9 +18,9 @@ macro_rules! map(
     };
 );
 
-pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
+pub fn new() -> HashMap<Key, viewer::Action> {
     // Defaults
-    let mut actions = map!{
+    let actions = map!{
         Key::Right => viewer::Action::MoveRight,
         Key::Left => viewer::Action::MoveLeft,
         Key::Down => viewer::Action::MoveDown,
@@ -52,6 +52,12 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::Ctrl('s') => viewer::Action::Save,
         Key::Ctrl('q') => viewer::Action::Quit
     };
+
+    actions
+}
+
+pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
+    let mut actions = new();
 
     // Load config file key settings
     let path = Path::new(filepath);
@@ -220,7 +226,7 @@ fn parse_config_file(text: String,
 
 #[test]
 fn test_default_keys() {
-    let map = fill_key_map("");
+    let map = new();
 
     assert_eq!(map.get(&Key::Right).unwrap(), &viewer::Action::MoveRight);
     assert_eq!(map.get(&Key::Left).unwrap(), &viewer::Action::MoveLeft);

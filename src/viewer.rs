@@ -1493,8 +1493,8 @@ impl Colors {
 fn test_new() {
     let text = String::from("test");
     let name = String::from("name");
-    let actions = keyconfig::fill_key_map("");
-    let colors = colorconfig::fill_colors("");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
 
     let mut test_view = Viewer::new(text.as_str(),
                                     name,
@@ -1514,8 +1514,8 @@ fn test_new() {
 fn test_display_chunk_outside_file() {
     let text = String::from("test");
     let name = String::from("name");
-    let actions = keyconfig::fill_key_map("");
-    let colors = colorconfig::fill_colors("");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
 
     // Run with: RUST_TEST_THREADS=1 cargo test
     let mut test_view = Viewer::new(text.as_str(),

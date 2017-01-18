@@ -168,3 +168,21 @@ fn test_rgb_colors() {
     assert_eq!(colors.line_num, Color::Byte(223));
     assert_eq!(colors.error, Color::Byte(94));
 }
+
+#[test]
+fn test_byte_colors() {
+    let mut colors = viewer::Colors::new();
+    let text = String::from("\
+        foreground: 5
+        background: 10
+        line_numbers: 232
+        errors: 255
+    ");
+
+    parse_config_file(text, &mut colors);
+
+    assert_eq!(colors.fg, Color::Byte(5));
+    assert_eq!(colors.bg, Color::Byte(10));
+    assert_eq!(colors.line_num, Color::Byte(232));
+    assert_eq!(colors.error, Color::Byte(255));
+}

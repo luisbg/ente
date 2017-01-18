@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
 
 use rustbox::Color;
 use viewer;
@@ -9,14 +10,28 @@ pub fn fill_colors(filepath: &str) -> viewer::Colors {
     let mut colors = viewer::Colors::new();
 
     // Load config file for colors
+    let path = Path::new(filepath);
+    if path.is_dir() {
+        info!("Color config file can't be a folder. {}",
+              filepath);
+        return colors;
+    }
+
+    if !path.is_file() {
+        info!("Color config file {} doesn't exist", filepath);
+        return colors;
+    }
+
     let mut config_file = match File::open(filepath) {
-        Ok(file) => file,
+        Ok(file) => {
+            info!("Opening color config file: {}", filepath);
+            file
+        }
         Err(_) => {
-            info!("Config file {} doesn't exist", filepath);
+            info!("Error opening color config file {}", filepath);
             return colors;
         }
     };
-    info!("Opening config file: {}", filepath);
 
     let mut text = String::new();
     match config_file.read_to_string(&mut text) {

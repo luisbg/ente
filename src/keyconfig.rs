@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
 
 use rustbox::Key;
 use viewer;
@@ -53,14 +54,27 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
     };
 
     // Load config file key settings
-    let mut config_file = match File::open(filepath) {
-        Ok(file) => file,
+    let path = Path::new(filepath);
+    if path.is_dir() {
+        info!("Key config file can't be a folder. {}", filepath);
+        return actions;
+    }
+
+    if !path.is_file() {
+        info!("Key config file {} doesn't exist", filepath);
+        return actions;
+    }
+
+    let mut config_file = match File::open(path) {
+        Ok(file) => {
+            info!("Opening key config file: {}", filepath);
+            file
+        }
         Err(_) => {
-            info!("Config file {} doesn't exist", filepath);
+            info!("Error opening key config file {}", filepath);
             return actions;
         }
     };
-    info!("Opening config file: {}", filepath);
 
     let mut text = String::new();
     match config_file.read_to_string(&mut text) {

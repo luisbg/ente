@@ -126,3 +126,18 @@ fn parse_config_file(text: String, colors: &mut viewer::Colors) {
         }
     }
 }
+
+#[test]
+fn test_default_colors() {
+    let colors = viewer::Colors {
+        fg: Color::White,
+        bg: Color::Black,
+        line_num: Color::Blue,
+        error: Color::Red,
+    };
+
+    assert_eq!(colors.fg, Color::White);
+    assert_eq!(colors.bg, Color::Black);
+    assert_eq!(colors.line_num, Color::Blue);
+    assert_eq!(colors.error, Color::Red);
+}

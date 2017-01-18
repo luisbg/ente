@@ -41,7 +41,7 @@ pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {
         Key::Char('w') => viewer::Action::MoveNextWord,
         Key::Char('s') => viewer::Action::MovePrevWord,
         Key::Ctrl('d') => viewer::Action::KillLine,
-        Key::Ctrl('r') => viewer::Action::KillEndLine,
+        Key::Ctrl('k') => viewer::Action::KillEndLine,
         Key::Delete => viewer::Action::Delete,
         Key::Ctrl('x') => viewer::Action::CopyStartMark,
         Key::Ctrl('c') => viewer::Action::CopyEndMark,
@@ -216,4 +216,49 @@ fn parse_config_file(text: String,
 
         actions.insert(k, a);
     }
+}
+
+#[test]
+fn test_default_keys() {
+    let map = fill_key_map("");
+
+    assert_eq!(map.get(&Key::Right).unwrap(), &viewer::Action::MoveRight);
+    assert_eq!(map.get(&Key::Left).unwrap(), &viewer::Action::MoveLeft);
+    assert_eq!(map.get(&Key::Down).unwrap(), &viewer::Action::MoveDown);
+    assert_eq!(map.get(&Key::Up).unwrap(), &viewer::Action::MoveUp);
+    assert_eq!(map.get(&Key::PageUp).unwrap(), &viewer::Action::MovePageUp);
+    assert_eq!(map.get(&Key::PageDown).unwrap(), &viewer::Action::MovePageDown);
+    assert_eq!(map.get(&Key::Home).unwrap(), &viewer::Action::MoveStartLine);
+    assert_eq!(map.get(&Key::End).unwrap(), &viewer::Action::MoveEndLine);
+
+    assert_eq!(map.get(&Key::Char('<')).unwrap(),
+               &viewer::Action::MoveStartFile);
+    assert_eq!(map.get(&Key::Char('>')).unwrap(), &viewer::Action::MoveEndFile);
+    assert_eq!(map.get(&Key::Char('e')).unwrap(), &viewer::Action::EditMode);
+    assert_eq!(map.get(&Key::Char('a')).unwrap(), &viewer::Action::Append);
+    assert_eq!(map.get(&Key::Ctrl('r')).unwrap(), &viewer::Action::ReadMode);
+
+    assert_eq!(map.get(&Key::Char('g')).unwrap(), &viewer::Action::GoToLine);
+    assert_eq!(map.get(&Key::Char('/')).unwrap(), &viewer::Action::Search);
+    assert_eq!(map.get(&Key::Char('n')).unwrap(), &viewer::Action::SearchNext);
+    assert_eq!(map.get(&Key::Char('p')).unwrap(),
+               &viewer::Action::SearchPrevious);
+    assert_eq!(map.get(&Key::Char('w')).unwrap(),
+               &viewer::Action::MoveNextWord);
+    assert_eq!(map.get(&Key::Char('s')).unwrap(),
+               &viewer::Action::MovePrevWord);
+    assert_eq!(map.get(&Key::Ctrl('d')).unwrap(), &viewer::Action::KillLine);
+    assert_eq!(map.get(&Key::Ctrl('k')).unwrap(), &viewer::Action::KillEndLine);
+
+    assert_eq!(map.get(&Key::Delete).unwrap(), &viewer::Action::Delete);
+    assert_eq!(map.get(&Key::Ctrl('x')).unwrap(),
+               &viewer::Action::CopyStartMark);
+    assert_eq!(map.get(&Key::Ctrl('c')).unwrap(), &viewer::Action::CopyEndMark);
+    assert_eq!(map.get(&Key::Ctrl('v')).unwrap(), &viewer::Action::Paste);
+    assert_eq!(map.get(&Key::Ctrl('z')).unwrap(), &viewer::Action::Undo);
+    assert_eq!(map.get(&Key::Ctrl('l')).unwrap(),
+               &viewer::Action::ToggleLineNumbers);
+    assert_eq!(map.get(&Key::Enter).unwrap(), &viewer::Action::Go);
+    assert_eq!(map.get(&Key::Ctrl('s')).unwrap(), &viewer::Action::Save);
+    assert_eq!(map.get(&Key::Ctrl('q')).unwrap(), &viewer::Action::Quit);
 }

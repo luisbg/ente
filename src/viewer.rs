@@ -22,7 +22,7 @@ const RB_COL_START: usize = 0;
 const RB_ROW_START: usize = 0;
 const TAB_SPACES: usize = 4;
 
-#[derive(Copy,Clone)]
+#[derive(Copy,Clone,Eq,PartialEq,Debug)]
 pub enum Action {
     None,
     Go,

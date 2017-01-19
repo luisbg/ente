@@ -208,6 +208,7 @@ fn parse_config_file(text: String,
             "MovePrevWord" => viewer::Action::MovePrevWord,
             "KillLine" => viewer::Action::KillLine,
             "KillEndLine" => viewer::Action::KillEndLine,
+            "Delete" => viewer::Action::Delete,
             "CopyStartMark" => viewer::Action::CopyStartMark,
             "CopyEndMark" => viewer::Action::CopyEndMark,
             "Paste" => viewer::Action::Paste,
@@ -267,4 +268,25 @@ fn test_default_keys() {
     assert_eq!(map.get(&Key::Enter).unwrap(), &viewer::Action::Go);
     assert_eq!(map.get(&Key::Ctrl('s')).unwrap(), &viewer::Action::Save);
     assert_eq!(map.get(&Key::Ctrl('q')).unwrap(), &viewer::Action::Quit);
+}
+
+#[test]
+fn test_fill_keys() {
+    let mut map = new();
+    let text = String::from("\
+ctrl+p: MovePageUp
+ctrl+n: MovePageDown
+x: Delete
+Esc: Quit
+f+2: Save
+    ");
+
+    parse_config_file(text, &mut map);
+
+    assert_eq!(map.get(&Key::Ctrl('p')).unwrap(), &viewer::Action::MovePageUp);
+    assert_eq!(map.get(&Key::Ctrl('n')).unwrap(),
+               &viewer::Action::MovePageDown);
+    assert_eq!(map.get(&Key::Char('x')).unwrap(), &viewer::Action::Delete);
+    assert_eq!(map.get(&Key::Esc).unwrap(), &viewer::Action::Quit);
+    assert_eq!(map.get(&Key::F(2)).unwrap(), &viewer::Action::Save);
 }

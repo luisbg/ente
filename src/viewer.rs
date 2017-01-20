@@ -1539,3 +1539,57 @@ fn test_display_chunk_outside_file() {
         Err(_) => {}
     }
 }
+
+#[test]
+fn test_cursor() {
+    let text = String::from("test
+second line");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_cursor = Cursor { line: 1, col: 1 };
+    let mut view_cursor: Cursor;
+
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false);
+
+    // Init at 1,1
+    view_cursor = test_view.get_cursor();
+    assert_eq!(view_cursor.col, test_cursor.col);
+    assert_eq!(view_cursor.line, test_cursor.line);
+
+    // Move Down
+    test_view.move_cursor(Action::MoveDown);
+    view_cursor = test_view.get_cursor();
+    test_cursor.line = 2;
+    assert_eq!(view_cursor.col, test_cursor.col);
+    assert_eq!(view_cursor.line, test_cursor.line);
+
+    // Move Left, twice
+    test_view.move_cursor(Action::MoveLeft);
+    test_view.move_cursor(Action::MoveLeft);
+    view_cursor = test_view.get_cursor();
+    test_cursor.col = 1;
+    assert_eq!(view_cursor.col, test_cursor.col);
+    assert_eq!(view_cursor.line, test_cursor.line);
+
+    // Move Right, thrice
+    test_view.move_cursor(Action::MoveRight);
+    test_view.move_cursor(Action::MoveRight);
+    test_view.move_cursor(Action::MoveRight);
+    view_cursor = test_view.get_cursor();
+    test_cursor.col = 4;
+    assert_eq!(view_cursor.col, test_cursor.col);
+    assert_eq!(view_cursor.line, test_cursor.line);
+
+    // Move Up
+    test_view.move_cursor(Action::MoveUp);
+    view_cursor = test_view.get_cursor();
+    test_cursor.line = 1;
+    assert_eq!(view_cursor.col, test_cursor.col);
+    assert_eq!(view_cursor.line, test_cursor.line);
+}

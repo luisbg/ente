@@ -1540,6 +1540,11 @@ fn test_display_chunk_outside_file() {
     }
 }
 
+#[allow(dead_code)]
+fn compare_cursors(first: &Cursor, second: &Cursor) -> bool {
+    first.col == second.col && first.line == second.line
+}
+
 #[test]
 fn test_cursor() {
     let text = String::from("test
@@ -1559,23 +1564,20 @@ second line");
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
-    assert_eq!(view_cursor.col, test_cursor.col);
-    assert_eq!(view_cursor.line, test_cursor.line);
+    assert!(compare_cursors(&view_cursor, &test_cursor));
 
     // Move Down
     test_view.move_cursor(Action::MoveDown);
     view_cursor = test_view.get_cursor();
     test_cursor.line = 2;
-    assert_eq!(view_cursor.col, test_cursor.col);
-    assert_eq!(view_cursor.line, test_cursor.line);
+    assert!(compare_cursors(&view_cursor, &test_cursor));
 
     // Move Left, twice
     test_view.move_cursor(Action::MoveLeft);
     test_view.move_cursor(Action::MoveLeft);
     view_cursor = test_view.get_cursor();
     test_cursor.col = 1;
-    assert_eq!(view_cursor.col, test_cursor.col);
-    assert_eq!(view_cursor.line, test_cursor.line);
+    assert!(compare_cursors(&view_cursor, &test_cursor));
 
     // Move Right, thrice
     test_view.move_cursor(Action::MoveRight);
@@ -1583,13 +1585,11 @@ second line");
     test_view.move_cursor(Action::MoveRight);
     view_cursor = test_view.get_cursor();
     test_cursor.col = 4;
-    assert_eq!(view_cursor.col, test_cursor.col);
-    assert_eq!(view_cursor.line, test_cursor.line);
+    assert!(compare_cursors(&view_cursor, &test_cursor));
 
     // Move Up
     test_view.move_cursor(Action::MoveUp);
     view_cursor = test_view.get_cursor();
     test_cursor.line = 1;
-    assert_eq!(view_cursor.col, test_cursor.col);
-    assert_eq!(view_cursor.line, test_cursor.line);
+    assert!(compare_cursors(&view_cursor, &test_cursor));
 }

@@ -535,6 +535,14 @@ impl Viewer {
         true
     }
 
+    #[allow(dead_code)]
+    fn get_cursor(&mut self) -> Cursor {
+        Cursor {
+            line: self.cursor.line,
+            col: self.cursor.col,
+        }
+    }
+
     fn match_key_action_edit(&mut self, action: Action, key: Key) -> bool {
         match action {
             Action::Quit => {

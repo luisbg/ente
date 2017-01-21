@@ -1328,7 +1328,8 @@ impl Viewer {
         let disp_col = self.disp_col;
 
         self.show_line_num = !self.show_line_num;
-        info!("Toggle showing line numbers: {}", self.show_line_num);
+        info!("Toggle showing line numbers: {}",
+              self.show_line_num);
 
         self.width = if self.show_line_num {
             self.rustbox.width() - self.num_lines_digits - 1
@@ -1589,6 +1590,45 @@ second line");
 
     // Move Up
     test_view.move_cursor(Action::MoveUp);
+    view_cursor = test_view.get_cursor();
+    test_cursor.line = 1;
+    assert!(compare_cursors(&view_cursor, &test_cursor));
+}
+
+#[test]
+fn test_pageup_pagedown() {
+    let mut text = String::from("test");
+    // Increase number of lines in text
+    for _ in 0..200 {
+        text.push_str("line\n");
+    }
+
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_cursor = Cursor { line: 1, col: 1 };
+    let mut view_cursor: Cursor;
+
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false);
+
+    // Init at 1,1
+    view_cursor = test_view.get_cursor();
+    assert!(compare_cursors(&view_cursor, &test_cursor));
+
+    // Move Page Down
+    test_view.move_cursor(Action::MovePageDown);
+    view_cursor = test_view.get_cursor();
+    test_cursor.line = 1 + test_view.height;
+    assert!(compare_cursors(&view_cursor, &test_cursor));
+
+    // Move Page Up
+    test_view.move_cursor(Action::MovePageUp);
+    test_view.move_cursor(Action::MovePageUp);
     view_cursor = test_view.get_cursor();
     test_cursor.line = 1;
     assert!(compare_cursors(&view_cursor, &test_cursor));

@@ -1487,14 +1487,12 @@ impl Viewer {
 
 impl Colors {
     pub fn new() -> Colors {
-        let default = Colors {
+        Colors {
             fg: Color::White,
             bg: Color::Black,
             line_num: Color::Blue,
             error: Color::Red,
-        };
-
-        default
+        }
     }
 }
 

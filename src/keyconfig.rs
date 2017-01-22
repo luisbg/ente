@@ -20,7 +20,7 @@ macro_rules! map(
 
 pub fn new() -> HashMap<Key, viewer::Action> {
     // Defaults
-    let actions = map!{
+    map!{
         Key::Right => viewer::Action::MoveRight,
         Key::Left => viewer::Action::MoveLeft,
         Key::Down => viewer::Action::MoveDown,
@@ -51,9 +51,7 @@ pub fn new() -> HashMap<Key, viewer::Action> {
         Key::Enter => viewer::Action::Go,
         Key::Ctrl('s') => viewer::Action::Save,
         Key::Ctrl('q') => viewer::Action::Quit
-    };
-
-    actions
+    }
 }
 
 pub fn fill_key_map(filepath: &str) -> HashMap<Key, viewer::Action> {

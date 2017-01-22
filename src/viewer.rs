@@ -1633,3 +1633,36 @@ fn test_pageup_pagedown() {
     test_cursor.line = 1;
     assert!(compare_cursors(&view_cursor, &test_cursor));
 }
+
+#[test]
+fn test_start_end_line() {
+    let text = String::from("this text is 30 characters long");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_cursor = Cursor { line: 1, col: 1 };
+    let mut view_cursor: Cursor;
+
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false);
+
+    // Init at 1,1
+    view_cursor = test_view.get_cursor();
+    assert!(compare_cursors(&view_cursor, &test_cursor));
+
+    // Move End Line
+    test_view.move_cursor(Action::MoveEndLine);
+    view_cursor = test_view.get_cursor();
+    test_cursor.col = 31;
+    assert!(compare_cursors(&view_cursor, &test_cursor));
+
+    // Move Start Line
+    test_view.move_cursor(Action::MoveStartLine);
+    view_cursor = test_view.get_cursor();
+    test_cursor.col = 1;
+    assert!(compare_cursors(&view_cursor, &test_cursor));
+}

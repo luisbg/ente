@@ -1664,3 +1664,43 @@ fn test_start_end_line() {
     test_cursor.col = 1;
     assert!(compare_cursors(&view_cursor, &test_cursor));
 }
+
+#[test]
+fn test_start_end_file() {
+    let mut text = String::from("");
+    // Increase number of lines in text
+    for n in 0..50 {
+        text.push_str(format!("line {}\n", n).as_ref());
+    }
+
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_cursor = Cursor { line: 1, col: 1 };
+    let mut view_cursor: Cursor;
+
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false);
+
+    // Init at 1,1
+    view_cursor = test_view.get_cursor();
+    assert!(compare_cursors(&view_cursor, &test_cursor));
+
+    // Move End Line
+    test_view.move_cursor(Action::MoveEndFile);
+    view_cursor = test_view.get_cursor();
+    test_cursor.line = 50;
+    test_cursor.col = 7;
+    assert!(compare_cursors(&view_cursor, &test_cursor));
+
+    // Move Start Line
+    test_view.move_cursor(Action::MoveStartFile);
+    view_cursor = test_view.get_cursor();
+    test_cursor.col = 1;
+    test_cursor.line = 1;
+    assert!(compare_cursors(&view_cursor, &test_cursor));
+}

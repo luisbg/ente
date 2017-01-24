@@ -240,7 +240,7 @@ impl Viewer {
                                        self.colors.bg,
                                        "");
                 }
-                if self.show_line_num {
+                if self.show_line_num && self.mode != Mode::Help {
                     self.rustbox.print(RB_COL_START + self.width + 1,
                                        ln,
                                        rustbox::RB_NORMAL,
@@ -1404,7 +1404,13 @@ impl Viewer {
     }
 
     fn show_help(&mut self) {
-        let help_text = String::from("  ::  Ente Help  ::");
+        let mut help_text = String::from("  ::  Ente Help  ::
+
+List of available keys:\n");
+        for (key, act) in &self.actions {
+            help_text.push_str(format!("{:?} => {:?}\n", key, act).as_ref());
+        }
+
         self.text = help_text;
         self.mode = Mode::Help;
 

@@ -219,6 +219,7 @@ fn parse_config_file(text: String,
             }
         };
 
+        info!("Adding key {:?} to match action {:?}", k, a);
         actions.insert(k, a);
     }
 }

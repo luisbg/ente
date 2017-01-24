@@ -55,6 +55,7 @@ pub enum Action {
     ToggleLineNumbers,
     Save,
     Quit,
+    Help,
 }
 
 #[derive(Eq,PartialEq)]
@@ -63,6 +64,7 @@ enum Mode {
     Edit,
     GoToLine,
     Search,
+    Help,
 }
 
 pub struct Cursor {
@@ -530,6 +532,11 @@ impl Viewer {
                     }
                 }
             }
+            Mode::Help => {
+                if action == Action::Quit {
+                    self.exit_help();
+                }
+            }
         }
 
         true
@@ -582,6 +589,9 @@ impl Viewer {
             }
             Action::ToggleLineNumbers => {
                 self.toggle_line_numbers();
+            }
+            Action::Help => {
+                self.show_help();
             }
             _ => {
                 match key {
@@ -672,6 +682,9 @@ impl Viewer {
             Action::Save => {
                 self.model.save();
                 self.update();
+            }
+            Action::Help => {
+                self.show_help();
             }
             _ => {}
         }
@@ -1390,6 +1403,26 @@ impl Viewer {
         false
     }
 
+    fn show_help(&mut self) {
+        let help_text = String::from("  ::  Ente Help  ::");
+        self.text = help_text;
+        self.mode = Mode::Help;
+
+        self.cursor.line = 1;
+        self.cursor.col = 1;
+
+        let _ = self.display_chunk(1, 1);
+        self.update();
+    }
+
+    fn exit_help(&mut self) {
+        self.mode = Mode::Read;
+        self.text = self.model.get_text();
+
+        let _ = self.display_chunk(1, 1);
+        self.update();
+    }
+
     fn update(&mut self) {
         // Add an informational status line
 
@@ -1428,6 +1461,9 @@ impl Viewer {
                     status = format!("/{}", self.search_string);
                 }
             }
+            Mode::Help => {
+                status = String::from("Press 'Esc' to exit help");
+            }
         }
 
         let cur_col = if self.cursor.col == 0 {
@@ -1442,6 +1478,8 @@ impl Viewer {
                            (self.cursor.line * 100) /
                            self.model.get_line_count());
 
+        let help = String::from("F1 for help");
+
         let mut first_empty = String::with_capacity((self.rustbox.width() / 2) -
                                                     status.len() -
                                                     2);
@@ -1450,7 +1488,8 @@ impl Viewer {
         }
         let mut second_empty = String::with_capacity((self.rustbox.width() /
                                                       2) -
-                                                     (perc.len() / 2));
+                                                     (perc.len() / 2) -
+                                                     help.len());
         for _ in 0..second_empty.capacity() {
             second_empty.push(' ');
         }
@@ -1461,6 +1500,11 @@ impl Viewer {
                            self.colors.fg,
                            self.colors.bg,
                            status.as_ref());
+        if self.mode == Mode::Help {
+            self.rustbox.present();
+            return;
+        }
+
         self.rustbox.print(RB_COL_START + status.len(),
                            self.height,
                            rustbox::RB_NORMAL,
@@ -1480,6 +1524,14 @@ impl Viewer {
                            self.colors.fg,
                            self.colors.bg,
                            second_empty.as_ref());
+        self.rustbox.print(RB_COL_START + status.len() + first_empty.len() +
+                           perc.len() +
+                           second_empty.len(),
+                           self.height,
+                           rustbox::RB_REVERSE,
+                           self.colors.fg,
+                           self.colors.bg,
+                           help.as_ref());
 
         self.rustbox.present();
     }

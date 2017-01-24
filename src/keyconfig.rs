@@ -50,7 +50,8 @@ pub fn new() -> HashMap<Key, viewer::Action> {
         Key::Ctrl('l') => viewer::Action::ToggleLineNumbers,
         Key::Enter => viewer::Action::Go,
         Key::Ctrl('s') => viewer::Action::Save,
-        Key::Ctrl('q') => viewer::Action::Quit
+        Key::Ctrl('q') => viewer::Action::Quit,
+        Key::F(1) => viewer::Action::Help
     }
 }
 
@@ -214,6 +215,7 @@ fn parse_config_file(text: String,
             "ToggleLineNumbers" => viewer::Action::ToggleLineNumbers,
             "Save" => viewer::Action::Save,
             "Quit" => viewer::Action::Quit,
+            "Help" => viewer::Action::Help,
             _ => {
                 continue;
             }
@@ -267,6 +269,8 @@ fn test_default_keys() {
     assert_eq!(map.get(&Key::Enter).unwrap(), &viewer::Action::Go);
     assert_eq!(map.get(&Key::Ctrl('s')).unwrap(), &viewer::Action::Save);
     assert_eq!(map.get(&Key::Ctrl('q')).unwrap(), &viewer::Action::Quit);
+
+    assert_eq!(map.get(&Key::F(1)).unwrap(), &viewer::Action::Help);
 }
 
 #[test]

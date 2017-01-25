@@ -216,7 +216,7 @@ impl Viewer {
         let mut lines = self.text.lines().skip(start_line - 1);
         for ln in 0..(self.height) {
             if let Some(line) = lines.next() {
-                self.draw_line(line, ln, start_col);
+                self.draw_line(String::from(line), ln, start_col);
 
                 if self.show_line_num && self.mode != Mode::Help {
                     self.rustbox.print(RB_COL_START + self.width + 1,
@@ -240,24 +240,30 @@ impl Viewer {
         Ok(())
     }
 
-    fn draw_line(&self, line: &str, line_num: usize, start_col: usize) {
-        let beg = start_col - 1;
+    fn draw_line(&self, line: String, line_num: usize, start_col: usize) {
+        let end = start_col + self.width;
 
         // Check if there is line content to show or past the end
-        if line.len() > beg {
-            let end = if (line.len() - beg) >= self.width {
-                // Don't show characters past terminal's right edge
-                beg + self.width
-            } else {
-                line.len()
-            };
+        if line.len() >= start_col {
+            let mut print_line = String::new();
+            let mut rune_count = 1;
+            for c in line.chars() {
+                if rune_count >= start_col {
+                    print_line.push(c);
+                }
+
+                rune_count += 1;
+                if rune_count > end {
+                    break;
+                }
+            }
 
             self.rustbox.print(RB_COL_START,
                                line_num,
                                rustbox::RB_NORMAL,
                                self.colors.fg,
                                self.colors.bg,
-                               &line[beg..end]);
+                               &print_line);
         } else {
             self.rustbox.print(RB_COL_START,
                                line_num,

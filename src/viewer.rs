@@ -249,7 +249,15 @@ impl Viewer {
             let mut rune_count = 1;
             for c in line.chars() {
                 if rune_count >= start_col {
-                    print_line.push(c);
+                    if c == '\t' {
+                        for _ in 0..TAB_SPACES {
+                            print_line.push(' ');
+                        }
+
+                        rune_count += 3;
+                    } else {
+                        print_line.push(c);
+                    }
                 }
 
                 rune_count += 1;

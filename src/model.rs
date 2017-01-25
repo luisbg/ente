@@ -41,6 +41,15 @@ impl Model {
         '_'
     }
 
+    pub fn get_line(&self, line: usize) -> String {
+        if let Some(l) = self.text.lines().nth(line - 1) {
+            return String::from(l);
+        }
+
+        info!("Out of range in get_line() {}", line);
+        String::new()
+    }
+
     pub fn get_line_count(&mut self) -> usize {
         self.line_count
     }

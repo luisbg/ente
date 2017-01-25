@@ -123,3 +123,14 @@ fn get_char() {
 
     assert_eq!('_', test_model.get_char(1, 10));
 }
+
+#[test]
+fn get_line() {
+    let text = String::from("First\nSecond\n\t\tThird\n");
+    let test_model = model::Model::new(text.as_str(), "/home/test/file");
+
+    assert_eq!("First", test_model.get_line(1));
+    assert_eq!("Second", test_model.get_line(2));
+    assert_eq!("\t\tThird", test_model.get_line(3));
+    assert_eq!("", test_model.get_line(4));
+}

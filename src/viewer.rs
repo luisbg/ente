@@ -216,30 +216,8 @@ impl Viewer {
         let mut lines = self.text.lines().skip(start_line - 1);
         for ln in 0..(self.height) {
             if let Some(line) = lines.next() {
-                let beg = start_col - 1;
+                self.draw_line(line, ln, start_col);
 
-                // Check if there is line content to show or past the end
-                if line.len() > beg {
-                    let end = if (line.len() - beg) >= self.width {
-                        // Don't show characters past terminal's right edge
-                        beg + self.width
-                    } else {
-                        line.len()
-                    };
-                    self.rustbox.print(RB_COL_START,
-                                       ln,
-                                       rustbox::RB_NORMAL,
-                                       self.colors.fg,
-                                       self.colors.bg,
-                                       &line[beg..end]);
-                } else {
-                    self.rustbox.print(RB_COL_START,
-                                       ln,
-                                       rustbox::RB_NORMAL,
-                                       self.colors.fg,
-                                       self.colors.bg,
-                                       "");
-                }
                 if self.show_line_num && self.mode != Mode::Help {
                     self.rustbox.print(RB_COL_START + self.width + 1,
                                        ln,
@@ -260,6 +238,34 @@ impl Viewer {
               start_line,
               start_line + self.height);
         Ok(())
+    }
+
+    fn draw_line(&self, line: &str, line_num: usize, start_col: usize) {
+        let beg = start_col - 1;
+
+        // Check if there is line content to show or past the end
+        if line.len() > beg {
+            let end = if (line.len() - beg) >= self.width {
+                // Don't show characters past terminal's right edge
+                beg + self.width
+            } else {
+                line.len()
+            };
+
+            self.rustbox.print(RB_COL_START,
+                               line_num,
+                               rustbox::RB_NORMAL,
+                               self.colors.fg,
+                               self.colors.bg,
+                               &line[beg..end]);
+        } else {
+            self.rustbox.print(RB_COL_START,
+                               line_num,
+                               rustbox::RB_NORMAL,
+                               self.colors.fg,
+                               self.colors.bg,
+                               "");
+        }
     }
 
     fn do_vertical_scroll(&mut self, action: Action) {

@@ -29,6 +29,18 @@ impl Model {
         self.text.clone()
     }
 
+    #[allow(dead_code)]
+    pub fn get_char(&mut self, line: usize, column: usize) -> char {
+        if let Some(l) = self.text.lines().nth(line - 1) {
+            if let Some(c) = l.chars().nth(column - 1) {
+                return c;
+            }
+        }
+
+        info!("Out of range in get_char() {}:{}", line, column);
+        '_'
+    }
+
     pub fn get_line_count(&mut self) -> usize {
         self.line_count
     }
@@ -135,7 +147,10 @@ impl Model {
             return;
         }
 
-        info!("Deleting {} chars from {}:{}", chars, line, column);
+        info!("Deleting {} chars from {}:{}",
+              chars,
+              line,
+              column);
 
         let mut new_text = String::new();
         for (x, ln) in self.text.lines().enumerate() {

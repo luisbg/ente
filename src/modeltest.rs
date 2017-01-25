@@ -108,3 +108,18 @@ fn delete_line() {
 
     assert_eq!("First\nThird\n", test_model.get_text());
 }
+
+#[test]
+fn get_char() {
+    let text = String::from("First\nSecond\n\t\tThird\n");
+    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+
+    assert_eq!('F', test_model.get_char(1, 1));
+    assert_eq!('t', test_model.get_char(1, 5));
+    assert_eq!('S', test_model.get_char(2, 1));
+
+    assert_eq!('\t', test_model.get_char(3, 1));
+    assert_eq!('T', test_model.get_char(3, 3));
+
+    assert_eq!('_', test_model.get_char(1, 10));
+}

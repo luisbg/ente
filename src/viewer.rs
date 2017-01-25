@@ -1000,6 +1000,30 @@ impl Viewer {
         }
     }
 
+    fn match_cursor_text(&self, text_col: usize) -> usize {
+        let mut count = 0;
+        let line = self.model.get_line(self.cursor.line);
+        let mut chars = line.chars();
+        for _ in 0..text_col {
+            match chars.next() {
+                Some(c) => {
+                    if c == '\t' {
+                        count += TAB_SPACES;
+                    } else {
+                        count += 1;
+                    }
+                }
+                None => {
+                    info!("Column out of range match_cursor_text {}",
+                          text_col);
+                    return 99999;
+                }
+            }
+        }
+
+        count
+    }
+
     fn set_cursor(&mut self, mut line_num: usize, col: usize) {
         self.focus_col = col;
 
@@ -1781,4 +1805,24 @@ fn test_start_end_file() {
     test_cursor.col = 1;
     test_cursor.line = 1;
     assert!(compare_cursors(&view_cursor, &test_cursor));
+}
+
+#[test]
+fn test_match_cursor_text() {
+    let text = String::from("abc\tdef\tg");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let test_view = Viewer::new(text.as_str(),
+                                name,
+                                actions,
+                                colors,
+                                "path",
+                                false);
+
+    assert_eq!(3, test_view.match_cursor_text(3));
+    assert_eq!(5 + TAB_SPACES - 1, test_view.match_cursor_text(5));
+    assert_eq!(9 + (TAB_SPACES - 1) * 2,
+               test_view.match_cursor_text(9));
+    assert_eq!(99999, test_view.match_cursor_text(20));
 }

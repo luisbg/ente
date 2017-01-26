@@ -1869,3 +1869,21 @@ fn test_match_cursor_text_start_with_tab() {
     assert_eq!(2 + (TAB_SPACES * 3), test_view.match_cursor_text(5));
     assert_eq!(99999, test_view.match_cursor_text(9));
 }
+
+#[test]
+fn test_get_line_len() {
+    let text = String::from("_");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let test_view = Viewer::new(text.as_str(),
+                                name,
+                                actions,
+                                colors,
+                                "path",
+                                false);
+
+    assert_eq!(4, test_view.get_line_len(&String::from("Test")));
+    assert_eq!(TAB_SPACES + 4, test_view.get_line_len(&String::from("\tMore")));
+    assert_eq!(TAB_SPACES * 3, test_view.get_line_len(&String::from("\t\t\t")));
+}

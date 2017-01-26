@@ -96,6 +96,7 @@ pub struct Viewer {
     num_lines_digits: usize,
     line_jump: usize,
     cursor: Cursor,
+    text_col: usize,
     colors: Colors,
     search_string: String,
     copy_start: Cursor,
@@ -156,6 +157,7 @@ impl Viewer {
             num_lines_digits: num_lines_digits,
             line_jump: 0,
             cursor: cursor,
+            text_col: 1,
             colors: colors,
             search_string: String::new(),
             copy_start: copy_start,
@@ -432,8 +434,9 @@ impl Viewer {
     }
 
     fn move_cursor_left(&mut self) {
-        if self.cursor.col > 1 {
-            self.cursor.col -= 1;
+        if self.text_col > 1 {
+            self.text_col -= 1;
+            self.cursor.col = self.match_cursor_text(self.text_col);
             self.focus_col = self.cursor.col;
         } else {
             info!("Can't go left, already at beginning of the line");
@@ -442,8 +445,9 @@ impl Viewer {
     }
 
     fn move_cursor_right(&mut self) {
-        if self.focus_col < self.cur_line_len {
-            self.cursor.col += 1;
+        if self.cursor.col < self.cur_line_len {
+            self.text_col += 1;
+            self.cursor.col = self.match_cursor_text(self.text_col);
             self.focus_col = self.cursor.col;
         } else {
             info!("Can't go right, already at end of the line");
@@ -776,8 +780,10 @@ impl Viewer {
             return;
         }
 
+        let col = self.match_cursor_text(1);
+
         info!("Go to line {}", line_num);
-        self.set_cursor(line_num, 1);
+        self.set_cursor(line_num, col);
         self.update();
     }
 
@@ -987,6 +993,8 @@ impl Viewer {
             line.len()
         };
 
+        self.focus_col = self.match_cursor_text(self.text_col);
+
         if self.cur_line_len < self.focus_col {
             // previous line was longer
             self.cursor.col = self.cur_line_len;
@@ -998,6 +1006,20 @@ impl Viewer {
                 self.cursor.col = 1;   // jump back to first column
             }
         }
+    }
+
+    fn get_line_len(&self, line: &String) -> usize {
+        let mut count = 0;
+
+        for c in line.chars() {
+            if c == '\t' {
+                count += TAB_SPACES;
+            } else {
+                count += 1;
+            }
+        }
+
+        count
     }
 
     fn match_cursor_text(&self, text_col: usize) -> usize {

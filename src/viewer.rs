@@ -82,6 +82,7 @@ pub struct Colors {
 pub struct Viewer {
     rustbox: RustBox,
     text: String,
+    current_line: String,
     model: model::Model,
     mode: Mode,
     actions: HashMap<Key, Action>,
@@ -143,6 +144,7 @@ impl Viewer {
         let mut view = Viewer {
             rustbox: rustbox,
             text: String::from(text),
+            current_line: String::new(),
             model: model,
             mode: Mode::Read,
             actions: key_map,
@@ -983,15 +985,13 @@ impl Viewer {
     fn set_current_line(&mut self, line_num: usize) {
         self.cursor.line = line_num;
 
-        let line = match self.text.lines().nth(self.cursor.line - 1) {
-            Some(line) => line,
-            None => return,
-        };
+        let curr_line = self.model.get_line(self.cursor.line);
         self.cur_line_len = if self.mode == Mode::Edit {
-            line.len() + 1
+            self.get_line_len(&curr_line) + 1
         } else {
-            line.len()
+            self.get_line_len(&curr_line)
         };
+        self.current_line = curr_line;
 
         self.focus_col = self.match_cursor_text(self.text_col);
 
@@ -1024,7 +1024,7 @@ impl Viewer {
 
     fn match_cursor_text(&self, text_col: usize) -> usize {
         let mut count = 0;
-        let line = self.model.get_line(self.cursor.line);
+        let ref line = self.current_line;
         let mut chars = line.chars();
         for _ in 0..text_col {
             match chars.next() {

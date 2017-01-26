@@ -1848,3 +1848,24 @@ fn test_match_cursor_text() {
                test_view.match_cursor_text(9));
     assert_eq!(99999, test_view.match_cursor_text(20));
 }
+
+#[test]
+fn test_match_cursor_text_start_with_tab() {
+    let text = String::from("\t\t\t_test");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let test_view = Viewer::new(text.as_str(),
+                                name,
+                                actions,
+                                colors,
+                                "path",
+                                false);
+
+    assert_eq!(TAB_SPACES, test_view.match_cursor_text(1));
+    assert_eq!(TAB_SPACES * 2, test_view.match_cursor_text(2));
+    assert_eq!(TAB_SPACES * 3, test_view.match_cursor_text(3));
+    assert_eq!(1 + (TAB_SPACES * 3), test_view.match_cursor_text(4));
+    assert_eq!(2 + (TAB_SPACES * 3), test_view.match_cursor_text(5));
+    assert_eq!(99999, test_view.match_cursor_text(9));
+}

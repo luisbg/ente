@@ -134,3 +134,15 @@ fn get_line() {
     assert_eq!("\t\tThird", test_model.get_line(3));
     assert_eq!("", test_model.get_line(4));
 }
+
+#[test]
+fn get_line_len() {
+    let text = String::from("1234\n12345\n12\n");
+    let test_model = model::Model::new(text.as_str(), "/home/test/file");
+
+    assert_eq!(4, test_model.get_line_len(1));
+    assert_eq!(5, test_model.get_line_len(2));
+    assert_eq!(2, test_model.get_line_len(3));
+    assert_eq!(0, test_model.get_line_len(4));
+    assert_eq!(0, test_model.get_line_len(5));
+}

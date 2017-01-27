@@ -50,6 +50,12 @@ impl Model {
         String::new()
     }
 
+    #[allow(dead_code)]
+    pub fn get_line_len(&self, line: usize) -> usize {
+        let ln = self.get_line(line);
+        ln.len()
+    }
+
     pub fn get_line_count(&mut self) -> usize {
         self.line_count
     }

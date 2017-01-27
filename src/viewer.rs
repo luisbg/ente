@@ -1138,19 +1138,19 @@ impl Viewer {
         // TODO: Use better data structure for strings. For example, a Rope
         let line = self.cursor.line;
         let column = if backspace {
-            self.cursor.col
+            self.text_col
         } else {
-            self.cursor.col + 1
+            self.text_col + 1
         };
 
         // Can't delete char from the beginning of the file or past the line
         // and can't do Delete action past the line (Edit Mode)
         if backspace {
-            if (line == 1 && column == 1) || column - 1 > self.cur_line_len {
+            if (line == 1 && column == 1) || self.cursor.col - 1 > self.cur_line_len {
                 return;
             }
         } else if self.cur_line_len == 0 ||
-                  (self.mode == Mode::Edit && (column > self.cur_line_len)) {
+                  (self.mode == Mode::Edit && (self.cursor.col > self.cur_line_len)) {
             return;
         }
 
@@ -1177,15 +1177,16 @@ impl Viewer {
                                  1;
                 }
             } else {
-                self.cursor.col -= 1;
+                self.text_col -= 1;
             }
         } else if column == self.cur_line_len + 1 {
             // Move cursor back if doing Delete in last character in line
-            self.cursor.col -= 1;
+            self.text_col -= 1;
         }
 
-        self.cur_line_len -= 1;
-        self.focus_col = self.cursor.col;
+        self.current_line = self.model.get_line(self.cursor.line);
+        self.cur_line_len = self.get_line_len(&self.current_line);
+        self.cursor.col = self.match_cursor_text(self.text_col);
 
         let _ = self.display_chunk(disp_line, disp_col);
         self.update();

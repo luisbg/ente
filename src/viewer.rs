@@ -634,7 +634,7 @@ impl Viewer {
                         self.delete_at_cursor();
                     }
                     Key::Tab => {
-                        self.add_tab();
+                        self.add_char('\t');
                     }
                     _ => {}
                 }
@@ -1087,23 +1087,11 @@ impl Viewer {
 
     fn add_char(&mut self, c: char) {
         let line = self.cursor.line;
-        let column = self.cursor.col;
+        let column = self.text_col;
         info!("Add {} at {}:{}", c, line, column);
 
         self.model.add_char(c, line, column);
         self.update_after_add(c);
-    }
-
-    fn add_tab(&mut self) {
-        let line = self.cursor.line;
-        let column = self.cursor.col;
-
-        info!("Add tab at {}:{}, line, column");
-
-        for c in 0..TAB_SPACES {
-            self.model.add_char(' ', line, column + c);
-        }
-        self.update_after_add('\t');
     }
 
     fn update_after_add(&mut self, c: char) {
@@ -1117,7 +1105,7 @@ impl Viewer {
             // might fall outside of the display
             let line_num = self.cursor.line + 1;
             disp_col = 1;
-            self.focus_col = 1;
+            self.text_col = 1;
             self.set_current_line(line_num);
             if self.cursor.line >= disp_line + self.height {
                 disp_line += 1;
@@ -1128,14 +1116,15 @@ impl Viewer {
             }
         } else if c == '\t' {
             // If tab, when tab is four spaces
-            self.cursor.col += TAB_SPACES;
+            self.text_col += 1;
             self.cur_line_len += TAB_SPACES;
         } else {
             // If adding any other character move the cursor one past new char
-            self.cursor.col += 1;
+            self.text_col += 1;
             self.cur_line_len += 1;
         }
-        self.focus_col = self.cursor.col;
+        self.current_line = self.model.get_line(self.cursor.line);
+        self.cursor.col = self.match_cursor_text(self.text_col);
 
         if self.cursor.col > disp_col + self.width {
             disp_col = self.cursor.col - self.width;

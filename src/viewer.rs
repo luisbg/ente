@@ -1193,12 +1193,10 @@ impl Viewer {
     }
 
     fn delete_backspace(&mut self) {
-        if self.cursor.col > TAB_SPACES {
+        if self.text_col > TAB_SPACES {
             // Check if we should delete an indentation level
-            let text_copy = self.text.clone();
-            let mut lines = text_copy.lines().skip(self.cursor.line - 1);
-            let (beg_line, _) =
-                lines.next().unwrap().split_at(self.cursor.col - 1);
+            let line = self.model.get_line(self.cursor.line);
+            let (beg_line, _) = line.split_at(self.text_col - 1);
 
             let mut tab_space = String::new();
             for _ in 0..TAB_SPACES {
@@ -1207,11 +1205,11 @@ impl Viewer {
             let len = beg_line.len();
             if beg_line[len - TAB_SPACES..len] == tab_space {
                 self.model.delete_block(self.cursor.line,
-                                        self.cursor.col,
+                                        self.text_col,
                                         TAB_SPACES);
 
                 self.cursor.col -= TAB_SPACES;
-                self.focus_col = self.cursor.col;
+                self.text_col -= TAB_SPACES;
 
                 let disp_line = self.disp_line;
                 let disp_col = self.disp_col;

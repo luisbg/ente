@@ -92,7 +92,6 @@ pub struct Viewer {
     filename: String,
     disp_line: usize, // first displayed line
     disp_col: usize, // first displayed col
-    focus_col: usize,
     cur_line_len: usize,
     num_lines_digits: usize,
     line_jump: usize,
@@ -154,7 +153,6 @@ impl Viewer {
             filename: filename,
             disp_line: 1,
             disp_col: 1,
-            focus_col: 1,
             cur_line_len: 1,
             num_lines_digits: num_lines_digits,
             line_jump: 0,
@@ -439,7 +437,6 @@ impl Viewer {
         if self.text_col > 1 {
             self.text_col -= 1;
             self.cursor.col = self.match_cursor_text(self.text_col);
-            self.focus_col = self.cursor.col;
         } else {
             info!("Can't go left, already at beginning of the line");
             return;
@@ -450,7 +447,6 @@ impl Viewer {
         if self.cursor.col < self.cur_line_len {
             self.text_col += 1;
             self.cursor.col = self.match_cursor_text(self.text_col);
-            self.focus_col = self.cursor.col;
         } else {
             info!("Can't go right, already at end of the line");
             return;
@@ -484,7 +480,7 @@ impl Viewer {
     fn move_cursor_start_line(&mut self) {
         if self.cur_line_len > 0 {
             self.cursor.col = 1;
-            self.focus_col = 1;
+            self.text_col = 1;
         } else {
             info!("Can't move to the beginning of an empty line");
         }
@@ -493,7 +489,7 @@ impl Viewer {
     fn move_cursor_end_line(&mut self) {
         if self.cur_line_len > 0 {
             self.cursor.col = self.cur_line_len;
-            self.focus_col = self.cur_line_len;
+            self.text_col = self.cur_line_len;
         } else {
             info!("Can't move to the end of an empty line");
         }
@@ -501,7 +497,7 @@ impl Viewer {
 
     fn move_cursor_start_file(&mut self) {
         self.cursor.col = 1;
-        self.focus_col = 1;
+        self.text_col = 1;
         self.set_current_line(1);
 
         if self.disp_line > 1 || self.disp_col > 1 {
@@ -845,9 +841,9 @@ impl Viewer {
         }
 
         if line_num != 0 {
-            info!("Found '{}' in line {}",
+            info!("Found '{}' in line {} column {}",
                   self.search_string,
-                  line_num);
+                  line_num, col);
             self.set_cursor(line_num, col);
         } else {
             info!("Did not found: {}", self.search_string);
@@ -993,14 +989,12 @@ impl Viewer {
         };
         self.current_line = curr_line;
 
-        self.focus_col = self.match_cursor_text(self.text_col);
+        self.cursor.col = self.match_cursor_text(self.text_col);
 
-        if self.cur_line_len < self.focus_col {
+        if self.cur_line_len < self.cursor.col {
             // previous line was longer
             self.cursor.col = self.cur_line_len;
         } else {
-            self.cursor.col = self.focus_col;
-
             if self.cursor.col == 0 {
                 // previous line was empty
                 self.cursor.col = 1;   // jump back to first column
@@ -1047,7 +1041,7 @@ impl Viewer {
     }
 
     fn set_cursor(&mut self, mut line_num: usize, col: usize) {
-        self.focus_col = col;
+        self.text_col = col;
 
         self.set_current_line(line_num);
         let line_count = self.model.get_line_count();
@@ -1359,7 +1353,8 @@ impl Viewer {
 
         self.set_current_line(line_num);
 
-        self.focus_col = 1;
+        self.text_col = 1;
+        self.cursor.col = 1;
         let disp_line = self.disp_line;
         let _ = self.display_chunk(disp_line, 1);
         self.update();

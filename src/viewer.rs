@@ -21,6 +21,7 @@ use errors::*;
 const RB_COL_START: usize = 0;
 const RB_ROW_START: usize = 0;
 const TAB_SPACES: usize = 4;
+const INSERT_TAB_AS_SPACES: bool = true;
 
 #[derive(Copy,Clone,Eq,PartialEq,Debug)]
 pub enum Action {
@@ -631,7 +632,11 @@ impl Viewer {
                         self.delete_at_cursor();
                     }
                     Key::Tab => {
-                        self.add_char('\t');
+                        if INSERT_TAB_AS_SPACES {
+                            self.add_tab_spaces();
+                        } else {
+                            self.add_char('\t');
+                        }
                     }
                     _ => {}
                 }
@@ -1068,10 +1073,22 @@ impl Viewer {
         info!("Add '{}' at {}:{}", c, line, column);
 
         self.model.add_char(c, line, column);
-        self.update_after_add(c);
+        self.update_after_add(c, 1);
     }
 
-    fn update_after_add(&mut self, c: char) {
+    fn add_tab_spaces(&mut self) {
+        let line = self.cursor.line;
+        let column = self.text_col;
+
+        info!("Add tab spaces at {}:{}", line, column);
+
+        for c in 0..TAB_SPACES {
+            self.model.add_char(' ', line, column + c);
+        }
+        self.update_after_add(' ', TAB_SPACES);
+    }
+
+    fn update_after_add(&mut self, c: char, count: usize) {
         self.text = self.model.get_text();
 
         let mut disp_line = self.disp_line;
@@ -1093,8 +1110,8 @@ impl Viewer {
             }
         } else {
             // If adding any other character move the cursor one past new char
-            self.text_col += 1;
-            self.cur_line_len += 1;
+            self.text_col += count;
+            self.cur_line_len += count;
         }
         self.current_line = self.model.get_line(self.cursor.line);
         self.cursor.col = self.match_cursor_text(self.text_col);

@@ -997,12 +997,10 @@ impl Viewer {
             // previous line was longer
             self.cursor.col = self.match_cursor_text(self.cur_line_len);
             self.text_col = self.cur_line_len;
-        } else {
-            if self.cursor.col == 0 {
-                // previous line was empty
-                self.cursor.col = 1;   // jump back to first column
-                self.text_col = 1;
-            }
+        } else if self.cursor.col == 0 {
+            // previous line was empty
+            self.cursor.col = 1;   // jump back to first column
+            self.text_col = 1;
         }
     }
 
@@ -1840,4 +1838,54 @@ fn test_match_cursor_text_start_with_tab() {
                test_view.match_cursor_text(8));
     assert_eq!(6 + (TAB_SPACES * 3),
                test_view.match_cursor_text(9));
+}
+
+#[test]
+fn test_set_current_line() {
+    let text = String::from("First
+Second length 16
+\tThird Line length 20
+
+Fifth 7");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false);
+
+    test_view.set_current_line(2);  // move to line 2
+    assert_eq!(16, test_view.cur_line_len);
+    test_view.set_current_line(3);  // move to line 3 (with tab)
+    test_view.move_cursor(Action::MoveEndLine);  // move to end of line
+    assert_eq!(21, test_view.cur_line_len);
+    assert_eq!(24, test_view.cursor.col);
+
+    test_view.set_current_line(5);  // move to shorter line 5
+    assert_eq!(7, test_view.cur_line_len);
+    assert_eq!(7, test_view.cursor.col);
+
+    test_view.mode = Mode::Edit;  // change mode to edit
+
+    test_view.set_current_line(2);  // move to line 2
+    assert_eq!(17, test_view.cur_line_len);
+    assert_eq!(7, test_view.cursor.col);
+    test_view.move_cursor(Action::MoveEndLine);  // move to end of line
+    assert_eq!(17, test_view.cursor.col);
+    test_view.set_current_line(3);  // move to line 3
+    assert_eq!(22, test_view.cur_line_len);
+    test_view.move_cursor(Action::MoveEndLine);  // move to end of line
+
+    test_view.set_current_line(5);  // move to shorter line 5
+    assert_eq!(8, test_view.cur_line_len);
+
+    test_view.move_cursor_left();  // move left twice
+    test_view.move_cursor_left();
+    assert_eq!(6, test_view.cursor.col);
+
+    test_view.set_current_line(4);  // move to empty line 4
+    assert_eq!(1, test_view.cursor.col);
 }

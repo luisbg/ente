@@ -21,7 +21,6 @@ use errors::*;
 const RB_COL_START: usize = 0;
 const RB_ROW_START: usize = 0;
 const TAB_SPACES: usize = 4;
-const INSERT_TAB_AS_SPACES: bool = true;
 
 #[derive(Copy,Clone,Eq,PartialEq,Debug)]
 pub enum Action {
@@ -90,6 +89,7 @@ pub struct Viewer {
     height: usize, // window height without status line
     width: usize,
     show_line_num: bool,
+    insert_tab_char: bool,
     filename: String,
     disp_line: usize, // first displayed line
     disp_col: usize, // first displayed col
@@ -121,7 +121,8 @@ impl Viewer {
                key_map: HashMap<Key, Action>,
                colors: Colors,
                filepath: &str,
-               show_line_num: bool)
+               show_line_num: bool,
+               insert_tab_char: bool)
                -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height() - 1;
@@ -151,6 +152,7 @@ impl Viewer {
             height: height,
             width: width,
             show_line_num: show_line_num,
+            insert_tab_char: insert_tab_char,
             filename: filename,
             disp_line: 1,
             disp_col: 1,
@@ -632,10 +634,10 @@ impl Viewer {
                         self.delete_at_cursor();
                     }
                     Key::Tab => {
-                        if INSERT_TAB_AS_SPACES {
-                            self.add_tab_spaces();
-                        } else {
+                        if self.insert_tab_char {
                             self.add_char('\t');
+                        } else {
+                            self.add_tab_spaces();
                         }
                     }
                     _ => {}

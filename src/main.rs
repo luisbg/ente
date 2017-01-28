@@ -49,7 +49,8 @@ const USAGE: &'static str = "
 Ente text editor.
 
 Usage:
-  ente FILE [--keyconfig=<kc>] [--colorconfig=<cc>] [--hide-line-num]
+  ente FILE [--keyconfig=<kc>] \
+     [--colorconfig=<cc>] [--hide-line-num] [--insert-tab-char]
   ente (-h | --help)
   ente --version
 
@@ -59,6 +60,7 @@ Usage:
     --keyconfig=<kc>      Key configuration file.
     --colorconfig=<cc>    Color configuration file.
     --hide-line-num       Hide line numbers.
+    --insert-tab-char     Insert a Tab instead of a number of spaces.
 ";
 
 #[derive(Debug, RustcDecodable)]
@@ -67,6 +69,7 @@ struct Args {
     flag_keyconfig: String,
     flag_colorconfig: String,
     flag_hidelinenum: bool,
+    flag_inserttabchar: bool,
 }
 
 impl slog_stream::Format for LogFormat {
@@ -136,12 +139,20 @@ fn main() {
     let colors = colorconfig::fill_colors(color_config_file.as_ref());
 
     let hide_line_num = args.get_bool("--hide-line-num");
+    let insert_tab_char = args.get_bool("--insert-tab-char");
+    if hide_line_num {
+        info!("Hide line numbers");
+    }
+    if insert_tab_char {
+        info!("Insert tab characters");
+    }
 
     // Run catching errors
     if let Err(ref e) = run(args.get_str("FILE"),
                             actions,
                             colors,
-                            !hide_line_num) {
+                            !hide_line_num,
+                            insert_tab_char) {
         println!("error: {}", e);
         for e in e.iter().skip(1) {
             println!("caused by: {}", e);
@@ -192,7 +203,8 @@ fn open_file(filepath: &str) -> String {
 fn run(filepath: &str,
        actions: HashMap<rustbox::Key, viewer::Action>,
        colors: viewer::Colors,
-       show_line_num: bool)
+       show_line_num: bool,
+       insert_tab_char: bool)
        -> Result<()> {
     // Get file content and start a Viewer with it
     let text = open_file(filepath);
@@ -206,7 +218,8 @@ fn run(filepath: &str,
                                          actions,
                                          colors,
                                          filepath,
-                                         show_line_num);
+                                         show_line_num,
+                                         insert_tab_char);
 
     // Wait for keyboard events
     match viewer.poll_event() {

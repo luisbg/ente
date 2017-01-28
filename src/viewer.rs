@@ -444,7 +444,7 @@ impl Viewer {
     }
 
     fn move_cursor_right(&mut self) {
-        if self.cursor.col < self.cur_line_len {
+        if self.text_col < self.cur_line_len {
             self.text_col += 1;
             self.cursor.col = self.match_cursor_text(self.text_col);
         } else {
@@ -488,8 +488,8 @@ impl Viewer {
 
     fn move_cursor_end_line(&mut self) {
         if self.cur_line_len > 0 {
-            self.cursor.col = self.cur_line_len;
             self.text_col = self.cur_line_len;
+            self.cursor.col = self.match_cursor_text(self.text_col);
         } else {
             info!("Can't move to the end of an empty line");
         }
@@ -510,7 +510,8 @@ impl Viewer {
         let line_count = self.model.get_line_count();
         self.set_current_line(line_count);
 
-        self.cursor.col = self.cur_line_len;
+        self.text_col = self.cur_line_len;
+        self.cursor.col = self.match_cursor_text(self.text_col);
 
         if self.disp_line + height <= line_count {
             let _ = self.display_chunk(line_count - height + 1, 1);
@@ -843,7 +844,8 @@ impl Viewer {
         if line_num != 0 {
             info!("Found '{}' in line {} column {}",
                   self.search_string,
-                  line_num, col);
+                  line_num,
+                  col);
             self.set_cursor(line_num, col);
         } else {
             info!("Did not found: {}", self.search_string);
@@ -983,56 +985,39 @@ impl Viewer {
 
         let curr_line = self.model.get_line(self.cursor.line);
         self.cur_line_len = if self.mode == Mode::Edit {
-            self.get_line_len(&curr_line) + 1
+            curr_line.len() + 1
         } else {
-            self.get_line_len(&curr_line)
+            curr_line.len()
         };
         self.current_line = curr_line;
 
         self.cursor.col = self.match_cursor_text(self.text_col);
 
-        if self.cur_line_len < self.cursor.col {
+        if self.cur_line_len < self.text_col {
             // previous line was longer
-            self.cursor.col = self.cur_line_len;
+            self.cursor.col = self.match_cursor_text(self.cur_line_len);
+            self.text_col = self.cur_line_len;
         } else {
             if self.cursor.col == 0 {
                 // previous line was empty
                 self.cursor.col = 1;   // jump back to first column
+                self.text_col = 1;
             }
         }
     }
 
-    fn get_line_len(&self, line: &String) -> usize {
-        let mut count = 0;
-
-        for c in line.chars() {
-            if c == '\t' {
-                count += TAB_SPACES;
-            } else {
-                count += 1;
-            }
-        }
-
-        count
-    }
-
+    // Match the cursor column based on current text line position
     fn match_cursor_text(&self, text_col: usize) -> usize {
         let mut count = 0;
-        let ref line = self.current_line;
+        let mut line = self.current_line.clone();
+        line.push(' ');  // Extra char for editing mode
         let mut chars = line.chars();
         for _ in 0..text_col {
-            match chars.next() {
-                Some(c) => {
-                    if c == '\t' {
-                        count += TAB_SPACES;
-                    } else {
-                        count += 1;
-                    }
-                }
-                None => {
-                    info!("Column out of range match_cursor_text {}",
-                          text_col);
-                    return 99999;
+            if let Some(c) = chars.next() {
+                if c == '\t' {
+                    count += TAB_SPACES;
+                } else {
+                    count += 1;
                 }
             }
         }
@@ -1082,7 +1067,7 @@ impl Viewer {
     fn add_char(&mut self, c: char) {
         let line = self.cursor.line;
         let column = self.text_col;
-        info!("Add {} at {}:{}", c, line, column);
+        info!("Add '{}' at {}:{}", c, line, column);
 
         self.model.add_char(c, line, column);
         self.update_after_add(c);
@@ -1108,10 +1093,6 @@ impl Viewer {
             if self.show_line_num && self.update_num_lines_digits(true, true) {
                 self.width = self.rustbox.width() - self.num_lines_digits - 1;
             }
-        } else if c == '\t' {
-            // If tab, when tab is four spaces
-            self.text_col += 1;
-            self.cur_line_len += TAB_SPACES;
         } else {
             // If adding any other character move the cursor one past new char
             self.text_col += 1;
@@ -1140,11 +1121,13 @@ impl Viewer {
         // Can't delete char from the beginning of the file or past the line
         // and can't do Delete action past the line (Edit Mode)
         if backspace {
-            if (line == 1 && column == 1) || self.cursor.col - 1 > self.cur_line_len {
+            if (line == 1 && column == 1) ||
+               self.text_col - 1 > self.cur_line_len {
                 return;
             }
         } else if self.cur_line_len == 0 ||
-                  (self.mode == Mode::Edit && (self.cursor.col > self.cur_line_len)) {
+                  (self.mode == Mode::Edit &&
+                   (self.text_col > self.cur_line_len)) {
             return;
         }
 
@@ -1160,7 +1143,8 @@ impl Viewer {
                 // Removed first character of line, move to line above
                 let line_num = self.cursor.line - 1;
                 self.set_current_line(line_num);
-                self.cursor.col = self.cur_line_len - end_len;
+                self.text_col = self.cur_line_len - end_len;
+                self.cursor.col = self.match_cursor_text(self.text_col);
                 if self.cursor.line < disp_line {
                     disp_line -= 1;
                 }
@@ -1179,7 +1163,7 @@ impl Viewer {
         }
 
         self.current_line = self.model.get_line(self.cursor.line);
-        self.cur_line_len = self.get_line_len(&self.current_line);
+        self.cur_line_len = self.current_line.len();
         self.cursor.col = self.match_cursor_text(self.text_col);
 
         let _ = self.display_chunk(disp_line, disp_col);
@@ -1198,9 +1182,8 @@ impl Viewer {
             }
             let len = beg_line.len();
             if beg_line[len - TAB_SPACES..len] == tab_space {
-                self.model.delete_block(self.cursor.line,
-                                        self.text_col,
-                                        TAB_SPACES);
+                self.model
+                    .delete_block(self.cursor.line, self.text_col, TAB_SPACES);
 
                 self.cursor.col -= TAB_SPACES;
                 self.text_col -= TAB_SPACES;
@@ -1826,10 +1809,11 @@ fn test_match_cursor_text() {
                                 false);
 
     assert_eq!(3, test_view.match_cursor_text(3));
-    assert_eq!(5 + TAB_SPACES - 1, test_view.match_cursor_text(5));
-    assert_eq!(9 + (TAB_SPACES - 1) * 2,
+    assert_eq!(4 + TAB_SPACES, test_view.match_cursor_text(5));
+    assert_eq!(7 + (TAB_SPACES * 2),
                test_view.match_cursor_text(9));
-    assert_eq!(99999, test_view.match_cursor_text(20));
+    assert_eq!(1 + 7 + (TAB_SPACES * 2),
+               test_view.match_cursor_text(20));
 }
 
 #[test]
@@ -1848,25 +1832,12 @@ fn test_match_cursor_text_start_with_tab() {
     assert_eq!(TAB_SPACES, test_view.match_cursor_text(1));
     assert_eq!(TAB_SPACES * 2, test_view.match_cursor_text(2));
     assert_eq!(TAB_SPACES * 3, test_view.match_cursor_text(3));
-    assert_eq!(1 + (TAB_SPACES * 3), test_view.match_cursor_text(4));
-    assert_eq!(2 + (TAB_SPACES * 3), test_view.match_cursor_text(5));
-    assert_eq!(99999, test_view.match_cursor_text(9));
-}
-
-#[test]
-fn test_get_line_len() {
-    let text = String::from("_");
-    let name = String::from("name");
-    let actions = keyconfig::new();
-    let colors = Colors::new();
-    let test_view = Viewer::new(text.as_str(),
-                                name,
-                                actions,
-                                colors,
-                                "path",
-                                false);
-
-    assert_eq!(4, test_view.get_line_len(&String::from("Test")));
-    assert_eq!(TAB_SPACES + 4, test_view.get_line_len(&String::from("\tMore")));
-    assert_eq!(TAB_SPACES * 3, test_view.get_line_len(&String::from("\t\t\t")));
+    assert_eq!(1 + (TAB_SPACES * 3),
+               test_view.match_cursor_text(4));
+    assert_eq!(2 + (TAB_SPACES * 3),
+               test_view.match_cursor_text(5));
+    assert_eq!(5 + (TAB_SPACES * 3),
+               test_view.match_cursor_text(8));
+    assert_eq!(6 + (TAB_SPACES * 3),
+               test_view.match_cursor_text(9));
 }

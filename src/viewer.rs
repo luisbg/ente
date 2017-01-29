@@ -1030,6 +1030,28 @@ impl Viewer {
         count
     }
 
+    // Match the text column based on the current cursor position
+    #[allow(dead_code)]
+    fn match_text_cursor(&self, cursor_col: usize) -> usize {
+        let mut count = 0;
+        let mut chars = self.current_line.chars();
+        let mut n = 0;
+
+        while n < cursor_col {
+            if let Some(c) = chars.next() {
+                if c == '\t' {
+                    n += TAB_SPACES;
+                } else {
+                    n += 1;
+                }
+
+                count += 1;
+            }
+        }
+
+        count
+    }
+
     fn set_cursor(&mut self, mut line_num: usize, col: usize) {
         self.text_col = col;
 
@@ -1916,4 +1938,27 @@ Fifth 7");
 
     test_view.set_current_line(4);  // move to empty line 4
     assert_eq!(1, test_view.cursor.col);
+}
+
+#[test]
+fn test_match_text_cursor() {
+    let text = String::from("First line\n\tthis is a tab");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false,
+                                    false);
+
+    assert_eq!(1, test_view.match_text_cursor(1));
+    assert_eq!(10, test_view.match_text_cursor(10));
+
+    test_view.set_current_line(2);
+
+    assert_eq!(1, test_view.match_text_cursor(4));
+    assert_eq!(9, test_view.match_text_cursor(12));
 }

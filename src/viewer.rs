@@ -1615,6 +1615,7 @@ fn test_new() {
                                     actions,
                                     colors,
                                     "path",
+                                    false,
                                     false);
     match test_view.display_chunk(1, 1) {
         Ok(_) => {}
@@ -1637,6 +1638,7 @@ fn test_display_chunk_outside_file() {
                                     actions,
                                     colors,
                                     "path",
+                                    false,
                                     false);
     match test_view.display_chunk(2, 1) {
         Ok(_) => {
@@ -1666,6 +1668,7 @@ second line");
                                     actions,
                                     colors,
                                     "path",
+                                    false,
                                     false);
 
     // Init at 1,1
@@ -1719,6 +1722,7 @@ fn test_pageup_pagedown() {
                                     actions,
                                     colors,
                                     "path",
+                                    false,
                                     false);
 
     // Init at 1,1
@@ -1753,6 +1757,7 @@ fn test_start_end_line() {
                                     actions,
                                     colors,
                                     "path",
+                                    false,
                                     false);
 
     // Init at 1,1
@@ -1791,6 +1796,7 @@ fn test_start_end_file() {
                                     actions,
                                     colors,
                                     "path",
+                                    false,
                                     false);
 
     // Init at 1,1
@@ -1823,6 +1829,7 @@ fn test_match_cursor_text() {
                                 actions,
                                 colors,
                                 "path",
+                                false,
                                 false);
 
     assert_eq!(3, test_view.match_cursor_text(3));
@@ -1844,6 +1851,7 @@ fn test_match_cursor_text_start_with_tab() {
                                 actions,
                                 colors,
                                 "path",
+                                false,
                                 false);
 
     assert_eq!(TAB_SPACES, test_view.match_cursor_text(1));
@@ -1874,6 +1882,7 @@ Fifth 7");
                                     actions,
                                     colors,
                                     "path",
+                                    false,
                                     false);
 
     test_view.set_current_line(2);  // move to line 2

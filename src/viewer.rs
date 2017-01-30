@@ -1962,3 +1962,42 @@ fn test_match_text_cursor() {
     assert_eq!(1, test_view.match_text_cursor(4));
     assert_eq!(9, test_view.match_text_cursor(12));
 }
+
+#[test]
+fn test_do_forward_search() {
+    let text = String::from("This is a test
+in which we try forward search
+third line includes test
+testing last line as well");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false,
+                                    false);
+
+    // first result
+    test_view.search_string = String::from("test");
+    test_view.do_forward_search();
+    assert_eq!(1, test_view.cursor.line);
+    assert_eq!(11, test_view.cursor.col);
+
+    // next result
+    test_view.do_forward_search();
+    assert_eq!(3, test_view.cursor.line);
+    assert_eq!(21, test_view.cursor.col);
+
+    // third result
+    test_view.do_forward_search();
+    assert_eq!(4, test_view.cursor.line);
+    assert_eq!(1, test_view.cursor.col);
+
+    // no more results
+    test_view.do_forward_search();
+    assert_eq!(4, test_view.cursor.line);
+    assert_eq!(1, test_view.cursor.col);
+}

@@ -822,11 +822,11 @@ impl Viewer {
         let mut col = 0;
 
         // Check current line after the cursor
-        let (_, rest_line) = lines.next().unwrap().split_at(self.cursor.col);
+        let (_, rest_line) = lines.next().unwrap().split_at(self.text_col);
         match rest_line.find(self.search_string.as_str()) {
             Some(c) => {
                 line_num = self.cursor.line;
-                col = c + self.cursor.col + 1;
+                col = c + self.text_col + 1;
             }
             None => {
                 // If nothing found in current line, search in the rest
@@ -849,6 +849,7 @@ impl Viewer {
         }
 
         if line_num != 0 {
+            self.text_col = col;
             info!("Found '{}' in line {} column {}",
                   self.search_string,
                   line_num,
@@ -1968,6 +1969,7 @@ fn test_do_forward_search() {
     let text = String::from("This is a test
 in which we try forward search
 third line includes test
+\t\tthis test should work with tabs as well
 testing last line as well");
     let name = String::from("name");
     let actions = keyconfig::new();
@@ -1994,10 +1996,15 @@ testing last line as well");
     // third result
     test_view.do_forward_search();
     assert_eq!(4, test_view.cursor.line);
+    assert_eq!(14, test_view.cursor.col);
+
+    // last result
+    test_view.do_forward_search();
+    assert_eq!(5, test_view.cursor.line);
     assert_eq!(1, test_view.cursor.col);
 
     // no more results
     test_view.do_forward_search();
-    assert_eq!(4, test_view.cursor.line);
+    assert_eq!(5, test_view.cursor.line);
     assert_eq!(1, test_view.cursor.col);
 }

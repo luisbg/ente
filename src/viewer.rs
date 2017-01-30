@@ -954,12 +954,14 @@ impl Viewer {
             .skip(self.model.get_line_count() - self.cursor.line);
         let line_num = self.cursor.line;
         let col: usize;
+        // TODO: Check next character is alphanumeric
+        let word_break: &[_] = &[' ', '\t'];
 
         let line = lines.next();
         if self.text_col > 1 {
             // Check current line before the cursor
             let (beg_line, _) = line.unwrap().split_at(self.text_col - 2);
-            match beg_line.rfind(' ') {
+            match beg_line.rfind(word_break) {
                 Some(c) => {
                     col = c + 2;
                 }
@@ -991,7 +993,6 @@ impl Viewer {
         self.set_cursor(line_num, col);
         self.update();
     }
-
 
     fn set_current_line(&mut self, line_num: usize) {
         self.cursor.line = line_num;
@@ -2105,4 +2106,55 @@ third line");
     assert_eq!(1, test_view.cursor.col);
     test_view.move_next_word();
     assert_eq!(7, test_view.cursor.col);
+}
+
+#[test]
+fn test_move_prev_word() {
+    let text = String::from("This is a test
+\t\tfor move next word
+third line");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false,
+                                    false);
+
+    test_view.move_cursor_end_file();
+    assert_eq!(3, test_view.cursor.line);
+    assert_eq!(10, test_view.cursor.col);
+
+    // third line
+    test_view.move_prev_word();
+    assert_eq!(7, test_view.cursor.col);
+    test_view.move_prev_word();
+    assert_eq!(1, test_view.cursor.col);
+
+    // second line
+    test_view.move_prev_word();
+    assert_eq!(2, test_view.cursor.line);
+    assert_eq!(23, test_view.cursor.col);
+    test_view.move_prev_word();
+    assert_eq!(18, test_view.cursor.col);
+    test_view.move_prev_word();
+    assert_eq!(13, test_view.cursor.col);
+    test_view.move_prev_word();
+    assert_eq!(9, test_view.cursor.col);
+    test_view.move_prev_word();
+    test_view.move_prev_word();
+
+    // first line
+    test_view.move_prev_word();
+    assert_eq!(1, test_view.cursor.line);
+    assert_eq!(11, test_view.cursor.col);
+    test_view.move_prev_word();
+    assert_eq!(9, test_view.cursor.col);
+    test_view.move_prev_word();
+    assert_eq!(6, test_view.cursor.col);
+    test_view.move_prev_word();
+    assert_eq!(1, test_view.cursor.col);
 }

@@ -924,12 +924,15 @@ impl Viewer {
         let mut lines = text_copy.lines().skip(self.cursor.line - 1);
         let mut line_num = self.cursor.line;
         let mut col = 1;
+        let word_break: &[_] = &[' ', '\t'];
 
         // Check current line after the cursor
-        let (_, rest_line) = lines.next().unwrap().split_at(self.cursor.col);
-        match rest_line.find(' ') {
+        // TODO: Don't consider a tab as a word.
+        //       Check next character is alphanumeric
+        let (_, rest_line) = lines.next().unwrap().split_at(self.text_col);
+        match rest_line.find(word_break) {
             Some(c) => {
-                col = c + self.cursor.col + 2;
+                col = c + self.text_col + 2;
             }
             None => {
                 // If no word break found in current line, go to next
@@ -2058,4 +2061,48 @@ testing last line as well");
     test_view.do_backward_search();
     assert_eq!(1, test_view.cursor.line);
     assert_eq!(11, test_view.cursor.col);
+}
+
+#[test]
+fn test_move_next_word() {
+    let text = String::from("This is a test
+\t\tfor move next word
+third line");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false,
+                                    false);
+
+    // first line
+    test_view.move_next_word();
+    assert_eq!(6, test_view.cursor.col);
+    test_view.move_next_word();
+    assert_eq!(9, test_view.cursor.col);
+    test_view.move_next_word();
+    assert_eq!(11, test_view.cursor.col);
+
+    // second line
+    test_view.move_next_word();
+    assert_eq!(2, test_view.cursor.line);
+    test_view.move_next_word();
+    assert_eq!(9, test_view.cursor.col);
+    test_view.move_next_word();
+    assert_eq!(13, test_view.cursor.col);
+    test_view.move_next_word();
+    assert_eq!(18, test_view.cursor.col);
+    test_view.move_next_word();
+    assert_eq!(23, test_view.cursor.col);
+
+    // last line
+    test_view.move_next_word();
+    assert_eq!(3, test_view.cursor.line);
+    assert_eq!(1, test_view.cursor.col);
+    test_view.move_next_word();
+    assert_eq!(7, test_view.cursor.col);
 }

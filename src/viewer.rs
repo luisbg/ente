@@ -879,7 +879,7 @@ impl Viewer {
         let mut col = 0;
 
         // Check current line before the cursor
-        let (beg_line, _) = lines.next().unwrap().split_at(self.cursor.col);
+        let (beg_line, _) = lines.next().unwrap().split_at(self.text_col);
         match beg_line.rfind(self.search_string.as_str()) {
             Some(c) => {
                 line_num = self.cursor.line;
@@ -906,9 +906,11 @@ impl Viewer {
         }
 
         if line_num != 0 {
-            info!("Found '{}' in line {}",
+            self.text_col = 1;
+            info!("Found '{}' in line {} column {}",
                   self.search_string,
-                  line_num);
+                  line_num,
+                  col);
             self.set_cursor(line_num, col);
         } else {
             info!("Did not found: {}", self.search_string);
@@ -2007,4 +2009,53 @@ testing last line as well");
     test_view.do_forward_search();
     assert_eq!(5, test_view.cursor.line);
     assert_eq!(1, test_view.cursor.col);
+}
+
+#[test]
+fn test_do_backward_search() {
+    let text = String::from("This is a test
+in which we try forward search
+third line includes test
+\t\tthis test should work with tabs as well
+testing last line as well");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false,
+                                    false);
+
+    test_view.move_cursor_end_file();
+    assert_eq!(5, test_view.cursor.line);
+    assert_eq!(25, test_view.cursor.col);
+
+    // first result
+    test_view.search_string = String::from("test");
+    test_view.do_backward_search();
+    assert_eq!(5, test_view.cursor.line);
+    assert_eq!(1, test_view.cursor.col);
+
+    // next result
+    test_view.do_backward_search();
+    assert_eq!(4, test_view.cursor.line);
+    assert_eq!(14, test_view.cursor.col);
+
+    // third result
+    test_view.do_backward_search();
+    assert_eq!(3, test_view.cursor.line);
+    assert_eq!(21, test_view.cursor.col);
+
+    // last result
+    test_view.do_backward_search();
+    assert_eq!(1, test_view.cursor.line);
+    assert_eq!(11, test_view.cursor.col);
+
+    // no more results
+    test_view.do_backward_search();
+    assert_eq!(1, test_view.cursor.line);
+    assert_eq!(11, test_view.cursor.col);
 }

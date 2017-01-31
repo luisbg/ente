@@ -1392,7 +1392,7 @@ impl Viewer {
     fn delete_end_of_line(&mut self) {
         let line = self.cursor.line;
         let line_len = self.cur_line_len;
-        let col = self.cursor.col;
+        let col = self.text_col;
 
         if col == line_len {
             return;
@@ -1400,11 +1400,12 @@ impl Viewer {
 
         // Account for having one extra character in Edit Mode
         if self.mode == Mode::Edit {
-            self.model.delete_block(line, line_len, line_len - col);
+            self.model.delete_block(line, line_len, line_len - col - 1);
+            self.cur_line_len -= line_len - col - 1;
         } else {
             self.model.delete_block(line, line_len + 1, line_len - col);
+            self.cur_line_len -= line_len - col;
         }
-        self.cur_line_len -= line_len - col;
 
         self.text = self.model.get_text();
 
@@ -2157,4 +2158,45 @@ third line");
     assert_eq!(6, test_view.cursor.col);
     test_view.move_prev_word();
     assert_eq!(1, test_view.cursor.col);
+}
+
+#[test]
+fn test_delete_end_of_line() {
+    let text = String::from("This is a test
+\t\tfor delete end of line");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false,
+                                    false);
+
+    // Delete end of line after first word
+    test_view.move_next_word();
+    test_view.delete_end_of_line();
+
+    assert_eq!(test_view.text, "This i
+\t\tfor delete end of line\n");
+    assert_eq!(6, test_view.cur_line_len);
+    // Cursor and text column are the same when the line doesn't have tabs
+    assert_eq!(test_view.cursor.col, test_view.cur_line_len);
+    assert_eq!(test_view.text_col, test_view.cur_line_len);
+
+    // Switch to Edit mode
+    // Delete end of second line after 'f'
+    test_view.mode = Mode::Edit;
+    test_view.move_cursor(Action::MoveDown);
+    test_view.move_cursor_start_line();
+    test_view.move_cursor_right();
+    test_view.move_cursor_right();
+
+    test_view.delete_end_of_line();
+    assert_eq!(test_view.text, "This i
+\t\tf\n");
+    // Text column + 1 because we are in Edit Mode
+    assert_eq!(test_view.text_col + 1, test_view.cur_line_len);
 }

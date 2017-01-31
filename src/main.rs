@@ -1,3 +1,5 @@
+// ENTE (Educational Nimble Text Editor)
+
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
@@ -16,16 +18,16 @@ extern crate slog_stream;
 extern crate rustc_serialize;
 extern crate docopt;
 
-use std::error::Error as StdError;
-use std::fs::File;
-use std::io::prelude::*;
-use std::io;
-use std::path::Path;
-
-use std::env;
+use docopt::Docopt;
 use slog::DrainExt;
 use std::collections::HashMap;
-use docopt::Docopt;
+
+use std::env;
+use std::error::Error as StdError;
+use std::fs::File;
+use std::io;
+use std::io::prelude::*;
+use std::path::Path;
 
 mod errors {
     error_chain!{}

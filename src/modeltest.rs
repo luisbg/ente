@@ -1,3 +1,5 @@
+// Tests for Model
+
 use super::model;
 
 #[test]
@@ -74,7 +76,7 @@ fn delete_char() {
 
     // TODO: it would make more sense for this to be character 6
     test_model.delete_char(1, 7);
-    test_model.delete_char(1, 1);  // this should do nothing
+    test_model.delete_char(1, 1); // this should do nothing
     test_model.delete_char(1, 11);
 
     assert_eq!("Text test\n", test_model.get_text());

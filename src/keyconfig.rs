@@ -1,9 +1,10 @@
+// Key Configuration
+
+use rustbox::Key;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-
-use rustbox::Key;
 use viewer;
 
 macro_rules! map(

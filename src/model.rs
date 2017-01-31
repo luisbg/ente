@@ -1,3 +1,5 @@
+// Model
+
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::path::Path;

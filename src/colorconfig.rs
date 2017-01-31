@@ -1,8 +1,9 @@
+// Color Configuration
+
+use rustbox::Color;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-
-use rustbox::Color;
 use viewer;
 
 pub fn fill_colors(filepath: &str) -> viewer::Colors {

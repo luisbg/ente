@@ -1,4 +1,7 @@
 fn_call_width = 50
 max_width = 80
 wrap_comments = true
+fn_brace_style = "PreferSameLine"
+normalize_comments = true
+reorder_imports = true
 verbose = true

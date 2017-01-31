@@ -1,18 +1,20 @@
+// Viewer
+
 extern crate rustbox;
 extern crate time;
 extern crate slog_stream;
 
-use std::default::Default;
-use std::collections::HashMap;
+#[allow(unused_imports)]
+use colorconfig;
+#[allow(unused_imports)]
+use keyconfig;
+
+use model;
 
 use rustbox::{Color, RustBox, OutputMode};
 use rustbox::Key;
-
-use model;
-#[allow(unused_imports)]
-use keyconfig;
-#[allow(unused_imports)]
-use colorconfig;
+use std::collections::HashMap;
+use std::default::Default;
 
 mod errors {}
 
@@ -779,7 +781,7 @@ impl Viewer {
     fn do_line_jump(&mut self) {
         let line_num = self.line_jump;
 
-        self.mode = Mode::Read;  // Set back to previous mode
+        self.mode = Mode::Read; // Set back to previous mode
         self.line_jump = 0;
 
         if line_num > self.model.get_line_count() || line_num == 0 {
@@ -819,7 +821,7 @@ impl Viewer {
         }
 
         info!("Search for next: {}", self.search_string);
-        let text_copy = self.text.clone();  // so we can borrow self as mutable
+        let text_copy = self.text.clone(); // so we can borrow self as mutable
         let mut lines = text_copy.lines().skip(self.cursor.line - 1);
         let mut line_num = 0;
         let mut col = 0;
@@ -840,7 +842,7 @@ impl Viewer {
                                 l.find(self.search_string.as_str()) {
                                 line_num = ln + 1;
                                 col = c + 1;
-                                break;  // Found it
+                                break; // Found it
                             }
                         }
                         _ => {
@@ -874,7 +876,7 @@ impl Viewer {
         }
 
         info!("Search for previous: {}", self.search_string);
-        let text_copy = self.text.clone();  // so we can borrow self as mutable
+        let text_copy = self.text.clone(); // so we can borrow self as mutable
         let mut lines = text_copy.lines()
             .rev()
             .skip(self.model.get_line_count() - self.cursor.line);
@@ -897,7 +899,7 @@ impl Viewer {
                                 l.rfind(self.search_string.as_str()) {
                                 line_num = ln;
                                 col = c + 1;
-                                break;  // Found it
+                                break; // Found it
                             }
                         }
                         _ => {
@@ -923,7 +925,7 @@ impl Viewer {
     }
 
     fn move_next_word(&mut self) {
-        let text_copy = self.text.clone();  // so we can borrow self as mutable
+        let text_copy = self.text.clone(); // so we can borrow self as mutable
         let mut lines = text_copy.lines().skip(self.cursor.line - 1);
         let mut line_num = self.cursor.line;
         let mut col = 1;
@@ -951,7 +953,7 @@ impl Viewer {
     }
 
     fn move_prev_word(&mut self) {
-        let text_copy = self.text.clone();  // so we can borrow self as mutable
+        let text_copy = self.text.clone(); // so we can borrow self as mutable
         let mut lines = text_copy.lines()
             .rev()
             .skip(self.model.get_line_count() - self.cursor.line);
@@ -1016,7 +1018,7 @@ impl Viewer {
             self.text_col = self.cur_line_len;
         } else if self.cursor.col == 0 {
             // previous line was empty
-            self.cursor.col = 1;   // jump back to first column
+            self.cursor.col = 1; // jump back to first column
             self.text_col = 1;
         }
     }
@@ -1025,7 +1027,7 @@ impl Viewer {
     fn match_cursor_text(&self, text_col: usize) -> usize {
         let mut count = 0;
         let mut line = self.current_line.clone();
-        line.push(' ');  // Extra char for editing mode
+        line.push(' '); // Extra char for editing mode
         let mut chars = line.chars();
         for _ in 0..text_col {
             if let Some(c) = chars.next() {
@@ -1918,36 +1920,36 @@ Fifth 7");
                                     false,
                                     false);
 
-    test_view.set_current_line(2);  // move to line 2
+    test_view.set_current_line(2); // move to line 2
     assert_eq!(16, test_view.cur_line_len);
-    test_view.set_current_line(3);  // move to line 3 (with tab)
-    test_view.move_cursor(Action::MoveEndLine);  // move to end of line
+    test_view.set_current_line(3); // move to line 3 (with tab)
+    test_view.move_cursor(Action::MoveEndLine); // move to end of line
     assert_eq!(21, test_view.cur_line_len);
     assert_eq!(24, test_view.cursor.col);
 
-    test_view.set_current_line(5);  // move to shorter line 5
+    test_view.set_current_line(5); // move to shorter line 5
     assert_eq!(7, test_view.cur_line_len);
     assert_eq!(7, test_view.cursor.col);
 
-    test_view.mode = Mode::Edit;  // change mode to edit
+    test_view.mode = Mode::Edit; // change mode to edit
 
-    test_view.set_current_line(2);  // move to line 2
+    test_view.set_current_line(2); // move to line 2
     assert_eq!(17, test_view.cur_line_len);
     assert_eq!(7, test_view.cursor.col);
-    test_view.move_cursor(Action::MoveEndLine);  // move to end of line
+    test_view.move_cursor(Action::MoveEndLine); // move to end of line
     assert_eq!(17, test_view.cursor.col);
-    test_view.set_current_line(3);  // move to line 3
+    test_view.set_current_line(3); // move to line 3
     assert_eq!(22, test_view.cur_line_len);
-    test_view.move_cursor(Action::MoveEndLine);  // move to end of line
+    test_view.move_cursor(Action::MoveEndLine); // move to end of line
 
-    test_view.set_current_line(5);  // move to shorter line 5
+    test_view.set_current_line(5); // move to shorter line 5
     assert_eq!(8, test_view.cur_line_len);
 
-    test_view.move_cursor_left();  // move left twice
+    test_view.move_cursor_left(); // move left twice
     test_view.move_cursor_left();
     assert_eq!(6, test_view.cursor.col);
 
-    test_view.set_current_line(4);  // move to empty line 4
+    test_view.set_current_line(4); // move to empty line 4
     assert_eq!(1, test_view.cursor.col);
 }
 
@@ -2182,7 +2184,8 @@ fn test_delete_end_of_line() {
     test_view.move_next_word();
     test_view.delete_end_of_line();
 
-    assert_eq!(test_view.text, "This i
+    assert_eq!(test_view.text,
+               "This i
 \t\tfor delete end of line\n");
     assert_eq!(6, test_view.cur_line_len);
     // Cursor and text column are the same when the line doesn't have tabs
@@ -2198,7 +2201,8 @@ fn test_delete_end_of_line() {
     test_view.move_cursor_right();
 
     test_view.delete_end_of_line();
-    assert_eq!(test_view.text, "This i
+    assert_eq!(test_view.text,
+               "This i
 \t\tf\n");
     // Text column + 1 because we are in Edit Mode
     assert_eq!(test_view.text_col + 1, test_view.cur_line_len);

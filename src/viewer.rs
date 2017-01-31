@@ -640,6 +640,9 @@ impl Viewer {
                             self.add_tab_spaces();
                         }
                     }
+                    Key::Ctrl('t') => {
+                        self.add_char('\t');
+                    }
                     _ => {}
                 }
             }

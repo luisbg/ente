@@ -1261,17 +1261,17 @@ impl Viewer {
               self.cursor.col);
 
         self.copy_start.line = self.cursor.line;
-        self.copy_start.col = self.cursor.col;
+        self.copy_start.col = self.text_col;
     }
 
     fn select_copy_end_marker(&mut self) {
         info!("Select copy end marker {}:{}",
               self.cursor.line,
-              self.cursor.col);
+              self.text_col);
 
         if self.cursor.line < self.copy_start.line ||
            (self.cursor.line == self.copy_start.line &&
-            self.cursor.col < self.copy_start.line) {
+            self.text_col < self.copy_start.line) {
             error!("Copy end marker can't be before start marker");
         }
 
@@ -1282,7 +1282,7 @@ impl Viewer {
             let line = lines.next().unwrap();
             // Check cursor isn't past the line
             let col = if self.cursor.col <= line.len() {
-                self.cursor.col
+                self.text_col
             } else {
                 line.len()
             };
@@ -1306,8 +1306,8 @@ impl Viewer {
 
             // Check cursor isn't past the last line
             let last_line = lines.next().unwrap();
-            let col = if self.cursor.col <= last_line.len() {
-                self.cursor.col
+            let col = if self.text_col <= last_line.len() {
+                self.text_col
             } else {
                 last_line.len()
             };
@@ -2206,4 +2206,43 @@ fn test_delete_end_of_line() {
 \t\tf\n");
     // Text column + 1 because we are in Edit Mode
     assert_eq!(test_view.text_col + 1, test_view.cur_line_len);
+}
+
+#[test]
+fn test_copy_paste() {
+    let text = String::from("\t\t_test for copy and paste
+middle line
+last line_");
+    let name = String::from("name");
+    let actions = keyconfig::new();
+    let colors = Colors::new();
+    let mut test_view = Viewer::new(text.as_str(),
+                                    name,
+                                    actions,
+                                    colors,
+                                    "path",
+                                    false,
+                                    false);
+
+    test_view.mode = Mode::Edit;
+    test_view.move_cursor_right();
+    test_view.move_cursor_right();
+    test_view.move_cursor_right();
+    test_view.select_copy_start_marker();
+
+    test_view.move_cursor_end_file();
+    test_view.move_cursor_left();
+    test_view.move_cursor_left();
+    test_view.select_copy_end_marker();
+    test_view.move_cursor_end_file();
+
+    test_view.add_char('\n');
+    test_view.paste();
+
+    assert_eq!("\t\t_test for copy and paste
+middle line
+last line_
+test for copy and paste
+middle line
+last line\n", test_view.text);
 }

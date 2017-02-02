@@ -289,6 +289,20 @@ impl Viewer {
         }
     }
 
+    fn clear_line(&self, line_num: usize) {
+        let mut empty = String::new();
+        for _ in 0..self.width {
+            empty.push(' ');
+        }
+
+        self.rustbox.print(RB_COL_START,
+                           line_num,
+                           rustbox::RB_NORMAL,
+                           self.colors.fg,
+                           self.colors.bg,
+                           &empty);
+    }
+
     fn do_vertical_scroll(&mut self, action: Action) {
         let mut disp_line = self.disp_line;
         let disp_col = self.disp_col;
@@ -1171,7 +1185,7 @@ impl Viewer {
 
     fn delete_char(&mut self, backspace: bool) {
         // TODO: Use better data structure for strings. For example, a Rope
-        let line = self.cursor.line;
+        let mut line_num = self.cursor.line;
         let column = if backspace {
             self.text_col
         } else {
@@ -1181,7 +1195,7 @@ impl Viewer {
         // Can't delete char from the beginning of the file or past the line
         // and can't do Delete action past the line (Edit Mode)
         if backspace {
-            if (line == 1 && column == 1) ||
+            if (line_num == 1 && column == 1) ||
                self.text_col - 1 > self.cur_line_len {
                 return;
             }
@@ -1191,8 +1205,8 @@ impl Viewer {
             return;
         }
 
-        info!("Delete char from {}:{}", line, column);
-        let end_len = self.model.delete_char(line, column);
+        info!("Delete char from {}:{}", line_num, column);
+        let end_len = self.model.delete_char(line_num, column);
         self.text = self.model.get_text();
 
         let mut disp_line = self.disp_line;
@@ -1201,7 +1215,7 @@ impl Viewer {
         if backspace {
             if column == 1 {
                 // Removed first character of line, move to line above
-                let line_num = self.cursor.line - 1;
+                line_num -=  1;
                 self.set_current_line(line_num);
                 self.text_col = self.cur_line_len - end_len;
                 self.cursor.col = self.match_cursor_text(self.text_col);
@@ -1230,14 +1244,20 @@ impl Viewer {
         };
         self.cursor.col = self.match_cursor_text(self.text_col);
 
-        let _ = self.display_chunk(disp_line, disp_col);
+        if backspace && column == 1 {
+            let _ = self.display_chunk(disp_line, disp_col);
+        } else {
+            line_num -= disp_line;
+            self.clear_line(line_num);
+            self.draw_line(self.current_line.clone(), line_num, disp_col);
+        }
         self.update();
     }
 
     fn delete_backspace(&mut self) {
         if self.text_col > TAB_SPACES {
             // Check if we should delete an indentation level
-            let line_num = self.cursor.line;
+            let mut line_num = self.cursor.line;
             let line = self.model.get_line(line_num);
             let (beg_line, _) = line.split_at(self.text_col - 1);
 
@@ -1257,7 +1277,11 @@ impl Viewer {
                 let disp_col = self.disp_col;
                 self.text = self.model.get_text();
                 self.set_current_line(line_num);
-                let _ = self.display_chunk(disp_line, disp_col);
+
+                line_num -= disp_line;
+                self.clear_line(line_num);
+                self.draw_line(self.current_line.clone(), line_num, disp_col);
+
                 self.update();
 
                 return;

@@ -131,7 +131,7 @@ impl Viewer {
         rustbox.set_output_mode(OutputMode::EightBit);
         info!("Terminal window height: {}", height);
 
-        rustbox.set_cursor(0, 0);
+        rustbox.set_cursor(RB_COL_START as isize, RB_ROW_START as isize);
 
         let cursor = Cursor { line: 1, col: 1 };
         let copy_start = Cursor { line: 1, col: 1 };
@@ -170,19 +170,8 @@ impl Viewer {
         };
 
         view.set_current_line(1);
-        match view.display_chunk(1, 1) {
-            Ok(_) => view.update(),
-            Err(_) => {
-                view.rustbox.print(RB_COL_START,
-                                   RB_ROW_START,
-                                   rustbox::RB_NORMAL,
-                                   view.colors.error,
-                                   view.colors.bg,
-                                   "Empty file!");
-                view.disp_line = 0;
-                view.update()
-            }
-        }
+        view.display_chunk(1, 1);
+        view.update();
 
         view
     }
@@ -208,13 +197,11 @@ impl Viewer {
 
     fn display_chunk(&mut self,
                      start_line: usize,
-                     start_col: usize)
-                     -> Result<()> {
+                     start_col: usize) {
         self.rustbox.clear();
 
         if start_line > self.model.get_line_count() {
             warn!("Line {} past EOF", start_line);
-            return Err("End of file".into());
         }
 
         self.disp_line = start_line;
@@ -237,14 +224,13 @@ impl Viewer {
                 info!("Displayed range {} : {} lines",
                       start_line,
                       start_line + ln - 1);
-                return Ok(());
+                return;
             }
         }
 
         info!("Displayed range {} : {} lines",
               start_line,
               start_line + self.height);
-        Ok(())
     }
 
     fn draw_line(&self, line: String, line_num: usize, start_col: usize) {
@@ -347,7 +333,7 @@ impl Viewer {
                 return;
             }
         }
-        let _ = self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col);
     }
 
     fn consider_horizontal_scroll(&mut self, action: Action) {
@@ -364,12 +350,12 @@ impl Viewer {
                     // Cursor before display, scroll left
                     let disp_col = tmp_cur_col;
                     let disp_line = self.disp_line;
-                    let _ = self.display_chunk(disp_line, disp_col);
+                    self.display_chunk(disp_line, disp_col);
                 } else if self.cursor.col > self.disp_col + self.width - 1 {
                     // Cursor past display, scroll right
                     let disp_col = self.cursor.col - self.width + 1;
                     let disp_line = self.disp_line;
-                    let _ = self.display_chunk(disp_line, disp_col);
+                    self.display_chunk(disp_line, disp_col);
                 }
 
             }
@@ -520,7 +506,7 @@ impl Viewer {
         self.set_current_line(1);
 
         if self.disp_line > 1 || self.disp_col > 1 {
-            let _ = self.display_chunk(1, 1);
+            self.display_chunk(1, 1);
         }
     }
 
@@ -533,7 +519,7 @@ impl Viewer {
         self.cursor.col = self.match_cursor_text(self.text_col);
 
         if self.disp_line + height <= line_count {
-            let _ = self.display_chunk(line_count - height + 1, 1);
+            self.display_chunk(line_count - height + 1, 1);
         }
         self.consider_horizontal_scroll(Action::MovePageDown);
     }
@@ -1090,7 +1076,7 @@ impl Viewer {
             if line_num > line_count - self.height {
                 line_num = line_count - self.height + 1;
             }
-            let _ = self.display_chunk(line_num, 1);
+            self.display_chunk(line_num, 1);
         }
     }
 
@@ -1174,7 +1160,7 @@ impl Viewer {
         }
 
         if c == '\n' || disp_col_change {
-            let _ = self.display_chunk(disp_line, disp_col);
+            self.display_chunk(disp_line, disp_col);
         } else {
             line_num = line_num - disp_line;
             self.draw_line(self.current_line.clone(), line_num, disp_col);
@@ -1245,7 +1231,7 @@ impl Viewer {
         self.cursor.col = self.match_cursor_text(self.text_col);
 
         if backspace && column == 1 {
-            let _ = self.display_chunk(disp_line, disp_col);
+            self.display_chunk(disp_line, disp_col);
         } else {
             line_num -= disp_line;
             self.clear_line(line_num);
@@ -1373,7 +1359,7 @@ impl Viewer {
         }
 
         self.set_current_line(line + paste_lines - 1);
-        let _ = self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col);
         self.update();
     }
 
@@ -1401,7 +1387,7 @@ impl Viewer {
                 disp_line = 1;
             }
         }
-        let _ = self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col);
         self.update();
     }
 
@@ -1429,7 +1415,7 @@ impl Viewer {
         self.text_col = 1;
         self.cursor.col = 1;
         let disp_line = self.disp_line;
-        let _ = self.display_chunk(disp_line, 1);
+        self.display_chunk(disp_line, 1);
         self.update();
     }
 
@@ -1455,7 +1441,7 @@ impl Viewer {
 
         let disp_line = self.disp_line;
         let disp_col = self.disp_col;
-        let _ = self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col);
         self.update();
     }
 
@@ -1473,7 +1459,7 @@ impl Viewer {
             self.rustbox.width()
         };
 
-        let _ = self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col);
         self.update();
     }
 
@@ -1540,7 +1526,7 @@ List of available keys:\n");
         self.cursor.line = 1;
         self.cursor.col = 1;
 
-        let _ = self.display_chunk(1, 1);
+        self.display_chunk(1, 1);
         self.update();
     }
 
@@ -1548,7 +1534,7 @@ List of available keys:\n");
         self.mode = Mode::Read;
         self.text = self.model.get_text();
 
-        let _ = self.display_chunk(1, 1);
+        self.display_chunk(1, 1);
         self.update();
     }
 
@@ -1684,42 +1670,17 @@ fn test_new() {
     let actions = keyconfig::new();
     let colors = Colors::new();
 
-    let mut test_view = Viewer::new(text.as_str(),
-                                    name,
-                                    actions,
-                                    colors,
-                                    "path",
-                                    false,
-                                    false);
-    match test_view.display_chunk(1, 1) {
-        Ok(_) => {}
-        Err(_) => {
-            panic!();
-        }
-    }
-}
-
-#[test]
-fn test_display_chunk_outside_file() {
-    let text = String::from("test");
-    let name = String::from("name");
-    let actions = keyconfig::new();
-    let colors = Colors::new();
-
-    // Run with: RUST_TEST_THREADS=1 cargo test
-    let mut test_view = Viewer::new(text.as_str(),
-                                    name,
-                                    actions,
-                                    colors,
-                                    "path",
-                                    false,
-                                    false);
-    match test_view.display_chunk(2, 1) {
-        Ok(_) => {
-            panic!();
-        }
-        Err(_) => {}
-    }
+    let test_view = Viewer::new(text.as_str(),
+                                name,
+                                actions,
+                                colors,
+                                "path",
+                                false,
+                                false);
+    // test_view.display_chunk(1, 1);
+    assert_eq!("test", test_view.text);
+    assert_eq!(1, test_view.cursor.col);
+    assert_eq!(1, test_view.cursor.line);
 }
 
 #[allow(dead_code)]

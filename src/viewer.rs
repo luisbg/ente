@@ -1129,11 +1129,13 @@ impl Viewer {
 
         let mut disp_line = self.disp_line;
         let mut disp_col = self.disp_col;
+        let mut line_num = self.cursor.line;
+        let mut disp_col_change = false;
 
         if c == '\n' {
             // If adding an Enter, we move the cursor to the newline which
             // might fall outside of the display
-            let line_num = self.cursor.line + 1;
+            line_num += 1;
             disp_col = 1;
             self.text_col = 1;
             self.set_current_line(line_num);
@@ -1154,9 +1156,16 @@ impl Viewer {
 
         if self.cursor.col > disp_col + self.width {
             disp_col = self.cursor.col - self.width;
+            disp_col_change = true;
         }
 
-        let _ = self.display_chunk(disp_line, disp_col);
+        if c == '\n' || disp_col_change {
+            let _ = self.display_chunk(disp_line, disp_col);
+        } else {
+            line_num = line_num - disp_line;
+            self.draw_line(self.current_line.clone(), line_num, disp_col);
+        }
+
         self.update();
     }
 

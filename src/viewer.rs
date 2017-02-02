@@ -1223,7 +1223,11 @@ impl Viewer {
         }
 
         self.current_line = self.model.get_line(self.cursor.line);
-        self.cur_line_len = self.current_line.len();
+        self.cur_line_len = if self.mode == Mode::Edit {
+            self.current_line.len() + 1
+        } else {
+            self.current_line.len()
+        };
         self.cursor.col = self.match_cursor_text(self.text_col);
 
         let _ = self.display_chunk(disp_line, disp_col);
@@ -1233,7 +1237,8 @@ impl Viewer {
     fn delete_backspace(&mut self) {
         if self.text_col > TAB_SPACES {
             // Check if we should delete an indentation level
-            let line = self.model.get_line(self.cursor.line);
+            let line_num = self.cursor.line;
+            let line = self.model.get_line(line_num);
             let (beg_line, _) = line.split_at(self.text_col - 1);
 
             let mut tab_space = String::new();
@@ -1251,6 +1256,7 @@ impl Viewer {
                 let disp_line = self.disp_line;
                 let disp_col = self.disp_col;
                 self.text = self.model.get_text();
+                self.set_current_line(line_num);
                 let _ = self.display_chunk(disp_line, disp_col);
                 self.update();
 

@@ -52,7 +52,8 @@ Ente text editor.
 
 Usage:
   ente FILE [--keyconfig=<kc>] \
-     [--colorconfig=<cc>] [--hide-line-num] [--insert-tab-char]
+     [--colorconfig=<cc>] [--hide-line-num] [--insert-tab-char] \
+     [--tab-size=<ts>]
   ente (-h | --help)
   ente --version
 
@@ -63,6 +64,7 @@ Usage:
     --colorconfig=<cc>    Color configuration file.
     --hide-line-num       Hide line numbers.
     --insert-tab-char     Insert a Tab instead of a number of spaces.
+    --tab-size=<ts>       Size of tab in columns. (4 by default)
 ";
 
 #[derive(Debug, RustcDecodable)]
@@ -72,6 +74,7 @@ struct Args {
     flag_colorconfig: String,
     flag_hidelinenum: bool,
     flag_inserttabchar: bool,
+    flag_tabsize: String,
 }
 
 impl slog_stream::Format for LogFormat {
@@ -149,12 +152,18 @@ fn main() {
         info!("Insert tab characters");
     }
 
+    let tab_size = match args.get_str("--tab-size").parse::<usize>() {
+        Ok(i) => i,
+        Err(_) => 0,
+    };
+
     // Run catching errors
     if let Err(ref e) = run(args.get_str("FILE"),
                             actions,
                             colors,
                             !hide_line_num,
-                            insert_tab_char) {
+                            insert_tab_char,
+                            tab_size) {
         println!("error: {}", e);
         for e in e.iter().skip(1) {
             println!("caused by: {}", e);
@@ -206,7 +215,8 @@ fn run(filepath: &str,
        actions: HashMap<rustbox::Key, viewer::Action>,
        colors: viewer::Colors,
        show_line_num: bool,
-       insert_tab_char: bool)
+       insert_tab_char: bool,
+       tab_size: usize)
        -> Result<()> {
     // Get file content and start a Viewer with it
     let text = open_file(filepath);
@@ -221,7 +231,8 @@ fn run(filepath: &str,
                                          colors,
                                          filepath,
                                          show_line_num,
-                                         insert_tab_char);
+                                         insert_tab_char,
+                                         tab_size);
 
     // Wait for keyboard events
     match viewer.poll_event() {

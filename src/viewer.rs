@@ -22,7 +22,7 @@ use errors::*;
 
 const RB_COL_START: usize = 0;
 const RB_ROW_START: usize = 0;
-const TAB_SPACES: usize = 4;
+const DEFAULT_TAB_SPACES: usize = 4;
 
 #[derive(Copy,Clone,Eq,PartialEq,Debug)]
 pub enum Action {
@@ -92,6 +92,7 @@ pub struct Viewer {
     width: usize,
     show_line_num: bool,
     insert_tab_char: bool,
+    tab_size: usize,
     filename: String,
     disp_line: usize, // first displayed line
     disp_col: usize, // first displayed col
@@ -124,7 +125,8 @@ impl Viewer {
                colors: Colors,
                filepath: &str,
                show_line_num: bool,
-               insert_tab_char: bool)
+               insert_tab_char: bool,
+               tab_size: usize)
                -> Viewer {
         let mut rustbox = RustBox::init(Default::default()).unwrap();
         let height = rustbox.height() - 1;
@@ -144,6 +146,13 @@ impl Viewer {
             rustbox.width()
         };
 
+        let checked_ts = if tab_size == 0 {
+            DEFAULT_TAB_SPACES
+        } else {
+            tab_size
+        };
+        info!("The tab size is {}", checked_ts);
+
         let mut view = Viewer {
             rustbox: rustbox,
             text: String::from(text),
@@ -155,6 +164,7 @@ impl Viewer {
             width: width,
             show_line_num: show_line_num,
             insert_tab_char: insert_tab_char,
+            tab_size: checked_ts,
             filename: filename,
             disp_line: 1,
             disp_col: 1,
@@ -243,7 +253,7 @@ impl Viewer {
             for c in line.chars() {
                 if rune_count >= start_col {
                     if c == '\t' {
-                        for _ in 0..TAB_SPACES {
+                        for _ in 0..self.tab_size {
                             print_line.push(' ');
                         }
 
@@ -1032,7 +1042,7 @@ impl Viewer {
         for _ in 0..text_col {
             if let Some(c) = chars.next() {
                 if c == '\t' {
-                    count += TAB_SPACES;
+                    count += self.tab_size;
                 } else {
                     count += 1;
                 }
@@ -1052,7 +1062,7 @@ impl Viewer {
         while n < cursor_col {
             if let Some(c) = chars.next() {
                 if c == '\t' {
-                    n += TAB_SPACES;
+                    n += self.tab_size;
                 } else {
                     n += 1;
                 }
@@ -1115,13 +1125,14 @@ impl Viewer {
     fn add_tab_spaces(&mut self) {
         let line = self.cursor.line;
         let column = self.text_col;
+        let tab_size = self.tab_size;
 
         info!("Add tab spaces at {}:{}", line, column);
 
-        for c in 0..TAB_SPACES {
+        for c in 0..tab_size {
             self.model.add_char(' ', line, column + c);
         }
-        self.update_after_add(' ', TAB_SPACES);
+        self.update_after_add(' ', tab_size);
     }
 
     fn update_after_add(&mut self, c: char, count: usize) {
@@ -1241,23 +1252,23 @@ impl Viewer {
     }
 
     fn delete_backspace(&mut self) {
-        if self.text_col > TAB_SPACES {
+        if self.text_col > self.tab_size {
             // Check if we should delete an indentation level
             let mut line_num = self.cursor.line;
             let line = self.model.get_line(line_num);
             let (beg_line, _) = line.split_at(self.text_col - 1);
 
             let mut tab_space = String::new();
-            for _ in 0..TAB_SPACES {
+            for _ in 0..self.tab_size {
                 tab_space.push(' ');
             }
             let len = beg_line.len();
-            if beg_line[len - TAB_SPACES..len] == tab_space {
+            if beg_line[len - self.tab_size..len] == tab_space {
                 self.model
-                    .delete_block(self.cursor.line, self.text_col, TAB_SPACES);
+                    .delete_block(self.cursor.line, self.text_col, self.tab_size);
 
-                self.cursor.col -= TAB_SPACES;
-                self.text_col -= TAB_SPACES;
+                self.cursor.col -= self.tab_size;
+                self.text_col -= self.tab_size;
 
                 let disp_line = self.disp_line;
                 let disp_col = self.disp_col;
@@ -1676,7 +1687,8 @@ fn test_new() {
                                 colors,
                                 "path",
                                 false,
-                                false);
+                                false,
+                                DEFAULT_TAB_SPACES);
     // test_view.display_chunk(1, 1);
     assert_eq!("test", test_view.text);
     assert_eq!(1, test_view.cursor.col);
@@ -1704,7 +1716,8 @@ second line");
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
@@ -1758,7 +1771,8 @@ fn test_pageup_pagedown() {
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
@@ -1793,7 +1807,8 @@ fn test_start_end_line() {
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
@@ -1832,7 +1847,8 @@ fn test_start_end_file() {
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
@@ -1865,13 +1881,14 @@ fn test_match_cursor_text() {
                                 colors,
                                 "path",
                                 false,
-                                false);
+                                false,
+                                DEFAULT_TAB_SPACES);
 
     assert_eq!(3, test_view.match_cursor_text(3));
-    assert_eq!(4 + TAB_SPACES, test_view.match_cursor_text(5));
-    assert_eq!(7 + (TAB_SPACES * 2),
+    assert_eq!(4 + test_view.tab_size, test_view.match_cursor_text(5));
+    assert_eq!(7 + (test_view.tab_size * 2),
                test_view.match_cursor_text(9));
-    assert_eq!(1 + 7 + (TAB_SPACES * 2),
+    assert_eq!(1 + 7 + (test_view.tab_size * 2),
                test_view.match_cursor_text(20));
 }
 
@@ -1887,18 +1904,19 @@ fn test_match_cursor_text_start_with_tab() {
                                 colors,
                                 "path",
                                 false,
-                                false);
+                                false,
+                                DEFAULT_TAB_SPACES);
 
-    assert_eq!(TAB_SPACES, test_view.match_cursor_text(1));
-    assert_eq!(TAB_SPACES * 2, test_view.match_cursor_text(2));
-    assert_eq!(TAB_SPACES * 3, test_view.match_cursor_text(3));
-    assert_eq!(1 + (TAB_SPACES * 3),
+    assert_eq!(test_view.tab_size, test_view.match_cursor_text(1));
+    assert_eq!(test_view.tab_size * 2, test_view.match_cursor_text(2));
+    assert_eq!(test_view.tab_size * 3, test_view.match_cursor_text(3));
+    assert_eq!(1 + (test_view.tab_size * 3),
                test_view.match_cursor_text(4));
-    assert_eq!(2 + (TAB_SPACES * 3),
+    assert_eq!(2 + (test_view.tab_size * 3),
                test_view.match_cursor_text(5));
-    assert_eq!(5 + (TAB_SPACES * 3),
+    assert_eq!(5 + (test_view.tab_size * 3),
                test_view.match_cursor_text(8));
-    assert_eq!(6 + (TAB_SPACES * 3),
+    assert_eq!(6 + (test_view.tab_size * 3),
                test_view.match_cursor_text(9));
 }
 
@@ -1918,7 +1936,8 @@ Fifth 7");
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     test_view.set_current_line(2); // move to line 2
     assert_eq!(16, test_view.cur_line_len);
@@ -1965,7 +1984,8 @@ fn test_match_text_cursor() {
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     assert_eq!(1, test_view.match_text_cursor(1));
     assert_eq!(10, test_view.match_text_cursor(10));
@@ -1992,7 +2012,8 @@ testing last line as well");
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     // first result
     test_view.search_string = String::from("test");
@@ -2037,7 +2058,8 @@ testing last line as well");
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     test_view.move_cursor_end_file();
     assert_eq!(5, test_view.cursor.line);
@@ -2084,7 +2106,8 @@ third line");
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     // first line
     test_view.move_next_word();
@@ -2128,7 +2151,8 @@ third line");
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     test_view.move_cursor_end_file();
     assert_eq!(3, test_view.cursor.line);
@@ -2178,7 +2202,8 @@ fn test_delete_end_of_line() {
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     // Delete end of line after first word
     test_view.move_next_word();
@@ -2222,7 +2247,8 @@ last line_");
                                     colors,
                                     "path",
                                     false,
-                                    false);
+                                    false,
+                                    DEFAULT_TAB_SPACES);
 
     test_view.mode = Mode::Edit;
     test_view.move_cursor_right();

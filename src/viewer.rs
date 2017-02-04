@@ -220,7 +220,7 @@ impl Viewer {
         let mut lines = self.text.lines().skip(start_line - 1);
         for ln in 0..(self.height) {
             if let Some(line) = lines.next() {
-                self.draw_line(String::from(line), ln, start_col);
+                self.draw_line(&String::from(line), ln, start_col);
 
                 if self.show_line_num && self.mode != Mode::Help {
                     self.rustbox.print(RB_COL_START + self.width + 1,
@@ -243,7 +243,7 @@ impl Viewer {
               start_line + self.height);
     }
 
-    fn draw_line(&self, line: String, line_num: usize, start_col: usize) {
+    fn draw_line(&self, line: &String, line_num: usize, start_col: usize) {
         let end = start_col + self.width;
 
         // Check if there is line content to show or past the end
@@ -1174,7 +1174,7 @@ impl Viewer {
             self.display_chunk(disp_line, disp_col);
         } else {
             line_num = line_num - disp_line;
-            self.draw_line(self.current_line.clone(), line_num, disp_col);
+            self.draw_line(&self.current_line, line_num, disp_col);
         }
 
         self.update();
@@ -1246,7 +1246,7 @@ impl Viewer {
         } else {
             line_num -= disp_line;
             self.clear_line(line_num);
-            self.draw_line(self.current_line.clone(), line_num, disp_col);
+            self.draw_line(&self.current_line, line_num, disp_col);
         }
         self.update();
     }
@@ -1277,7 +1277,7 @@ impl Viewer {
 
                 line_num -= disp_line;
                 self.clear_line(line_num);
-                self.draw_line(self.current_line.clone(), line_num, disp_col);
+                self.draw_line(&self.current_line, line_num, disp_col);
 
                 self.update();
 

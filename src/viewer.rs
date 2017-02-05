@@ -581,7 +581,7 @@ impl Viewer {
     }
 
     #[allow(dead_code)]
-    fn get_cursor(&mut self) -> Cursor {
+    fn get_cursor(&self) -> Cursor {
         Cursor {
             line: self.cursor.line,
             col: self.cursor.col,

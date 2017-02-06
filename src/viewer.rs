@@ -935,23 +935,24 @@ impl Viewer {
     }
 
     fn move_next_word(&mut self) {
-        let text_copy = self.text.clone(); // so we can borrow self as mutable
-        let mut lines = text_copy.lines().skip(self.cursor.line - 1);
         let mut line_num = self.cursor.line;
         let mut col = 1;
-        let word_break: &[_] = &[' ', '\t'];
+        {
+            let mut lines = self.text.lines().skip(self.cursor.line - 1);
+            let word_break: &[_] = &[' ', '\t'];
 
-        // Check current line after the cursor
-        // TODO: Don't consider a tab as a word.
-        //       Check next character is alphanumeric
-        let (_, rest_line) = lines.next().unwrap().split_at(self.text_col);
-        match rest_line.find(word_break) {
-            Some(c) => {
-                col = c + self.text_col + 2;
-            }
-            None => {
-                // If no word break found in current line, go to next
-                line_num += 1;
+            // Check current line after the cursor
+            // TODO: Don't consider a tab as a word.
+            //       Check next character is alphanumeric
+            let (_, rest_line) = lines.next().unwrap().split_at(self.text_col);
+            match rest_line.find(word_break) {
+                Some(c) => {
+                    col = c + self.text_col + 2;
+                }
+                None => {
+                    // If no word break found in current line, go to next
+                    line_num += 1;
+                }
             }
         }
 

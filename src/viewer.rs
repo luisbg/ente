@@ -552,7 +552,7 @@ impl Viewer {
                     }
                     _ => {
                         // Numbers don't always match GoToLine action
-                        self.go_to_line_mode(key);
+                        self.go_to_line_mode(&key);
                     }
                 }
             }
@@ -762,8 +762,8 @@ impl Viewer {
         self.update();
     }
 
-    fn go_to_line_mode(&mut self, key: Key) {
-        let n = match key {
+    fn go_to_line_mode(&mut self, key: &Key) {
+        let n = match *key {
             Key::Char('1') => 1,
             Key::Char('2') => 2,
             Key::Char('3') => 3,

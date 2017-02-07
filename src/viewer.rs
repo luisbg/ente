@@ -1013,13 +1013,12 @@ impl Viewer {
     fn set_current_line(&mut self, line_num: usize) {
         self.cursor.line = line_num;
 
-        let curr_line = self.model.get_line(self.cursor.line);
+        self.current_line = self.model.get_line(self.cursor.line);;
         self.cur_line_len = if self.mode == Mode::Edit {
-            curr_line.len() + 1
+            self.current_line.len() + 1
         } else {
-            curr_line.len()
+            self.current_line.len()
         };
-        self.current_line = curr_line;
 
         self.cursor.col = self.match_cursor_text(self.text_col);
 

@@ -1035,17 +1035,19 @@ impl Viewer {
 
     // Match the cursor column based on current text line position
     fn match_cursor_text(&self, text_col: usize) -> usize {
+        let ref line = self.current_line;
         let mut count = 0;
-        let mut line = self.current_line.clone();
-        line.push(' '); // Extra char for editing mode
         let mut chars = line.chars();
-        for _ in 0..text_col {
+        for n in 0..text_col {
             if let Some(c) = chars.next() {
                 if c == '\t' {
                     count += self.tab_size;
                 } else {
                     count += 1;
                 }
+            } else if n == line.len() {
+                // Extra char for editing mode
+                count += 1;
             }
         }
 

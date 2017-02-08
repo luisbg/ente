@@ -1116,11 +1116,12 @@ impl Viewer {
     }
 
     fn add_char(&mut self, c: char) {
-        let line = self.cursor.line;
-        let column = self.text_col;
-        info!("Add '{}' at {}:{}", c, line, column);
+        info!("Add '{}' at {}:{}",
+              c,
+              self.cursor.line,
+              self.text_col);
 
-        self.model.add_char(c, line, column);
+        self.model.add_char(c, self.cursor.line, self.text_col);
         self.update_after_add(c, 1);
     }
 
@@ -2273,4 +2274,35 @@ last line_
 test for copy and paste
 middle line
 last line\n", test_view.text);
+}
+
+#[test]
+fn test_add_char() {
+    let text = String::from("New test text");
+    let mut test_view = Viewer::new(text.as_str(),
+                                    String::from("name"),
+                                    keyconfig::new(),
+                                    Colors::new(),
+                                    "path",
+                                    false,
+                                    false,
+                                    DEFAULT_TAB_SPACES);
+
+    test_view.switch_mode(Action::EditMode);
+    assert_eq!("New test text", test_view.text);
+    assert_eq!(14, test_view.cur_line_len);
+
+    test_view.add_char('_');
+    assert_eq!("_New test text\n", test_view.text);
+    assert_eq!(15, test_view.cur_line_len);
+
+    test_view.move_cursor_right();
+    test_view.move_cursor_right();
+    test_view.add_char('_');
+    assert_eq!("_Ne_w test text\n", test_view.text);
+    assert_eq!(16, test_view.cur_line_len);
+
+    test_view.move_cursor_end_line();
+    test_view.add_char('_');
+    assert_eq!("_Ne_w test text_\n", test_view.text);
 }

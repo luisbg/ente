@@ -205,9 +205,7 @@ impl Viewer {
         }
     }
 
-    fn display_chunk(&mut self,
-                     start_line: usize,
-                     start_col: usize) {
+    fn display_chunk(&mut self, start_line: usize, start_col: usize) {
         self.rustbox.clear();
 
         if start_line > self.model.get_line_count() {
@@ -1215,7 +1213,7 @@ impl Viewer {
         if backspace {
             if column == 1 {
                 // Removed first character of line, move to line above
-                line_num -=  1;
+                line_num -= 1;
                 self.set_current_line(line_num);
                 self.text_col = self.cur_line_len - end_len;
                 self.cursor.col = self.match_cursor_text(self.text_col);
@@ -1268,7 +1266,9 @@ impl Viewer {
             let len = beg_line.len();
             if beg_line[len - self.tab_size..len] == tab_space {
                 self.model
-                    .delete_block(self.cursor.line, self.text_col, self.tab_size);
+                    .delete_block(self.cursor.line,
+                                  self.text_col,
+                                  self.tab_size);
 
                 self.cursor.col -= self.tab_size;
                 self.text_col -= self.tab_size;

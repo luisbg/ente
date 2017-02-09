@@ -1205,7 +1205,7 @@ impl Viewer {
         self.text = self.model.get_text();
 
         let mut disp_line = self.disp_line;
-        let disp_col = self.disp_col;
+        let mut disp_col = self.disp_col;
 
         if backspace {
             if column == 1 {
@@ -1237,7 +1237,12 @@ impl Viewer {
         } else {
             self.current_line.len()
         };
+
         self.cursor.col = self.match_cursor_text(self.text_col);
+        if self.cursor.col < disp_col {
+            disp_col = self.cursor.col;
+            self.display_chunk(disp_line, disp_col);
+        }
 
         if backspace && column == 1 {
             self.display_chunk(disp_line, disp_col);

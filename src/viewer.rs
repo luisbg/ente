@@ -1124,14 +1124,11 @@ impl Viewer {
     }
 
     fn add_tab_spaces(&mut self) {
-        let line = self.cursor.line;
-        let column = self.text_col;
         let tab_size = self.tab_size;
-
-        info!("Add tab spaces at {}:{}", line, column);
+        info!("Add tab spaces at {}:{}", self.cursor.line, self.text_col);
 
         for c in 0..tab_size {
-            self.model.add_char(' ', line, column + c);
+            self.model.add_char(' ', self.cursor.line, self.text_col + c);
         }
         self.update_after_add(' ', tab_size);
     }
@@ -2305,4 +2302,36 @@ fn test_add_char() {
     test_view.move_cursor_end_line();
     test_view.add_char('_');
     assert_eq!("_Ne_w test text_\n", test_view.text);
+}
+
+#[test]
+fn test_add_tab() {
+    let text = String::from("New test text");
+    let mut test_view = Viewer::new(text.as_str(),
+                                    String::from("name"),
+                                    keyconfig::new(),
+                                    Colors::new(),
+                                    "path",
+                                    false,
+                                    false,
+                                    DEFAULT_TAB_SPACES);
+
+    test_view.switch_mode(Action::EditMode);
+    assert_eq!("New test text", test_view.text);
+    assert_eq!(14, test_view.cur_line_len);
+
+    test_view.add_tab_spaces();
+    assert_eq!("    New test text\n", test_view.text);
+    assert_eq!(18, test_view.cur_line_len);
+
+    test_view.move_cursor_right();
+    test_view.move_cursor_right();
+    test_view.add_tab_spaces();
+    assert_eq!("    Ne    w test text\n", test_view.text);
+    assert_eq!(22, test_view.cur_line_len);
+
+    test_view.move_cursor_end_line();
+    test_view.add_tab_spaces();
+    assert_eq!("    Ne    w test text    \n", test_view.text);
+    assert_eq!(26, test_view.cur_line_len);
 }

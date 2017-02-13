@@ -137,7 +137,7 @@ impl Viewer {
 
         let cursor = Cursor { line: 1, col: 1 };
         let copy_start = Cursor { line: 1, col: 1 };
-        let mut model = model::Model::new(text, filepath);
+        let model = model::Model::new(text, filepath);
         let num_lines_digits = number_of_digits(model.get_line_count());
 
         let width = if show_line_num {

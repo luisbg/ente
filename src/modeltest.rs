@@ -5,7 +5,7 @@ use super::model;
 #[test]
 fn get_text() {
     let text = String::from("This is a test\n");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let test_model = model::Model::new(text.as_str(), "/home/test/file");
 
     assert_eq!("This is a test\n", test_model.get_text());
 }
@@ -117,7 +117,7 @@ fn delete_line() {
 #[test]
 fn get_char() {
     let text = String::from("First\nSecond\n\t\tThird\n");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let test_model = model::Model::new(text.as_str(), "/home/test/file");
 
     assert_eq!('F', test_model.get_char(1, 1));
     assert_eq!('t', test_model.get_char(1, 5));

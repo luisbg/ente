@@ -27,12 +27,12 @@ impl Model {
         }
     }
 
-    pub fn get_text(&mut self) -> String {
+    pub fn get_text(&self) -> String {
         self.text.clone()
     }
 
     #[allow(dead_code)]
-    pub fn get_char(&mut self, line: usize, column: usize) -> char {
+    pub fn get_char(&self, line: usize, column: usize) -> char {
         if let Some(l) = self.text.lines().nth(line - 1) {
             if let Some(c) = l.chars().nth(column - 1) {
                 return c;
@@ -58,11 +58,11 @@ impl Model {
         ln.len()
     }
 
-    pub fn get_line_count(&mut self) -> usize {
+    pub fn get_line_count(&self) -> usize {
         self.line_count
     }
 
-    pub fn get_saved_stat(&mut self) -> bool {
+    pub fn get_saved_stat(&self) -> bool {
         self.saved
     }
 

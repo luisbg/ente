@@ -4,9 +4,10 @@ ENTE (Educational Nimble Text Editor)
     __( Ꙩ<
     \___)
 
-A text editor project to keep learning Rust through practice.
+A text editor project to learn Rust through practice.
 
-It edits files now. Check out the Actions list in keys.conf.
+It can view and edits files. Check out the Actions list in keys.conf.
+Since December 25, Ente is self-contained and used to write itself.
 
 Comments and patches welcome :)
 

@@ -11,6 +11,33 @@ fn get_text() {
 }
 
 #[test]
+fn get_text_slice() {
+    let text = String::from("This is a test
+Need a
+few lines
+to test the slice.
+Last line
+For a total of 6\n");
+    let test_model = model::Model::new(text.as_str(), "/home/test/file");
+
+    // Test normal usage
+    assert_eq!("This is a test\n", test_model.get_text_slice(1, 1));
+    assert_eq!("Need a\nfew lines\n", test_model.get_text_slice(2, 2));
+    assert_eq!("Need a\nfew lines\nto test the slice.\nLast line
+For a total of 6\n",
+               test_model.get_text_slice(2, 5));
+
+    // Amount of lines will go past the end
+    assert_eq!("Need a\nfew lines\nto test the slice.\nLast line
+For a total of 6\n",
+               test_model.get_text_slice(2, 10));
+    // Last line
+    assert_eq!("For a total of 6\n", test_model.get_text_slice(6, 1));
+    // Start line past the end
+    assert_eq!("", test_model.get_text_slice(7, 1));
+}
+
+#[test]
 fn add_char_start() {
     let text = String::from("tart");
     let mut test_model = model::Model::new(text.as_str(), "/home/test/file");

@@ -32,6 +32,25 @@ impl Model {
     }
 
     #[allow(dead_code)]
+    pub fn get_text_slice(&self, start_line: usize, amount: usize) -> String {
+        let mut slice = String::new();
+
+        if start_line <= self.line_count {
+            let mut lines = self.text.lines().skip(start_line - 1);
+            for _ in 0..amount {
+                if let Some(l) = lines.next() {
+                    slice.push_str(l);
+                    slice.push('\n');
+                }
+            }
+        } else {
+            info!("Out of range in get_text_slice() {}", start_line);
+        }
+
+        slice
+    }
+
+    #[allow(dead_code)]
     pub fn get_char(&self, line: usize, column: usize) -> char {
         if let Some(l) = self.text.lines().nth(line - 1) {
             if let Some(c) = l.chars().nth(column - 1) {

@@ -180,9 +180,12 @@ impl Viewer {
             copy_string: String::new(),
         };
 
-        view.set_current_line(1);
-        view.display_chunk(1, 1);
-        view.update();
+        // Check if running for real or a test
+        if filepath != "" {
+            view.set_current_line(1);
+            view.display_chunk(1, 1);
+            view.update();
+        }
 
         view
     }
@@ -1529,6 +1532,17 @@ impl Viewer {
         false
     }
 
+    #[allow(dead_code)]
+    fn update_text(&mut self) {
+        self.text = self.model.get_text();
+        self.current_line = self.model.get_line(self.cursor.line + self.disp_line - 1);
+        self.cur_line_len = if self.mode == Mode::Edit {
+            self.current_line.len() + 1
+        } else {
+            self.current_line.len()
+        };
+    }
+
     fn show_help(&mut self) {
         let mut help_text = String::from("  ::  Ente Help  ::
 
@@ -1682,19 +1696,20 @@ impl Colors {
 
 #[test]
 fn test_new() {
-    let text = String::from("test");
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
 
-    let test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                 name,
                                 actions,
                                 colors,
-                                "path",
                                 false,
                                 false,
                                 DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(String::from("test"));
+    test_view.update_text();
+
     // test_view.display_chunk(1, 1);
     assert_eq!("test", test_view.text);
     assert_eq!(1, test_view.cursor.col);
@@ -1708,22 +1723,21 @@ fn compare_cursors(first: &Cursor, second: &Cursor) -> bool {
 
 #[test]
 fn test_cursor() {
-    let text = String::from("test
-second line");
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
     let mut test_cursor = Cursor { line: 1, col: 1 };
     let mut view_cursor: Cursor;
 
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(String::from("test
+second line"));
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
@@ -1771,14 +1785,14 @@ fn test_pageup_pagedown() {
     let mut test_cursor = Cursor { line: 1, col: 1 };
     let mut view_cursor: Cursor;
 
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
@@ -1807,14 +1821,15 @@ fn test_start_end_line() {
     let mut test_cursor = Cursor { line: 1, col: 1 };
     let mut view_cursor: Cursor;
 
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
@@ -1847,14 +1862,14 @@ fn test_start_end_file() {
     let mut test_cursor = Cursor { line: 1, col: 1 };
     let mut view_cursor: Cursor;
 
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
@@ -1881,14 +1896,15 @@ fn test_match_cursor_text() {
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let test_view = Viewer::new(text.as_str(),
-                                name,
-                                actions,
-                                colors,
-                                "path",
-                                false,
-                                false,
-                                DEFAULT_TAB_SPACES);
+    let mut test_view = Viewer::new("",
+                                    name,
+                                    actions,
+                                    colors,
+                                    false,
+                                    false,
+                                    DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     assert_eq!(3, test_view.match_cursor_text(3));
     assert_eq!(4 + test_view.tab_size, test_view.match_cursor_text(5));
@@ -1904,14 +1920,15 @@ fn test_match_cursor_text_start_with_tab() {
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let test_view = Viewer::new(text.as_str(),
-                                name,
-                                actions,
-                                colors,
-                                "path",
-                                false,
-                                false,
-                                DEFAULT_TAB_SPACES);
+    let mut test_view = Viewer::new("",
+                                    name,
+                                    actions,
+                                    colors,
+                                    false,
+                                    false,
+                                    DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     assert_eq!(test_view.tab_size, test_view.match_cursor_text(1));
     assert_eq!(test_view.tab_size * 2, test_view.match_cursor_text(2));
@@ -1936,14 +1953,15 @@ Fifth 7");
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     test_view.set_current_line(2); // move to line 2
     assert_eq!(16, test_view.cur_line_len);
@@ -1984,14 +2002,15 @@ fn test_match_text_cursor() {
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     assert_eq!(1, test_view.match_text_cursor(1));
     assert_eq!(10, test_view.match_text_cursor(10));
@@ -2012,14 +2031,15 @@ testing last line as well");
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     // first result
     test_view.search_string = String::from("test");
@@ -2058,14 +2078,15 @@ testing last line as well");
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     test_view.move_cursor_end_file();
     assert_eq!(5, test_view.cursor.line);
@@ -2106,14 +2127,15 @@ third line");
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     // first line
     test_view.move_next_word();
@@ -2151,14 +2173,15 @@ third line");
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     test_view.move_cursor_end_file();
     assert_eq!(3, test_view.cursor.line);
@@ -2202,14 +2225,15 @@ fn test_delete_end_of_line() {
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     // Delete end of line after first word
     test_view.move_next_word();
@@ -2247,14 +2271,15 @@ last line_");
     let name = String::from("name");
     let actions = keyconfig::new();
     let colors = Colors::new();
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     name,
                                     actions,
                                     colors,
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     test_view.mode = Mode::Edit;
     test_view.move_cursor_right();
@@ -2282,14 +2307,15 @@ last line\n", test_view.text);
 #[test]
 fn test_add_char() {
     let text = String::from("New test text");
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     String::from("name"),
                                     keyconfig::new(),
                                     Colors::new(),
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     test_view.switch_mode(Action::EditMode);
     assert_eq!("New test text", test_view.text);
@@ -2313,14 +2339,15 @@ fn test_add_char() {
 #[test]
 fn test_add_tab() {
     let text = String::from("New test text");
-    let mut test_view = Viewer::new(text.as_str(),
+    let mut test_view = Viewer::new("",
                                     String::from("name"),
                                     keyconfig::new(),
                                     Colors::new(),
-                                    "path",
                                     false,
                                     false,
                                     DEFAULT_TAB_SPACES);
+    test_view.model.change_text_for_tests(text);
+    test_view.update_text();
 
     test_view.switch_mode(Action::EditMode);
     assert_eq!("New test text", test_view.text);

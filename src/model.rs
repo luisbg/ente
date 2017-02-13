@@ -53,8 +53,17 @@ fn open_file(filepath: &str) -> String {
 
 impl Model {
     pub fn new(filepath: &str) -> Model {
-        let text = open_file(filepath);
-        let line_count = text.lines().count();
+        let text: String;
+        let line_count: usize;
+
+        if filepath != "" {
+            text = open_file(filepath);
+            line_count = text.lines().count();
+        } else {
+            // Empty path for test cases
+            text = String::new();
+            line_count = 0;
+        }
 
         Model {
             text: text,
@@ -305,5 +314,11 @@ impl Model {
         }
 
         self.saved = true;
+    }
+
+    #[allow(dead_code)]
+    pub fn change_text_for_tests(&mut self, text: String) {
+        self.line_count = text.lines().count();
+        self.text = text;
     }
 }

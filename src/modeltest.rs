@@ -5,7 +5,8 @@ use super::model;
 #[test]
 fn get_text() {
     let text = String::from("This is a test\n");
-    let test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     assert_eq!("This is a test\n", test_model.get_text());
 }
@@ -18,7 +19,8 @@ few lines
 to test the slice.
 Last line
 For a total of 6\n");
-    let test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     // Test normal usage
     assert_eq!("This is a test\n", test_model.get_text_slice(1, 1));
@@ -40,7 +42,8 @@ For a total of 6\n",
 #[test]
 fn add_char_start() {
     let text = String::from("tart");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     test_model.add_char('s', 1, 1);
 
@@ -50,7 +53,8 @@ fn add_char_start() {
 #[test]
 fn add_char_middle() {
     let text = String::from("Text to :: test with");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     test_model.add_char('x', 1, 10);
 
@@ -60,7 +64,8 @@ fn add_char_middle() {
 #[test]
 fn add_char_end() {
     let text = String::from("Start\nSecond lin");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     test_model.add_char('e', 2, 11);
 
@@ -70,7 +75,8 @@ fn add_char_end() {
 #[test]
 fn get_line_count() {
     let text = String::from("1\n2\n3\n");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     assert_eq!(3, test_model.get_line_count());
 
@@ -83,7 +89,8 @@ fn get_line_count() {
 #[test]
 fn add_block() {
     let text = String::from("Start\n\nEnd\n");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     test_model.add_block(String::from("This is a block"), 2, 1);
 
@@ -99,7 +106,8 @@ fn add_block() {
 fn delete_char() {
     // TODO: test out of bounds
     let text = String::from("Text _test_");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     // TODO: it would make more sense for this to be character 6
     test_model.delete_char(1, 7);
@@ -113,7 +121,8 @@ fn delete_char() {
 fn delete_block() {
     // TODO: protect out of bounds
     let text = String::from("Text.._block_ test\t\t_block");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     // TODO: it would make more sense for this to be (1, 5, 9)
     test_model.delete_block(1, 14, 9);
@@ -131,7 +140,8 @@ fn delete_block() {
 #[test]
 fn delete_line() {
     let text = String::from("First\nSecond\nThird\n");
-    let mut test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     test_model.delete_line(2);
 
@@ -144,7 +154,8 @@ fn delete_line() {
 #[test]
 fn get_char() {
     let text = String::from("First\nSecond\n\t\tThird\n");
-    let test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     assert_eq!('F', test_model.get_char(1, 1));
     assert_eq!('t', test_model.get_char(1, 5));
@@ -159,7 +170,8 @@ fn get_char() {
 #[test]
 fn get_line() {
     let text = String::from("First\nSecond\n\t\tThird\n");
-    let test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     assert_eq!("First", test_model.get_line(1));
     assert_eq!("Second", test_model.get_line(2));
@@ -170,7 +182,8 @@ fn get_line() {
 #[test]
 fn get_line_len() {
     let text = String::from("1234\n12345\n12\n");
-    let test_model = model::Model::new(text.as_str(), "/home/test/file");
+    let mut test_model = model::Model::new("");
+    test_model.change_text_for_tests(text);
 
     assert_eq!(4, test_model.get_line_len(1));
     assert_eq!(5, test_model.get_line_len(2));

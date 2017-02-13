@@ -23,11 +23,8 @@ use slog::DrainExt;
 use std::collections::HashMap;
 
 use std::env;
-use std::error::Error as StdError;
 use std::fs::File;
 use std::io;
-use std::io::prelude::*;
-use std::path::Path;
 
 mod errors {
     error_chain!{}
@@ -177,40 +174,6 @@ fn main() {
     }
 }
 
-fn open_file(filepath: &str) -> String {
-    // Open the file
-    let mut text = String::new();
-
-    let path = Path::new(filepath);
-    if path.is_dir() {
-        panic!("Can't open a folder. {}", filepath);
-    }
-
-    if path.is_file() {
-        let mut file = match File::open(path) {
-            Ok(file) => file,
-            Err(_) => panic!("File {} does not exist. Creating it.", filepath),
-        };
-
-        info!("Opening file: {}", filepath);
-
-        // Read the file into a String
-        match file.read_to_string(&mut text) {
-            Ok(_) => {}
-            Err(error) => panic!("couldn't read {}: ", error.description()),
-        }
-    } else {
-        info!("Creating new file: {}", filepath);
-        File::create(path).expect("Couldn't create file");
-    }
-
-    if text.lines().count() == 0 {
-        text.push('\n');
-    }
-
-    text
-}
-
 fn run(filepath: &str,
        actions: HashMap<rustbox::Key, viewer::Action>,
        colors: viewer::Colors,
@@ -219,17 +182,15 @@ fn run(filepath: &str,
        tab_size: usize)
        -> Result<()> {
     // Get file content and start a Viewer with it
-    let text = open_file(filepath);
     let filename = match filepath.to_string().split('/').last() {
         Some(name) => name.to_string(),
         None => "unknown".to_string(),
     };
 
-    let mut viewer = viewer::Viewer::new(&text,
+    let mut viewer = viewer::Viewer::new(filepath,
                                          filename,
                                          actions,
                                          colors,
-                                         filepath,
                                          show_line_num,
                                          insert_tab_char,
                                          tab_size);

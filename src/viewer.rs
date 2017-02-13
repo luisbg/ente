@@ -119,11 +119,10 @@ fn number_of_digits(number: usize) -> usize {
 }
 
 impl Viewer {
-    pub fn new(text: &str,
+    pub fn new(filepath: &str,
                filename: String,
                key_map: HashMap<Key, Action>,
                colors: Colors,
-               filepath: &str,
                show_line_num: bool,
                insert_tab_char: bool,
                tab_size: usize)
@@ -137,7 +136,9 @@ impl Viewer {
 
         let cursor = Cursor { line: 1, col: 1 };
         let copy_start = Cursor { line: 1, col: 1 };
-        let model = model::Model::new(text, filepath);
+        let model = model::Model::new(filepath);
+
+        let text = model.get_text();
         let num_lines_digits = number_of_digits(model.get_line_count());
 
         let width = if show_line_num {
@@ -155,7 +156,7 @@ impl Viewer {
 
         let mut view = Viewer {
             rustbox: rustbox,
-            text: String::from(text),
+            text: text,
             current_line: String::new(),
             model: model,
             mode: Mode::Read,

@@ -4,6 +4,9 @@ use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::path::Path;
 
+use std::fs::File;
+use std::error::Error as StdError;
+
 mod errors {}
 
 pub struct Model {
@@ -14,12 +17,47 @@ pub struct Model {
     saved: bool,
 }
 
+fn open_file(filepath: &str) -> String {
+    // Open the file
+    let mut text = String::new();
+
+    let path = Path::new(filepath);
+    if path.is_dir() {
+        panic!("Can't open a folder. {}", filepath);
+    }
+
+    if path.is_file() {
+        let mut file = match File::open(path) {
+            Ok(file) => file,
+            Err(_) => panic!("File {} does not exist. Creating it.", filepath),
+        };
+
+        info!("Opening file: {}", filepath);
+
+        // Read the file into a String
+        match file.read_to_string(&mut text) {
+            Ok(_) => {}
+            Err(error) => panic!("couldn't read {}: ", error.description()),
+        }
+    } else {
+        info!("Creating new file: {}", filepath);
+        File::create(path).expect("Couldn't create file");
+    }
+
+    if text.lines().count() == 0 {
+        text.push('\n');
+    }
+
+    text
+}
+
 impl Model {
-    pub fn new(text: &str, filepath: &str) -> Model {
+    pub fn new(filepath: &str) -> Model {
+        let text = open_file(filepath);
         let line_count = text.lines().count();
 
         Model {
-            text: String::from(text),
+            text: text,
             old_text: String::new(),
             filepath: filepath.to_string(),
             line_count: line_count,

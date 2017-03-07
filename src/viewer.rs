@@ -1138,7 +1138,7 @@ impl Viewer {
     }
 
     fn update_after_add(&mut self, c: char, count: usize) {
-        self.text = self.model.get_text();
+        self.update_text(false);
 
         let mut disp_line = self.disp_line;
         let mut disp_col = self.disp_col;
@@ -1206,7 +1206,7 @@ impl Viewer {
 
         info!("Delete char from {}:{}", line_num, column);
         let end_len = self.model.delete_char(line_num, column);
-        self.text = self.model.get_text();
+        self.update_text(false);
 
         let mut disp_line = self.disp_line;
         let mut disp_col = self.disp_col;
@@ -1281,7 +1281,7 @@ impl Viewer {
 
                 let disp_line = self.disp_line;
                 let disp_col = self.disp_col;
-                self.text = self.model.get_text();
+                self.update_text(false);
                 self.set_current_line(line_num);
 
                 line_num -= disp_line;
@@ -1372,7 +1372,7 @@ impl Viewer {
         let copy_string = self.copy_string.clone();
 
         self.model.add_block(copy_string, line, column);
-        self.text = self.model.get_text();
+        self.update_text(false);
 
         if self.show_line_num && self.update_num_lines_digits(true, false) {
             self.width = self.rustbox.width() - self.num_lines_digits - 1;
@@ -1389,7 +1389,7 @@ impl Viewer {
         let disp_col = self.disp_col;
 
         self.model.undo();
-        self.text = self.model.get_text();
+        self.update_text(false);
 
         if self.show_line_num && self.update_num_lines_digits(true, false) {
             self.width = self.rustbox.width() - self.num_lines_digits - 1;
@@ -1424,7 +1424,7 @@ impl Viewer {
         if !self.model.delete_line(line) {
             return;
         }
-        self.text = self.model.get_text();
+        self.update_text(false);
 
         if self.show_line_num && self.update_num_lines_digits(false, true) {
             self.width = self.rustbox.width() - self.num_lines_digits - 1;
@@ -1457,7 +1457,7 @@ impl Viewer {
             self.cur_line_len -= line_len - col;
         }
 
-        self.text = self.model.get_text();
+        self.update_text(false);
 
         let disp_line = self.disp_line;
         let disp_col = self.disp_col;
@@ -1532,15 +1532,18 @@ impl Viewer {
         false
     }
 
-    #[allow(dead_code)]
-    fn update_text(&mut self) {
+    fn update_text(&mut self, update_line_len: bool) {
         self.text = self.model.get_text();
-        self.current_line = self.model.get_line(self.cursor.line + self.disp_line - 1);
-        self.cur_line_len = if self.mode == Mode::Edit {
-            self.current_line.len() + 1
-        } else {
-            self.current_line.len()
-        };
+
+        if update_line_len {
+            self.current_line = self.model
+                .get_line(self.cursor.line + self.disp_line - 1);
+            self.cur_line_len = if self.mode == Mode::Edit {
+                self.current_line.len() + 1
+            } else {
+                self.current_line.len()
+            };
+        }
     }
 
     fn show_help(&mut self) {
@@ -1708,7 +1711,7 @@ fn test_new() {
                                 false,
                                 DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(String::from("test"));
-    test_view.update_text();
+    test_view.update_text(true);
 
     // test_view.display_chunk(1, 1);
     assert_eq!("test", test_view.text);
@@ -1829,7 +1832,7 @@ fn test_start_end_line() {
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     // Init at 1,1
     view_cursor = test_view.get_cursor();
@@ -1904,7 +1907,7 @@ fn test_match_cursor_text() {
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     assert_eq!(3, test_view.match_cursor_text(3));
     assert_eq!(4 + test_view.tab_size, test_view.match_cursor_text(5));
@@ -1928,7 +1931,7 @@ fn test_match_cursor_text_start_with_tab() {
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     assert_eq!(test_view.tab_size, test_view.match_cursor_text(1));
     assert_eq!(test_view.tab_size * 2, test_view.match_cursor_text(2));
@@ -1961,7 +1964,7 @@ Fifth 7");
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     test_view.set_current_line(2); // move to line 2
     assert_eq!(16, test_view.cur_line_len);
@@ -2010,7 +2013,7 @@ fn test_match_text_cursor() {
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     assert_eq!(1, test_view.match_text_cursor(1));
     assert_eq!(10, test_view.match_text_cursor(10));
@@ -2039,7 +2042,7 @@ testing last line as well");
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     // first result
     test_view.search_string = String::from("test");
@@ -2086,7 +2089,7 @@ testing last line as well");
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     test_view.move_cursor_end_file();
     assert_eq!(5, test_view.cursor.line);
@@ -2135,7 +2138,7 @@ third line");
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     // first line
     test_view.move_next_word();
@@ -2181,7 +2184,7 @@ third line");
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     test_view.move_cursor_end_file();
     assert_eq!(3, test_view.cursor.line);
@@ -2233,7 +2236,7 @@ fn test_delete_end_of_line() {
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     // Delete end of line after first word
     test_view.move_next_word();
@@ -2279,7 +2282,7 @@ last line_");
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     test_view.mode = Mode::Edit;
     test_view.move_cursor_right();
@@ -2315,9 +2318,9 @@ fn test_add_char() {
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
-
     test_view.switch_mode(Action::EditMode);
+    test_view.update_text(true);
+
     assert_eq!("New test text", test_view.text);
     assert_eq!(14, test_view.cur_line_len);
 
@@ -2347,7 +2350,7 @@ fn test_add_tab() {
                                     false,
                                     DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(text);
-    test_view.update_text();
+    test_view.update_text(true);
 
     test_view.switch_mode(Action::EditMode);
     assert_eq!("New test text", test_view.text);

@@ -138,7 +138,6 @@ impl Viewer {
         let copy_start = Cursor { line: 1, col: 1 };
         let model = model::Model::new(filepath);
 
-        let text = model.get_text();
         let num_lines_digits = number_of_digits(model.get_line_count());
 
         let width = if show_line_num {
@@ -156,7 +155,7 @@ impl Viewer {
 
         let mut view = Viewer {
             rustbox: rustbox,
-            text: text,
+            text: String::new(),
             current_line: String::new(),
             model: model,
             mode: Mode::Read,
@@ -183,7 +182,7 @@ impl Viewer {
         // Check if running for real or a test
         if filepath != "" {
             view.set_current_line(1);
-            view.display_chunk(1, 1);
+            view.display_chunk(1, 1, true);
             view.update();
         }
 
@@ -209,9 +208,10 @@ impl Viewer {
         }
     }
 
-    fn display_chunk(&mut self, start_line: usize, start_col: usize) {
-        self.rustbox.clear();
-
+    fn display_chunk(&mut self,
+                     start_line: usize,
+                     start_col: usize,
+                     update_text: bool) {
         if start_line > self.model.get_line_count() {
             warn!("Line {} past EOF", start_line);
         }
@@ -219,7 +219,12 @@ impl Viewer {
         self.disp_line = start_line;
         self.disp_col = start_col;
 
-        let mut lines = self.text.lines().skip(start_line - 1);
+        self.rustbox.clear();
+        if update_text {
+            self.text = self.model.get_text_slice(self.disp_line, self.height);
+        }
+
+        let mut lines = self.text.lines();
         for ln in 0..(self.height) {
             if let Some(line) = lines.next() {
                 self.draw_line(&String::from(line), ln, start_col);
@@ -345,7 +350,7 @@ impl Viewer {
                 return;
             }
         }
-        self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col, true);
     }
 
     fn consider_horizontal_scroll(&mut self, action: Action) {
@@ -362,12 +367,12 @@ impl Viewer {
                     // Cursor before display, scroll left
                     let disp_col = tmp_cur_col;
                     let disp_line = self.disp_line;
-                    self.display_chunk(disp_line, disp_col);
+                    self.display_chunk(disp_line, disp_col, true);
                 } else if self.cursor.col > self.disp_col + self.width - 1 {
                     // Cursor past display, scroll right
                     let disp_col = self.cursor.col - self.width + 1;
                     let disp_line = self.disp_line;
-                    self.display_chunk(disp_line, disp_col);
+                    self.display_chunk(disp_line, disp_col, true);
                 }
 
             }
@@ -518,7 +523,7 @@ impl Viewer {
         self.set_current_line(1);
 
         if self.disp_line > 1 || self.disp_col > 1 {
-            self.display_chunk(1, 1);
+            self.display_chunk(1, 1, true);
         }
     }
 
@@ -531,7 +536,7 @@ impl Viewer {
         self.cursor.col = self.match_cursor_text(self.text_col);
 
         if self.disp_line + height <= line_count {
-            self.display_chunk(line_count - height + 1, 1);
+            self.display_chunk(line_count - height + 1, 1, true);
         }
         self.consider_horizontal_scroll(Action::MovePageDown);
     }
@@ -1090,7 +1095,7 @@ impl Viewer {
             if line_num > line_count - self.height {
                 line_num = line_count - self.height + 1;
             }
-            self.display_chunk(line_num, 1);
+            self.display_chunk(line_num, 1, true);
         }
     }
 
@@ -1173,7 +1178,7 @@ impl Viewer {
         }
 
         if c == '\n' || disp_col_change {
-            self.display_chunk(disp_line, disp_col);
+            self.display_chunk(disp_line, disp_col, true);
         } else {
             line_num = line_num - disp_line;
             self.draw_line(&self.current_line, line_num, disp_col);
@@ -1245,11 +1250,11 @@ impl Viewer {
         self.cursor.col = self.match_cursor_text(self.text_col);
         if self.cursor.col < disp_col {
             disp_col = self.cursor.col;
-            self.display_chunk(disp_line, disp_col);
+            self.display_chunk(disp_line, disp_col, true);
         }
 
         if backspace && column == 1 {
-            self.display_chunk(disp_line, disp_col);
+            self.display_chunk(disp_line, disp_col, true);
         } else {
             line_num -= disp_line;
             self.clear_line(line_num);
@@ -1379,7 +1384,7 @@ impl Viewer {
         }
 
         self.set_current_line(line + paste_lines - 1);
-        self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col, true);
         self.update();
     }
 
@@ -1407,7 +1412,7 @@ impl Viewer {
                 disp_line = 1;
             }
         }
-        self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col, true);
         self.update();
     }
 
@@ -1435,7 +1440,7 @@ impl Viewer {
         self.text_col = 1;
         self.cursor.col = 1;
         let disp_line = self.disp_line;
-        self.display_chunk(disp_line, 1);
+        self.display_chunk(disp_line, 1, true);
         self.update();
     }
 
@@ -1461,7 +1466,7 @@ impl Viewer {
 
         let disp_line = self.disp_line;
         let disp_col = self.disp_col;
-        self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col, true);
         self.update();
     }
 
@@ -1479,7 +1484,7 @@ impl Viewer {
             self.rustbox.width()
         };
 
-        self.display_chunk(disp_line, disp_col);
+        self.display_chunk(disp_line, disp_col, true);
         self.update();
     }
 
@@ -1533,7 +1538,7 @@ impl Viewer {
     }
 
     fn update_text(&mut self, update_line_len: bool) {
-        self.text = self.model.get_text();
+        self.text = self.model.get_text_slice(self.disp_line, self.height);
 
         if update_line_len {
             self.current_line = self.model
@@ -1560,15 +1565,15 @@ List of available keys:\n");
         self.cursor.line = 1;
         self.cursor.col = 1;
 
-        self.display_chunk(1, 1);
+        self.display_chunk(1, 1, false);
         self.update();
     }
 
     fn exit_help(&mut self) {
         self.mode = Mode::Read;
-        self.text = self.model.get_text();
+        self.text = self.model.get_text_slice(self.disp_line, self.height);
 
-        self.display_chunk(1, 1);
+        self.display_chunk(1, 1, true);
         self.update();
     }
 
@@ -1704,16 +1709,16 @@ fn test_new() {
     let colors = Colors::new();
 
     let mut test_view = Viewer::new("",
-                                name,
-                                actions,
-                                colors,
-                                false,
-                                false,
-                                DEFAULT_TAB_SPACES);
+                                    name,
+                                    actions,
+                                    colors,
+                                    false,
+                                    false,
+                                    DEFAULT_TAB_SPACES);
     test_view.model.change_text_for_tests(String::from("test"));
     test_view.update_text(true);
 
-    // test_view.display_chunk(1, 1);
+    // test_view.display_chunk(1, 1, true);
     assert_eq!("test\n", test_view.text);
     assert_eq!(1, test_view.cursor.col);
     assert_eq!(1, test_view.cursor.line);

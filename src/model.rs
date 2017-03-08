@@ -82,6 +82,7 @@ impl Model {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_text(&self) -> String {
         let mut text = String::new();
 

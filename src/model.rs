@@ -18,6 +18,11 @@ pub struct Model {
     saved: bool,
 }
 
+pub struct Position {
+    pub line: usize,
+    pub col: usize,
+}
+
 fn open_file(filepath: &str) -> String {
     // Open the file
     let mut text = String::new();
@@ -311,6 +316,46 @@ impl Model {
         self.line_count -= 1;
 
         true
+    }
+
+    pub fn forward_search(&mut self,
+                          search_str: &str,
+                          cur_pos: Position)
+                          -> Position {
+        let mut lines = self.text_vec.iter().skip(cur_pos.line - 1);
+        let mut line_num = 0;
+        let mut col = 0;
+
+        // Check current line after the cursor
+        let (_, rest_line) = lines.next().unwrap().split_at(cur_pos.col);
+        match rest_line.find(search_str) {
+            Some(c) => {
+                line_num = cur_pos.line;
+                col = c + cur_pos.col + 1;
+            }
+            None => {
+                // If nothing found in current line, search in the rest
+                for ln in cur_pos.line..self.text.len() {
+                    match lines.next() {
+                        Some(l) => {
+                            if let Some(c) = l.find(search_str) {
+                                line_num = ln + 1;
+                                col = c + 1;
+                                break; // Found it
+                            }
+                        }
+                        _ => {
+                            return Position { line: 0, col: 0 };
+                        }
+                    }
+                }
+            }
+        }
+
+        Position {
+            line: line_num,
+            col: col,
+        }
     }
 
     pub fn undo(&mut self) {

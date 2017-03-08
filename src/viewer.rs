@@ -837,46 +837,20 @@ impl Viewer {
             return;
         }
 
-        info!("Search for next: {}", self.search_string);
-        let text_copy = self.text.clone(); // so we can borrow self as mutable
-        let mut lines = text_copy.lines().skip(self.cursor.line - 1);
-        let mut line_num = 0;
-        let mut col = 0;
+        let cur_pos = model::Position {
+            line: self.cursor.line,
+            col: self.text_col,
+        };
+        let pos = self.model
+            .forward_search(self.search_string.as_str(), cur_pos);
 
-        // Check current line after the cursor
-        let (_, rest_line) = lines.next().unwrap().split_at(self.text_col);
-        match rest_line.find(self.search_string.as_str()) {
-            Some(c) => {
-                line_num = self.cursor.line;
-                col = c + self.text_col + 1;
-            }
-            None => {
-                // If nothing found in current line, search in the rest
-                for ln in self.cursor.line..self.model.get_line_count() {
-                    match lines.next() {
-                        Some(l) => {
-                            if let Some(c) =
-                                l.find(self.search_string.as_str()) {
-                                line_num = ln + 1;
-                                col = c + 1;
-                                break; // Found it
-                            }
-                        }
-                        _ => {
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-
-        if line_num != 0 {
-            self.text_col = col;
+        if pos.line != 0 {
+            self.text_col = pos.col;
             info!("Found '{}' in line {} column {}",
                   self.search_string,
-                  line_num,
-                  col);
-            self.set_cursor(line_num, col);
+                  pos.line,
+                  pos.col);
+            self.set_cursor(pos.line, pos.col);
         } else {
             info!("Did not found: {}", self.search_string);
         }

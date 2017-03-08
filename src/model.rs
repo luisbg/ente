@@ -358,6 +358,49 @@ impl Model {
         }
     }
 
+    pub fn backward_search(&mut self,
+                           search_str: &str,
+                           cur_pos: Position)
+                           -> Position {
+        let mut lines = self.text_vec
+            .iter()
+            .rev()
+            .skip(self.get_line_count() - cur_pos.line);
+        let mut line_num = 0;
+        let mut col = 0;
+
+        // Check current line before the cursor
+        let (beg_line, _) = lines.next().unwrap().split_at(cur_pos.col);
+        match beg_line.rfind(search_str) {
+            Some(c) => {
+                line_num = cur_pos.line;
+                col = c + 1;
+            }
+            None => {
+                // If nothing found in current line, search in the rest
+                for ln in (1..cur_pos.line).rev() {
+                    match lines.next() {
+                        Some(l) => {
+                            if let Some(c) = l.rfind(search_str) {
+                                line_num = ln;
+                                col = c + 1;
+                                break; // Found it
+                            }
+                        }
+                        _ => {
+                            return Position { line: 0, col: 0 };
+                        }
+                    }
+                }
+            }
+        }
+
+        Position {
+            line: line_num,
+            col: col,
+        }
+    }
+
     pub fn undo(&mut self) {
         // TODO: Optimize. For example with a stack of changes
         // This only reverts back one change :(

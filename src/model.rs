@@ -1,11 +1,11 @@
 // Model
 
+use std::error::Error as StdError;
+
+use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::path::Path;
-
-use std::fs::File;
-use std::error::Error as StdError;
 
 mod errors {}
 
@@ -316,6 +316,12 @@ impl Model {
         // TODO: Optimize. For example with a stack of changes
         // This only reverts back one change :(
         self.text = self.old_text.clone();
+
+        self.text_vec.clear();
+        for line in self.old_text.lines() {
+            self.text_vec.push(String::from(line));
+        }
+
         self.line_count = self.text.lines().count();
         self.saved = false;
     }

@@ -1714,7 +1714,7 @@ fn test_new() {
     test_view.update_text(true);
 
     // test_view.display_chunk(1, 1);
-    assert_eq!("test", test_view.text);
+    assert_eq!("test\n", test_view.text);
     assert_eq!(1, test_view.cursor.col);
     assert_eq!(1, test_view.cursor.line);
 }
@@ -2321,7 +2321,7 @@ fn test_add_char() {
     test_view.switch_mode(Action::EditMode);
     test_view.update_text(true);
 
-    assert_eq!("New test text", test_view.text);
+    assert_eq!("New test text\n", test_view.text);
     assert_eq!(14, test_view.cur_line_len);
 
     test_view.add_char('_');
@@ -2353,7 +2353,7 @@ fn test_add_tab() {
     test_view.update_text(true);
 
     test_view.switch_mode(Action::EditMode);
-    assert_eq!("New test text", test_view.text);
+    assert_eq!("New test text\n", test_view.text);
     assert_eq!(14, test_view.cur_line_len);
 
     test_view.add_tab_spaces();

@@ -80,8 +80,8 @@ fn get_line_count() {
 
     assert_eq!(3, test_model.get_line_count());
 
+    test_model.add_char('\n', 3, 2);
     test_model.add_char('4', 4, 1);
-    test_model.add_char('\n', 4, 2);
 
     assert_eq!(4, test_model.get_line_count());
 }
@@ -111,6 +111,7 @@ fn delete_char() {
 
     // TODO: it would make more sense for this to be character 6
     test_model.delete_char(1, 7);
+    assert_eq!("Text test_\n", test_model.get_text());
     test_model.delete_char(1, 1); // this should do nothing
     test_model.delete_char(1, 11);
 

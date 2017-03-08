@@ -10,9 +10,8 @@ use std::path::Path;
 mod errors {}
 
 pub struct Model {
-    text: String,
-    text_vec: Vec<String>,
-    old_text: String,
+    text: Vec<String>,
+    old_text: Vec<String>,
     line_count: usize,
     filepath: String,
     saved: bool,
@@ -62,7 +61,7 @@ impl Model {
         let text: String;
         let line_count: usize;
 
-        let mut text_vec: Vec<String> = Vec::new();
+        let mut model_text: Vec<String> = Vec::new();
 
         if filepath != "" {
             text = open_file(filepath);
@@ -74,13 +73,14 @@ impl Model {
         }
 
         for line in text.lines() {
-            text_vec.push(String::from(line));
+            model_text.push(String::from(line));
         }
 
+        let old_text = model_text.clone();
+
         Model {
-            text: text,
-            text_vec: text_vec,
-            old_text: String::new(),
+            text: model_text,
+            old_text: old_text,
             filepath: filepath.to_string(),
             line_count: line_count,
             saved: true,
@@ -91,7 +91,7 @@ impl Model {
     pub fn get_text(&self) -> String {
         let mut text = String::new();
 
-        for line in &self.text_vec {
+        for line in &self.text {
             text.push_str(line);
             text.push('\n');
         }
@@ -104,7 +104,7 @@ impl Model {
         let mut slice = String::new();
 
         if start_line <= self.line_count {
-            let mut lines = self.text.lines().skip(start_line - 1);
+            let mut lines = self.text.iter().skip(start_line - 1);
             for _ in 0..amount {
                 if let Some(l) = lines.next() {
                     slice.push_str(l);
@@ -120,7 +120,7 @@ impl Model {
 
     #[allow(dead_code)]
     pub fn get_char(&self, line: usize, column: usize) -> char {
-        if let Some(l) = self.text.lines().nth(line - 1) {
+        if let Some(l) = self.text.iter().nth(line - 1) {
             if let Some(c) = l.chars().nth(column - 1) {
                 return c;
             }
@@ -131,8 +131,8 @@ impl Model {
     }
 
     pub fn get_line(&self, line: usize) -> String {
-        if line <= self.text_vec.len() {
-            return self.text_vec[line - 1].clone();
+        if line <= self.text.len() {
+            return self.text[line - 1].clone();
         }
 
         info!("Out of range in get_line() {}", line);
@@ -146,7 +146,7 @@ impl Model {
     }
 
     pub fn get_line_count(&self) -> usize {
-        self.text_vec.len()
+        self.text.len()
     }
 
     pub fn get_saved_stat(&self) -> bool {
@@ -155,66 +155,54 @@ impl Model {
 
     pub fn add_char(&mut self, c: char, line: usize, column: usize) {
         // TODO: Use better data structure for strings. For example, a Rope
-        let mut new_text = String::new();
         let mut tmp_line = String::new();
 
-        let line_clone = self.text_vec[line - 1].clone();
+        self.old_text = self.text.clone();
+
+        let line_clone = self.text[line - 1].clone();
         let (beg, end) = line_clone.split_at(column - 1);
 
         if c != '\n' {
             tmp_line.push_str(&format!("{}{}{}", beg, c, end));
 
-            self.text_vec[line - 1] = tmp_line;
+            self.text[line - 1] = tmp_line;
         } else {
-            if line == self.text_vec.len() &&
-               (column + 1) == self.text_vec[line - 1].len() {
-                self.text_vec.push(tmp_line);
+            if line == self.text.len() &&
+               (column + 1) == self.text[line - 1].len() {
+                self.text.push(tmp_line);
             } else {
-                self.text_vec[line - 1] = String::from(beg);
-                self.text_vec.insert(line, String::from(end));
+                self.text[line - 1] = String::from(beg);
+                self.text.insert(line, String::from(end));
             }
             self.line_count += 1;
         }
 
-        for ln in &self.text_vec {
-            new_text.push_str(ln.as_ref());
-            new_text.push('\n');
-        }
-        self.old_text = self.text.clone();
-        self.text = new_text;
         self.saved = false;
     }
 
     pub fn add_block(&mut self, copy_str: String, line: usize, column: usize) {
         // TODO: Too similar to add_char(), overload?
-        if line > self.text.lines().count() {
+        if line > self.text.len() {
             warn!("line parameter is past the end of file");
             return;
         }
 
-        if column - 1 > self.text_vec[line - 1].len() {
+        if column - 1 > self.text[line - 1].len() {
             warn!("column parameter is past line text");
             return;
         }
 
-        let mut new_text = String::new();
+        self.old_text = self.text.clone();
+
         let mut tmp_line = String::new();
 
-        let line_clone = self.text_vec[line - 1].clone();
+        let line_clone = self.text[line - 1].clone();
         let (beg, end) = line_clone.split_at(column - 1);
 
         tmp_line.push_str(&format!("{}{}{}", beg, copy_str, end));
-        self.text_vec[line - 1] = tmp_line;
-
-        for ln in &self.text_vec {
-            new_text.push_str(ln.as_ref());
-            new_text.push('\n');
-        }
+        self.text[line - 1] = tmp_line;
 
         self.line_count += copy_str.lines().count() - 1;
-
-        self.old_text = self.text.clone();
-        self.text = new_text;
         self.saved = false;
     }
 
@@ -225,33 +213,29 @@ impl Model {
             return 0;
         }
 
-        let mut new_text = String::new();
+        self.old_text = self.text.clone();
+
         let mut tmp_line = String::new();
         let mut end_len = 0;
 
-        let line_clone = self.text_vec[line - 1].clone();
+        let line_clone = self.text[line - 1].clone();
         let (tmp_beg, tmp_end) = line_clone.split_at(column - 1);
         let mut beg = tmp_beg.to_string();
         let end = tmp_end.to_string();
 
         if beg.is_empty() {
-            tmp_line.push_str(&format!("{}{}", self.text_vec[line - 2], line_clone));
-            self.text_vec[line - 2] = tmp_line;
-            self.text_vec.remove(line - 1);
-            end_len = self.text_vec[line - 2].len();
+            tmp_line.push_str(&format!("{}{}",
+                                       self.text[line - 2],
+                                       line_clone));
+            self.text[line - 2] = tmp_line;
+            self.text.remove(line - 1);
+            end_len = self.text[line - 2].len();
         } else {
             beg.pop();
             tmp_line.push_str(&format!("{}{}", beg, end));
-            self.text_vec[line - 1] = tmp_line;
+            self.text[line - 1] = tmp_line;
         }
 
-        for ln in &self.text_vec {
-            new_text.push_str(ln.as_ref());
-            new_text.push('\n');
-        }
-
-        self.old_text = self.text.clone();
-        self.text = new_text;
         self.saved = false;
 
         if column == 1 {
@@ -266,7 +250,7 @@ impl Model {
             return;
         }
         // There needs to be enough chars left of the cursor in the line
-        if column <= chars || line > self.text_vec.len() {
+        if column <= chars || line > self.text.len() {
             return;
         }
 
@@ -275,23 +259,17 @@ impl Model {
               line,
               column);
 
-        let mut new_text = String::new();
+        self.old_text = self.text.clone();
+
         let mut tmp_line = String::new();
 
-        let line_clone = self.text_vec[line - 1].clone();
+        let line_clone = self.text[line - 1].clone();
         let (tmp_beg, tmp_end) = line_clone.split_at(column - 1);
         let beg = tmp_beg[0..(tmp_beg.len() - chars)].to_string();
         let end = tmp_end.to_string();
         tmp_line.push_str(&format!("{}{}", beg, end));
-        self.text_vec[line - 1] = tmp_line;
+        self.text[line - 1] = tmp_line;
 
-        for ln in &self.text_vec {
-            new_text.push_str(ln.as_ref());
-            new_text.push('\n');
-        }
-
-        self.old_text = self.text.clone();
-        self.text = new_text;
         self.saved = false;
     }
 
@@ -302,16 +280,9 @@ impl Model {
             return false;
         }
 
-        let mut new_text = String::new();
-        self.text_vec.remove(line - 1);
-
-        for ln in &self.text_vec {
-            new_text.push_str(ln.as_ref());
-            new_text.push('\n');
-        }
-
         self.old_text = self.text.clone();
-        self.text = new_text;
+
+        self.text.remove(line - 1);
         self.saved = false;
         self.line_count -= 1;
 
@@ -322,7 +293,7 @@ impl Model {
                           search_str: &str,
                           cur_pos: Position)
                           -> Position {
-        let mut lines = self.text_vec.iter().skip(cur_pos.line - 1);
+        let mut lines = self.text.iter().skip(cur_pos.line - 1);
         let mut line_num = 0;
         let mut col = 0;
 
@@ -362,7 +333,7 @@ impl Model {
                            search_str: &str,
                            cur_pos: Position)
                            -> Position {
-        let mut lines = self.text_vec
+        let mut lines = self.text
             .iter()
             .rev()
             .skip(self.get_line_count() - cur_pos.line);
@@ -404,14 +375,9 @@ impl Model {
     pub fn undo(&mut self) {
         // TODO: Optimize. For example with a stack of changes
         // This only reverts back one change :(
+        self.text.clear();
         self.text = self.old_text.clone();
-
-        self.text_vec.clear();
-        for line in self.old_text.lines() {
-            self.text_vec.push(String::from(line));
-        }
-
-        self.line_count = self.text.lines().count();
+        self.line_count = self.text.len();
         self.saved = false;
     }
 
@@ -425,7 +391,13 @@ impl Model {
             }
         };
 
-        match file.write_all(self.text.as_bytes()) {
+        let mut text = String::new();
+        for ln in &self.text {
+            text.push_str(ln.as_ref());
+            text.push('\n');
+        }
+
+        match file.write_all(text.as_bytes()) {
             Ok(_) => {}
             Err(error) => {
                 error!("Couldn't write to {} because {}",
@@ -434,7 +406,7 @@ impl Model {
                 return;
             }
         }
-        match file.set_len(self.text.len() as u64) {
+        match file.set_len(text.len() as u64) {
             Ok(_) => info!("Successfully saved file: {}", path.display()),
             Err(error) => {
                 error!("Couldn't truncate file {} because {}",
@@ -451,11 +423,9 @@ impl Model {
     pub fn change_text_for_tests(&mut self, text: String) {
         self.line_count = text.lines().count();
 
-        self.text_vec.clear();
+        self.text.clear();
         for line in text.lines() {
-            self.text_vec.push(String::from(line));
+            self.text.push(String::from(line));
         }
-
-        self.text = text;
     }
 }

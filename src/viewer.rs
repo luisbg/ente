@@ -1563,7 +1563,7 @@ List of available keys:\n");
                 }
             }
             Mode::Help => {
-                status = String::from("Press 'Esc' to exit help");
+                status = String::from("Press 'Ctrl-q' to exit help");
             }
         }
 

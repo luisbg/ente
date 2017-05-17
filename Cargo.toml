@@ -2,6 +2,9 @@
 name = "ente"
 version = "0.4.0"
 authors = ["Luis de Bethencourt <luisbg@debethencourt.com>"]
+description = "An educational nimble text editor"
+license = "MIT"
+repository = "https://github.com/luisbg/ente"
 
 [dependencies]
 rustbox = "0.9.0"
@@ -12,7 +15,7 @@ slog-scope = "0.2.2"
 time = "0.1.35"
 docopt = "0.6.86"
 rustc-serialize = "0.3.22"
-clippy = {version = "*", optional = true}
+clippy = {version = "0.0.133", optional = true}
 
 [features]
 default = []
